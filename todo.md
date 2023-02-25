@@ -1,13 +1,7 @@
 # deamons a mettre ne place
 
 ## Publier une donnée
-    ex : le poids de la balance
-    - a interval régulier
-        un timer pour tous ok 
-    - à la demande via mqtt
-        topic_ / SENDIT     OK
     - si la valeur change ou n'importe quel test
-    - json si object ok 
     - sur trigger
 
 ## REPL via mqtt
@@ -24,13 +18,6 @@
     ```
     )
 
-## Watchdog
-    envoie d'un message régulièrement ok
-    Si pas de réponse => reboot
-
-## SYSTEM
-
-    -  publish à la connection
 
 # Scanner de broker mqtt
 
