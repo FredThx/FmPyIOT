@@ -45,10 +45,17 @@ class DS18b20:
             roms = self.ds.scan()
             if len(roms)==1:
                 rom = roms[0]
-        assert rom is not None, "rom must be specified. or use read_all()"
-        self.ds.convert_temp()
-        time.sleep_ms(delais)
-        return self.ds.read_temp(rom)
+        if rom is not None:
+            self.ds.convert_temp()
+            time.sleep_ms(delais)
+            try:
+                temp = self.ds.read_temp(rom)
+            except Exception as e:
+                print(f"Error during temperature reading : {e}")
+            else:
+                return temp if temp!=85 else None
+        else:
+            print(f"Error reading {self} : {len(roms)} devices found.")
     
     def read_all(self)->dict:
         self.ds.convert_temp()
