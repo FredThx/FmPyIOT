@@ -102,10 +102,17 @@ class  FmPyIot:
                 self.lock_timer=False
     
     def run(self):
+        '''if async mode, start the timer
+        else, loop forever
+        '''
         self.stopped = False
-        while not self.stopped:
-            self.do_mqtt_events()
-            time.sleep_ms(self.mqtt_check_period)
+        if self.timer:
+            self.lock_timer=False
+            self.timer.init(mode = Timer.PERIODIC, period = self.mqtt_check_period, callback =self.on_timer)
+        else:
+            while not self.stopped:
+                self.do_mqtt_events()
+                time.sleep_ms(self.mqtt_check_period)
 
 
     def do_mqtt_events(self):
@@ -282,11 +289,11 @@ class  FmPyIot:
         return self.network_status[self.wlan.status()]
     
     def check_wlan(self):
-        '''Check wlan status (ping on DNS server) and kill wlan if test fall
+        '''Check wlan status (ping on mqtt) and kill wlan if test fall
         return True is wlan is ok, False otherwise
         '''
         try:
-            assert ping(self.wlan.ifconfig()[3],count=1,quiet=True)[1]>0,"Wlan error"
+            assert ping(self.mqtt_pub.server,count=3,quiet=True)[1]>0,"Wlan error"
         except Exception as e:
             print(e)
             self.wlan.deinit()
@@ -317,12 +324,4 @@ class  FmPyIot:
         for topic, callback in self.callbacks.items():
             repr += f"\t\t\t{topic}\n"
         return repr
-
-    def _run(self):
-        while not self.stopped:
-            self.on_timer(None)
-            time.sleep(1)
-    
-    def xxrun(self):
-        _thread.start_new_thread(self._run, [])
     

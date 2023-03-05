@@ -34,13 +34,14 @@ class Topic:
         ''' Read the device and return payload
         read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
-        try:
-            return self.read(topic, payload)
-        except TypeError:
+        if self.read:
             try:
-                return self.read(payload)
+                return self.read(topic, payload)
             except TypeError:
-                return self.read()
+                try:
+                    return self.read(payload)
+                except TypeError:
+                    return self.read()
             
     def do_action(self, topic:str=None, payload:str=None):
         '''Execute the action method and return (if exist) the value
