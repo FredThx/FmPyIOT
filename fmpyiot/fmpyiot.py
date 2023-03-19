@@ -5,6 +5,7 @@ from fmpyiot.wd import WDT
 from fmpyiot.umqtt.simple import MQTTClient
 from fmpyiot.topics import Topic
 from fmpyiot.uping import ping
+from fmpyiot.fwebiot import FwebIot
 import ubinascii
 
 class  FmPyIot:
@@ -17,7 +18,7 @@ class  FmPyIot:
             timeout:int = 60,
             autoconnect:bool = False,
             watchdog:int = 100,
-            mqtt_check_period:int = 1000, #ms
+            mqtt_check_period:int = 100, #ms
             debug:bool = True,
             sysinfo_period:int = 600, #s
             country = 'FR',
@@ -70,6 +71,8 @@ class  FmPyIot:
             self.init_watchdog(watchdog)
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
+        #Interface web
+        self.fwebiot = FwebIot(iot=self)
 
     def connect(self):
         self.logging("Try to connect IOT")
@@ -112,6 +115,7 @@ class  FmPyIot:
         else:
             while not self.stopped:
                 self.do_mqtt_events()
+                self.fwebiot.listen()
                 time.sleep_ms(self.mqtt_check_period)
 
 
