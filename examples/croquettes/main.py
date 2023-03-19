@@ -8,14 +8,22 @@ from croquettes import Croquettes
 from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.topics import Topic
 
-croquettes = Croquettes(Pin(13),Pin(12),Pin(7), Pin(8), Pin(6))
-iot = FmPyIot(            
+croquettes = Croquettes(
+        hx_clk = Pin(13), # GP13 = 17
+        hx_data = Pin(12), # GP12 = 16
+        motor_pinA = Pin(7), # GP7 = 10
+        motor_pinB = Pin(8), # GP8 = 11
+        motor_pin_ena = Pin(6) # GP6 = 9
+        )
+
+iot = FmPyIot(
     mqtt_host = "***REMOVED***",
     mqtt_base_topic = "T-HOME/CROQ3",
     ssid = 'WIFI_THOME2',
     password = "***REMOVED***",
     watchdog=300,
-    sysinfo_period = 600)
+    sysinfo_period = 600,
+    async_mode=False)
 
 
 balance = Topic("./POIDS", read=croquettes.get_weight, send_period=20)
@@ -27,13 +35,10 @@ def ftest():
 
 test = Topic("./TEST", read = ftest, send_period=1)
 
+
 if True:
-    if iot.connect():
-        iot.add_topic(balance)
-        iot.add_topic(dose)
-        #iot.add_topic(test)
-else:
-    iot.wlan.connect(iot.ssid, iot.password)
-    while True:
-        print(iot.str_network_status())
-        time.sleep(0.1)
+    while not iot.connect():
+        print("Erreur lors de la connexion.... en retente!")
+    iot.add_topic(balance)
+    iot.add_topic(dose)
+    iot.run()
