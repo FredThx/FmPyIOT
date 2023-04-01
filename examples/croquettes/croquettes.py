@@ -1,7 +1,7 @@
 from machine import Pin
 from hx711 import HX711
 from motor_I298 import MotorI298
-import json, time
+import json, time, math
 
 class Croquettes:
     '''Un distributeur de croquette
@@ -29,12 +29,12 @@ class Croquettes:
     params = {
             "hx_gain" : 1993,
             "hx_tare" : 118247 / 1993,
-            "motor_speed" : 1,
+            "motor_speed" : 0.3,
             "timeout" : 30,
-            "autoreverse" : 10,
-            "autoreverse_duration" : 1,
+            "autoreverse" : 200, #ms
+            "autoreverse_duration" : 100, #ms
             "qty_offset" : 5,
-            "motor_speed" : 1,
+            "booster" : 0.01
         }
 
     def load_params(self):
@@ -70,8 +70,9 @@ class Croquettes:
                 timeout:int = None,
                 autoreverse:int = None,
                 autoreverse_duration:int = None,
-                qty_offset:int = None,
-                motor_speed:int = None)-> float:
+                qty_offset:float = None,
+                motor_speed:float = None,
+                booster: float = None)-> float:
         '''Verse des croquettes
         qty         :   qte a verser en grammes
         timeout     :   timeout en secondes
@@ -85,24 +86,48 @@ class Croquettes:
         autoreverse_duration = autoreverse_duration or self.params.get("autoreverse_duration")
         qty_offset = qty_offset or self.params.get("qty_offset")
         motor_speed = motor_speed or self.params.get("motor_speed")
+        booster = booster or self.params.get('booster')
         #Distribution
         tare = self.get_weight()
         target = tare + qty - qty_offset #offset : erreur de jetee
         timeout = time.time() + timeout
         print(f"Ditribution de {qty} grammes de croquettes")
-        self.motor.run(duty=self.params["motor_speed"])
-        while self.get_weight()<target and time.time()<timeout:
-            time_autoreverse = time.time() + autoreverse
-            while self.get_weight()<target and time.time()<time_autoreverse:
-                print(".",end="")
-            if self.get_weight()<target and time.time()<timeout + autoreverse_duration:
-                print(f"\nPas assez de croquettes : autoreverse {autoreverse_duration} secondes")
-                self.motor.run(reverse = True)
-                while self.get_weight()<target and time.time()<time_autoreverse + autoreverse_duration:
-                    pass
-                self.motor.run(reverse = False)
         self.motor.stop()
+        self.motor.duty=motor_speed
+        print(f"set speed motor : {motor_speed}")
+        boost=0
+        while self.get_weight()<target and time.time()<timeout:
+            print(f"Boost : {boost}=>{math.exp(boost)}")
+            start_ms = time.ticks_ms()
+            duty = min(1,self.motor.duty*math.exp(boost))
+            self.motor.run(reverse = False, duty = duty)
+            print(f"speed motor : {duty}")
+            while self.get_weight()<target and time.ticks_diff(time.ticks_ms(), start_ms)<autoreverse*math.exp(boost):
+                print("+",end="")
+            start_ms = time.ticks_ms()
+            self.motor.stop()
+            self.motor.run(reverse = True)
+            while self.get_weight()<target and time.ticks_diff(time.ticks_ms(), start_ms)<autoreverse_duration*math.exp(boost):
+                print("-",end="")
+            boost+=booster
+            self.motor.stop()
+            print("|",end="")
+        print("arrêt du moteur")
         #Résultat : renvoie ce qui a été versé
         time.sleep(1)
         print("")
         return self.get_weight() - tare
+
+
+
+    def run_motor(self,value:float):
+        '''Run the motor
+        value : [-1;1]
+        '''
+        if value < 0:
+            self.motor.run(duty=-value, reverse = True)
+        elif value > 0:
+            self.motor.run(duty=value, reverse = False)
+        else:
+            self.motor.stop()
+

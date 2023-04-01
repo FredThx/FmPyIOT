@@ -28,17 +28,16 @@ iot = FmPyIot(
 
 balance = Topic("./POIDS", read=croquettes.get_weight, send_period=20)
 dose = Topic("./DOSE", action = lambda topic, payload : croquettes.distribute(float(payload)))
+motor = Topic("./MOTOR", action = lambda topic, payload : croquettes.run_motor(float(payload)))
 
 def ftest():
     time.sleep(2)
     return iot.lock_timer
-
-test = Topic("./TEST", read = ftest, send_period=1)
-
 
 if True:
     while not iot.connect():
         print("Erreur lors de la connexion.... en retente!")
     iot.add_topic(balance)
     iot.add_topic(dose)
+    iot.add_topic(motor)
     iot.run()
