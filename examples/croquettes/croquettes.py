@@ -29,11 +29,12 @@ class Croquettes:
     params = {
             "hx_gain" : 1993,
             "hx_tare" : 118247 / 1993,
-            "motor_speed" : 0.3,
-            "timeout" : 30,
+            "motor_speed" : 0.3, # vitesse initiale du moteur [0-1]
+            "timeout" : 30, # seconds
             "autoreverse" : 200, #ms
             "autoreverse_duration" : 100, #ms
-            "qty_offset" : 5,
+            "qty_offset" : 0, # E
+            "duration_objectif" : 5000, #ms Temps objectif pour la distribution d'une dose
             "booster" : 0.01
         }
 
@@ -72,13 +73,17 @@ class Croquettes:
                 autoreverse_duration:int = None,
                 qty_offset:float = None,
                 motor_speed:float = None,
+                duration_objectif = None,
                 booster: float = None)-> float:
         '''Verse des croquettes
-        qty         :   qte a verser en grammes
-        timeout     :   timeout en secondes
-        autoreverse :   timeout for autoreverse
-        autoreverse_duration : autoreverse duration
-        qty_offset  :   reduce the target (erreur de jetée)
+        qty                 :   qte a verser en grammes
+        timeout             :   timeout en secondes
+        autoreverse         :   timeout for autoreverse
+        autoreverse_duration: autoreverse duration
+        qty_offset          :   reduce the target (erreur de jetée en gramme)
+        motor_speed         :   initial motor speed
+        duration_objectif   :   target duration (ms) to distribute a dose
+        booster             :   incremente for booster ex 0.01
         '''
         #Paramètres
         timeout = timeout or self.params.get("timeout")
@@ -87,6 +92,7 @@ class Croquettes:
         qty_offset = qty_offset or self.params.get("qty_offset")
         motor_speed = motor_speed or self.params.get("motor_speed")
         booster = booster or self.params.get('booster')
+        duration_objectif = duration_objectif or self.params.get("duration_objectif") or timeout / 3
         #Distribution
         tare = self.get_weight()
         target = tare + qty - qty_offset #offset : erreur de jetee
@@ -94,22 +100,26 @@ class Croquettes:
         print(f"Ditribution de {qty} grammes de croquettes")
         self.motor.stop()
         self.motor.duty=motor_speed
-        print(f"set speed motor : {motor_speed}")
+        #print(f"set speed motor : {motor_speed}")
         boost=0
+        start0_ms = time.ticks_ms()
         while self.get_weight()<target and time.time()<timeout:
-            print(f"Boost : {boost}=>{math.exp(boost)}")
+            #print(f"Boost : {boost}=>{math.exp(boost)}")
             start_ms = time.ticks_ms()
             duty = min(1,self.motor.duty*math.exp(boost))
             self.motor.run(reverse = False, duty = duty)
-            print(f"speed motor : {duty}")
+            #print(f"speed motor : {duty}")
             while self.get_weight()<target and time.ticks_diff(time.ticks_ms(), start_ms)<autoreverse*math.exp(boost):
                 print("+",end="")
             start_ms = time.ticks_ms()
             self.motor.stop()
             self.motor.run(reverse = True)
-            while self.get_weight()<target and time.ticks_diff(time.ticks_ms(), start_ms)<autoreverse_duration*math.exp(boost):
+            while (weight:=self.get_weight())<target and time.ticks_diff(time.ticks_ms(), start_ms)<autoreverse_duration*math.exp(boost):
                 print("-",end="")
-            boost+=booster
+            #print(f"Poids : {weight} | Obj : {qty/duration_objectif*time.ticks_diff(time.ticks_ms(), start0_ms) + tare}")
+            if weight < qty/duration_objectif*time.ticks_diff(time.ticks_ms(), start0_ms) + tare:
+                boost+=booster
+                print("B",end="")
             self.motor.stop()
             print("|",end="")
         print("arrêt du moteur")
@@ -117,8 +127,6 @@ class Croquettes:
         time.sleep(1)
         print("")
         return self.get_weight() - tare
-
-
 
     def run_motor(self,value:float):
         '''Run the motor

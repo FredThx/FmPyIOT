@@ -47,12 +47,17 @@ class Topic:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
+        # la fonction action pour prendre 2,1 ou 0 arguments
+        # Et je n'ai pas trouvé comment connaitre en micropython le combre d'arguments
+        # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda fucntion!
         try:
             return str(self.action(topic, payload))
-        except TypeError:
+        except TypeError as e:
+            #print(e)
             try:
                 return str(self.action(payload))
-            except TypeError:
+            except TypeError as e:
+                #print(e)
                 return str(self.action())
 
     def reverse_topic(self):
