@@ -1,4 +1,5 @@
 import os, network, time, json, gc, _thread
+import logging
 import rp2
 from machine import Timer
 from fmpyiot.wd import WDT
@@ -6,6 +7,7 @@ from fmpyiot.umqtt.simple import MQTTClient
 from fmpyiot.topics import Topic
 from fmpyiot.uping import ping
 from fmpyiot.fwebiot import FwebIot
+#from fmpyiot.flog_iot import FLogIot
 import ubinascii
 
 class  FmPyIot:
@@ -22,7 +24,11 @@ class  FmPyIot:
             debug:bool = True,
             sysinfo_period:int = 600, #s
             country = 'FR',
-            async_mode = True
+            async_mode = True,
+            mqtt_log = "./LOG",
+            log_console_level = logging.DEBUG,
+            log_mqtt_level = logging.INFO
+
             ):
         '''Initialisation
         mqtt_host           :     mqtt host (ip or name)
@@ -39,6 +45,8 @@ class  FmPyIot:
         country             :       for wifi (default : 'FR')
         async_mode          :       True : pub, sub managed by timer
                                     False : pub, sub, manage by run()
+        mqtt_log            :       mqtt topic for logs (default : './LOG')
+        log_echo            :       if True, print also logs on stdout
         '''
         rp2.country(country)
         self.wlan = network.WLAN(network.STA_IF)
@@ -60,6 +68,7 @@ class  FmPyIot:
         self.auto_send_topics = []
         self.stopped = False
         self.timer = None
+        #self.logger = FLogIot(self, log_console_level, log_mqtt_level, mqtt_log)
         if async_mode:
             self.timer=Timer(-1)
         #Connect
@@ -206,7 +215,7 @@ class  FmPyIot:
             self.callbacks[bytes(topic,'utf-8')]=callback
 
     def resubscribe_all(self):
-        '''Re-crée les subsciptions auprès du broker
+        '''Re-crée les subscriptions auprès du broker
         '''
         for topic, callback in self.callbacks.items():
             self.logging(f"resubscribe {topic}")
@@ -264,6 +273,15 @@ class  FmPyIot:
                     send_period=period,
                     read=self.sysinfo
                     ))
+        self.add_topic(Topic(
+                    "./SET_PARAMS",
+                    reverse_topic=False,
+                    action = self.set_params
+        ))
+        self.add_topic(Topic(
+                    "./_PARAMS",
+                    read = self.get_params
+        ))
 
     def sysinfo(self)->dict:
         '''renvoie les informations system
@@ -277,6 +295,31 @@ class  FmPyIot:
             'mem_alloc' : gc.mem_alloc(),
             'statvfs' : os.statvfs('/')
         }
+    
+    params_json = "params.json"
+
+    def get_params(self)->dict:
+        '''Renvoie le contenu de params_json
+        '''
+        try:
+            with open(self.params_json,"r") as json_file:
+                return json.load(json_file)
+        except OSError as e:
+            print(e)
+    
+    def set_params(self, topic, payload):
+        '''Met à jour le fichier params_json en fonction de payload
+        '''
+        params = self.get_params()
+        try:
+            params.update(json.loads(payload))
+        except Exception as e:
+            print(e)
+        try:
+            with open(self.params_json,"W") as json_file:
+                json.dump(params, json_file)
+        except OSError as e:
+            print(e)
     
     network_status = {
         network.STAT_IDLE : "Link DOWN", #(0 : CYW43_LINK_DOWN)
