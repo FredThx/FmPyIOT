@@ -40,4 +40,5 @@ if True:
     iot.add_topic(balance)
     iot.add_topic(dose)
     iot.add_topic(motor)
+    iot.set_params_loader(croquettes.load_params)
     iot.run()

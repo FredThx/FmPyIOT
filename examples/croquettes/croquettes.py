@@ -46,6 +46,7 @@ class Croquettes:
                 self.params.update(json.load(json_file))
         except OSError as e:
             print(e)
+        print(f"Params loaded. New params : {self.params}")
 
     def set_params(self, volatil: bool = False, **kwargs):
         '''Met à jour un ou plusieur paramètres
@@ -120,8 +121,9 @@ class Croquettes:
             if weight < qty/duration_objectif*time.ticks_diff(time.ticks_ms(), start0_ms) + tare:
                 boost+=booster
                 print("B",end="")
+            else:
+                print("|",end="")
             self.motor.stop()
-            print("|",end="")
         print("arrêt du moteur")
         #Résultat : renvoie ce qui a été versé
         time.sleep(1)

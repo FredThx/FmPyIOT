@@ -68,6 +68,7 @@ class  FmPyIot:
         self.auto_send_topics = []
         self.stopped = False
         self.timer = None
+        self.params_loaders = []
         #self.logger = FLogIot(self, log_console_level, log_mqtt_level, mqtt_log)
         if async_mode:
             self.timer=Timer(-1)
@@ -307,7 +308,7 @@ class  FmPyIot:
         except OSError as e:
             print(e)
     
-    def set_params(self, topic, payload):
+    def set_params(self, topic:bytes, payload:bytes):
         '''Met à jour le fichier params_json en fonction de payload
         '''
         params = self.get_params()
@@ -320,6 +321,14 @@ class  FmPyIot:
                 json.dump(params, json_file)
         except OSError as e:
             print(e)
+        for loader in self.params_loaders:
+            try:
+                loader()
+            except Exception as e:
+                print(f"Error on params_loader {loader} : {e}")
+    
+    def set_params_loader(self, loader:function):
+        self.params_loaders.append(loader)
     
     network_status = {
         network.STAT_IDLE : "Link DOWN", #(0 : CYW43_LINK_DOWN)
