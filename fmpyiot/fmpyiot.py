@@ -3,9 +3,9 @@ import logging
 import rp2
 from machine import Timer
 from fmpyiot.wd import WDT
-from fmpyiot.umqtt.simple import MQTTClient
+from umqtt.simple import MQTTClient
 from fmpyiot.topics import Topic
-from fmpyiot.uping import ping
+from uping import ping
 from fmpyiot.fwebiot import FwebIot
 #from fmpyiot.flog_iot import FLogIot
 import ubinascii
@@ -27,8 +27,9 @@ class  FmPyIot:
             async_mode = True,
             mqtt_log = "./LOG",
             log_console_level = logging.DEBUG,
-            log_mqtt_level = logging.INFO
-
+            log_mqtt_level = logging.INFO,
+            web = False,
+            web_port = 80
             ):
         '''Initialisation
         mqtt_host           :     mqtt host (ip or name)
@@ -82,7 +83,10 @@ class  FmPyIot:
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
         #Interface web
-        self.fwebiot = FwebIot(iot=self)
+        if web:
+            self.fwebiot = FwebIot(iot=self, port=web_port)
+        else:
+            self.fwebiot = None
 
     def connect(self):
         self.logging("Try to connect IOT")
@@ -125,7 +129,8 @@ class  FmPyIot:
         else:
             while not self.stopped:
                 self.do_mqtt_events()
-                self.fwebiot.listen()
+                if self.fwebiot:
+                    self.fwebiot.listen()
                 time.sleep_ms(self.mqtt_check_period)
 
 

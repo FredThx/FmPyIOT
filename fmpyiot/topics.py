@@ -11,6 +11,8 @@ class Topic:
             - send_period : period (seconds) for auto send timer
             - functions overloaded (ex : read=lambda : 42)
                 - read
+                - action
+                - payload
         '''
         self.topic = topic
         self.send_period = send_period
@@ -42,6 +44,8 @@ class Topic:
                     return self.read(payload)
                 except TypeError:
                     return self.read()
+        else:
+            print(f"Error : {self} has to attribute 'read'")
             
     def do_action(self, topic:str=None, payload:str=None):
         '''Execute the action method and return (if exist) the value
@@ -50,20 +54,23 @@ class Topic:
         # la fonction action pour prendre 2,1 ou 0 arguments
         # Et je n'ai pas trouvé comment connaitre en micropython le combre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda fucntion!
-        try:
-            return str(self.action(topic, payload))
-        except TypeError as e:
-            #print(e)
+        if self.action:
             try:
-                return str(self.action(payload))
+                return str(self.action(topic, payload))
             except TypeError as e:
                 #print(e)
-                return str(self.action())
+                try:
+                    return str(self.action(payload))
+                except TypeError as e:
+                    #print(e)
+                    return str(self.action())
+        else:
+            print(f"Error : {self} has not attribute 'action'")
 
     def reverse_topic(self):
-        '''return the server topic name
+        '''return the reverse topic name
         '''
-        if self._reverse_topic:
+        if self._reverse_topic and self.read:
             return f"{self}_"
     
     def auto_send(self, publisher: function):
