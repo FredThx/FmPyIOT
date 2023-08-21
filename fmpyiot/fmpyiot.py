@@ -381,3 +381,8 @@ class  FmPyIot:
             repr += f"\t\t\t{topic}\n"
         return repr
     
+    def dm(self):
+        '''place de dispositif en mode debug'''
+        self.wd.disable()
+        print('Watchdog desactivate')
+    
