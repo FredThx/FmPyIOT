@@ -7,7 +7,7 @@ info : https://www.pololu.com/product/4733
 
 '''
 
-from machine import Pin, PWM
+from machine import Pin, PWM, ADC
 
 
 
@@ -26,11 +26,15 @@ class MP6560:
         self.pinVISEN = Pin(pinVISEN) if type(pinVISEN)==int else pinVISEN
         self.pinSLEEP = Pin(pinSLEEP) if type(pinSLEEP)==int else pinSLEEP
         self.pinIN1.init(Pin.OUT)
-        self.pwmIN1 = PWM(self.pinIN1, pwm_frequency, 0)
+        self.pwmIN1 = PWM(self.pinIN1)
+        self.pwmIN1.freq(pwm_frequency)
+        self.pwmIN1.duty_u16(0)
         self.pinIN2.init(Pin.OUT)
-        self.pwmIN2 = PWM(self.pinIN2, pwm_frequency, 0)
+        self.pwmIN2 = PWM(self.pinIN2)
+        self.pwmIN2.freq(pwm_frequency)
+        self.pwmIN2.duty_u16(0)
         if self.pinVISEN:
-            self.pinVISEN.init(Pin.ANALOG)
+            self.adcVISEN = ADC(self.pinVISEN)
         if self.pinSLEEP:
             self.pinSLEEP.init(Pin.OUT)
         self.speed = 0.0 #float 0.0-1.0
@@ -58,9 +62,9 @@ class MP6560:
             self.pwmIN2.duty_u16(0)
     
     def get_current(self)->float:
-        '''Return the motor current en mA
+        '''Return the motor current en A
         '''
-        return (self.pinVISEN.read_u16()*3.3 / 65535) / 0.2 # 200 mV / A
+        return (self.adcVISEN.read_u16()*3.3 / 65535) / 0.2 # 200 mV / A
     
 
 
