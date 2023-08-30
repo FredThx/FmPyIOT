@@ -11,7 +11,7 @@ from machine import Pin, PWM, ADC
 
 
 
-class MP6560:
+class MP6550:
     '''Single Brushed DC Motor Driver Carrier
     '''
     def __init__(
