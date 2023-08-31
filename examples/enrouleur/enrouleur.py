@@ -6,7 +6,8 @@ from tempo import Tempo
 
 
 class Enrouleur:
-
+    '''un enrouleur pour imprimante Epson P9000
+    '''
     def __init__(
             self, moteur:MP6550,
             detecteur:Pin,
@@ -22,6 +23,7 @@ class Enrouleur:
             handler = lambda pin:self.tempo.set(not pin.value()),
             trigger =  Pin.IRQ_FALLING | Pin.IRQ_RISING
             )
+        self.tempo.set(not self.detecteur.value())
         self.pin_forward = pin_forward
         self.pin_backward = pin_backward
         self.pin_force_forward = pin_force_forward
@@ -46,3 +48,5 @@ class Enrouleur:
             else:
                 self.moteur.set_direction(0)
             time.sleep_ms(50)
+            if self.moteur.direction!=0:
+                print(f"Direction : {self.moteur.direction}. Vitesse : {int(self.moteur.speed*100)}%. Intensité moteur : {int(self.moteur.get_current()*1000)}mA")
