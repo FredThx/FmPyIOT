@@ -20,6 +20,7 @@ class MP6550:
             pinVISEN:Pin=None,
             pinSLEEP:Pin = None,
             pwm_frequency = 1000,
+            auto_brake = False
             ):
         self.pinIN1 = Pin(pinIN1) if type(pinIN1)==int else pinIN1
         self.pinIN2 = Pin(pinIN2) if type(pinIN2)==int else pinIN2
@@ -37,18 +38,29 @@ class MP6550:
             self.adcVISEN = ADC(self.pinVISEN)
         if self.pinSLEEP:
             self.pinSLEEP.init(Pin.OUT)
+        self.auto_brake = auto_brake
         self.speed = 0.0 #float 0.0-1.0
         self.direction = 0 #int -1,0,1
     
     def set_speed(self, speed:float):
+        '''Set speed : a float between 0 and 1
+        '''
         assert 0<=speed<=1, "speed must be between 0.0 and 1.0"
         self.speed = speed
         self._apply_changes()
 
     def set_direction(self, direction:int):
+        ''' Set the direction (-1 | 0 | 1)
+        '''
         assert direction in [-1,0,1], "direction muste be -1, 0 or 1"
         self.direction = direction
         self._apply_changes()
+    
+    def brake(self):
+        ''' Apply HIGH on IN1 and IN2 for LOW BRAKE
+        '''
+        self.pwmIN1.duty_u16(65535) #LOW BRAKE
+        self.pwmIN2.duty_u16(65535) #LOW BRAKE
 
     def _apply_changes(self):
         if self.direction == -1:
@@ -58,8 +70,12 @@ class MP6550:
             self.pwmIN1.duty_u16(0)
             self.pwmIN2.duty_u16(int(self.speed*65535))
         else:
-            self.pwmIN1.duty_u16(0)
-            self.pwmIN2.duty_u16(0)
+            if self.auto_brake:
+                self.brake()
+            else:
+                self.pwmIN1.duty_u16(0)
+                self.pwmIN2.duty_u16(0) 
+            
     
     def get_current(self)->float:
         '''Return the motor current en A
