@@ -15,10 +15,11 @@ class Enrouleur:
             pin_forward:Pin=None,
             pin_backward:Pin = None,
             pin_force_forward:Pin=None,
-            pin_force_backward:Pin=None ):
+            pin_force_backward:Pin=None,
+            debug = False ):
         self.moteur = moteur
         self.detecteur = detecteur
-        self.tempo = Tempo(temporisation)
+        self.tempo = Tempo(temporisation, debug=debug)
         self.irq = detecteur.irq(
             handler = lambda pin:self.tempo.set(not pin.value()),
             trigger =  Pin.IRQ_FALLING | Pin.IRQ_RISING
@@ -28,6 +29,7 @@ class Enrouleur:
         self.pin_backward = pin_backward
         self.pin_force_forward = pin_force_forward
         self.pin_force_backward = pin_force_backward
+        self.debug = debug
 
     def enroule(self):
         if self.pin_forward.value()==0:
@@ -48,5 +50,5 @@ class Enrouleur:
             else:
                 self.moteur.set_direction(0)
             time.sleep_ms(50)
-            if self.moteur.direction!=0:
+            if self.debug and self.moteur.direction!=0:
                 print(f"Direction : {self.moteur.direction}. Vitesse : {int(self.moteur.speed*100)}%. Intensité moteur : {int(self.moteur.get_current()*1000)}mA")
