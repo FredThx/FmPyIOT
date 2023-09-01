@@ -2,20 +2,23 @@ import time
 
 class Tempo:
 
-    def __init__(self, temporisation:float):
+    def __init__(self, temporisation:float, debug = False):
         '''temporisation : seconds
         '''
         self.temporisation = temporisation
         self.tempo_ns = 0
+        self.debug = debug
 
     def set(self, level:int):
         '''Set the input level (0|1)
         '''
-        if level: #HIGHT
+        if self.debug:
+            print(f"Tempo : set {level}")
+        if level: #HIGH
             self.tempo_ns = -1
         else: #LOW
             if self.tempo_ns == -1:
-                self.tempo_ns = time.time_ns() + self.temporisation * 1000_000_000
+                self.tempo_ns = time.time_ns() + int(self.temporisation * 1000_000_000.0)
 
     def read(self):
         '''Read the output
