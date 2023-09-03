@@ -20,6 +20,11 @@ class Tempo:
             if self.tempo_ns == -1:
                 self.tempo_ns = time.time_ns() + int(self.temporisation * 1000_000_000.0)
 
+    def reset(self):
+        '''reset the tempo
+        '''
+        self.tempo_ns = 0
+
     def read(self):
         '''Read the output
         '''

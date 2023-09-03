@@ -16,6 +16,7 @@ class Enrouleur:
             pin_backward:Pin = None,
             pin_force_forward:Pin=None,
             pin_force_backward:Pin=None,
+            max_current = None,
             debug = False ):
         self.moteur = moteur
         self.detecteur = detecteur
@@ -29,15 +30,21 @@ class Enrouleur:
         self.pin_backward = pin_backward
         self.pin_force_forward = pin_force_forward
         self.pin_force_backward = pin_force_backward
+        self.max_current = max_current
         self.debug = debug
 
     def enroule(self):
-        if self.pin_forward.value()==0:
-            self.moteur.set_direction(1)
-        elif self.pin_backward.value()==0:
-            self.moteur.set_direction(-1)
+        if self.max_current == None or self.moteur.get_current() < self.max_current:
+            if self.pin_forward.value()==0:
+                self.moteur.set_direction(1)
+            elif self.pin_backward.value()==0:
+                self.moteur.set_direction(-1)
+            else:        
+                self.moteur.set_direction(0)
         else:
             self.moteur.set_direction(0)
+            self.tempo.reset()
+                
 
     def run(self):
         while True:
