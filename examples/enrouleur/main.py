@@ -23,6 +23,7 @@ enrouleur = Enrouleur(
     pin_backward=pin_backward,
     pin_force_forward=pin_force_forward,
     pin_force_backward=pin_force_backward,
+    max_current=0.4, # 400mA
     debug=True)
 
 enrouleur.run()
