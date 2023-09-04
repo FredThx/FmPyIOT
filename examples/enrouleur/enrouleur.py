@@ -44,6 +44,7 @@ class Enrouleur:
         else:
             self.moteur.set_direction(0)
             self.tempo.reset()
+            print('MAX CURRENT!!')
                 
 
     def run(self):
