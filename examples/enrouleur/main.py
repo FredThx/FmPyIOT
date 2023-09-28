@@ -15,15 +15,18 @@ pin_forward = Pin(13, Pin.IN, Pin.PULL_UP)
 pin_backward = Pin(14, Pin.IN, Pin.PULL_UP)
 pin_force_forward = Pin(11, Pin.IN, Pin.PULL_UP)
 pin_force_backward = Pin(12, Pin.IN, Pin.PULL_UP)
-                   
+
+pin_led = Pin(10, Pin.OUT)
+
 enrouleur = Enrouleur(
     moteur = moteur,
-    detecteur=detecteur, temporisation = 1.5,
+    detecteur=detecteur, temporisation = 5,
     pin_forward=pin_forward,
     pin_backward=pin_backward,
     pin_force_forward=pin_force_forward,
     pin_force_backward=pin_force_backward,
-    max_current=0.4, # 400mA
+    pin_led = pin_led,
+    max_current=0.225, # A
     debug=True)
 
 enrouleur.run()
