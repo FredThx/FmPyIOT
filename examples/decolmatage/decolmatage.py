@@ -7,7 +7,7 @@ class Decolmatage:
     '''
     def __init__(
             self, 
-            relais:list[Pin], tempo1:float=30, tempo2:float=0.4):
+            relais:list[Pin], tempo1:float=30, tempo2:float=0.4, led = None):
         self.relais = relais
         for i, rel in enumerate(self.relais):
             if type(rel)==int:
@@ -18,6 +18,24 @@ class Decolmatage:
         self.tempo2 = int(tempo2 * 1000) #ms
         self.tim1 = Timer()
         self.tim2 = Timer()
+        self.led = led
+        self.led.init(Pin.OUT)
+        self.tim_led = Timer()
+        if self.led:
+            tim_led = Timer()
+            tim_led.init(
+                period = 1000,
+                mode = Timer.PERIODIC,
+                callback = self.blink_led
+            )
+
+    def blink_led(self, tim:Timer):
+        self.led.on()
+        self.tim_led.init(
+            period = 200,
+            mode = Timer.ONE_SHOT,
+            callback = lambda t:self.led.off()
+        )
 
     
     def souffle(self, rel:Pin):
