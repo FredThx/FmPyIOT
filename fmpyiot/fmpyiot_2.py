@@ -200,7 +200,10 @@ class FmPyIot:
     def run(self):
         try:
             asyncio.run(self.main())
+        except KeyboardInterrupt:
+            pass
         finally:  # Prevent LmacRxBlk:1 errors.
+            logging.info("Main routine stopped.")
             self.client.close()
             asyncio.new_event_loop()
 
