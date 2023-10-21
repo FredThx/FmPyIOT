@@ -4,7 +4,11 @@ import time
 class Topic:
     '''Topic (Device) on a FmPyIOT object
     '''
-    def __init__(self, topic:str, send_period:float = None, reverse_topic:bool = True, **kwargs: function):
+    def __init__(self, topic:str,
+                 send_period:float = None,
+                 reverse_topic:bool = True,
+                 read:function = None,
+                 action:function = None):
         '''Initialisation
         Arguments : 
             - topic (can start with ./ for relative topic name)
@@ -16,22 +20,14 @@ class Topic:
         self.topic = topic
         self.send_period = send_period
         self._reverse_topic = reverse_topic
-        for method, func in kwargs.items():
-            setattr(self,method,func)
+        self.read = read
+        self.action = action
         self.last_send = 0
 
-    def __str__(self):
+    def __str__(self)->str:
         return self.topic
 
-    read = None
-    action = None
-    #def read(self, init_topic:str=None, init_payload:str=None)->str:
-    #    '''Must be overloaded
-    #    topic, payload (optional)
-    #    '''
-    #    raise Exception("read function must be overloaded!")
-    
-    def get_payload(self, topic:str=None, payload:any=None):
+    def get_payload(self, topic:str=None, payload:any=None)->any:
         ''' Read the device and return payload
         read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
@@ -46,7 +42,7 @@ class Topic:
         else:
             print(f"Error : {self} has to attribute 'read'")
             
-    def do_action(self, topic:str=None, payload:str=None):
+    def do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
@@ -66,7 +62,7 @@ class Topic:
         else:
             print(f"Error : {self} has not attribute 'action'")
 
-    def reverse_topic(self):
+    def reverse_topic(self)->str:
         '''return the reverse topic name
         '''
         if self._reverse_topic and self.read:
