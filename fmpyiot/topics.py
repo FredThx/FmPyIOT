@@ -1,5 +1,6 @@
 import time
-
+from machine import Pin
+#from fmpyiot.fmpyiot_2 import FmPyIot
 
 class Topic:
     '''Topic (Device) on a FmPyIOT object
@@ -75,4 +76,43 @@ class Topic:
             publisher(self)
             self.last_send = time.time()
 
+    def attach(self, iot):
+        pass
     
+class TopicIrq(Topic):
+    ''' Un topic basé sur l'intéruption matérielle d'un GPIO
+    '''
+    def __init__(self, topic:str,
+                 pin:Pin | int,
+                 trigger:int = None,
+                 values:tuple[any]=None,
+                 rate_limit:int=1, 
+                 reverse_topic:bool = True,
+                 read:function = None,
+                 action:function = None):
+        self.pin = pin if type(pin)==Pin else Pin(pin)
+        self.trigger = trigger
+        self.pin.init(Pin.IN)
+        self.values = values
+        self.rate_limit = rate_limit
+        self.new_irq_time = time.time()
+        super().__init__(topic, reverse_topic=reverse_topic, read=read, action = action)
+        if self.read is None:
+            self.read = self._read
+
+    def _read(self, topic:str, payload:str)->any:
+        if self.values and len(self.values)==2:
+            return self.values[self.pin()]
+        else:
+            return self.pin()
+
+    def attach(self, iot):
+        '''Lie l'intéruption => iot => lmqtt
+        '''
+        def callback(pin):
+            if time.time()>self.new_irq_time:
+                self.new_irq_time = time.time() + self.rate_limit
+                iot.publish_topic(self)
+                
+        self.pin.irq(callback, self.trigger)
+

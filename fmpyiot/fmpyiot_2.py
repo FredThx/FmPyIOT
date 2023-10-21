@@ -160,6 +160,8 @@ class FmPyIot:
                 )
         if topic.send_period:
             self.auto_send_topics.append(topic)
+        # Essentiellement pour IRQ
+        topic.attach(self)
     
     def publish_topic(self, topic:Topic):
         '''publish
