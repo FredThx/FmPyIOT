@@ -1,8 +1,9 @@
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
-import logging
+import logging, os, ubinascii, gc, json, network
 from machine import Pin
 from fmpyiot.topics import Topic
+from fmpyiot.wd import WDT
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -45,10 +46,18 @@ class FmPyIot:
         mqtt_as_config["queue_len"] = 1  # Use event interface with default queue
         MQTTClient.DEBUG = True
         self.client = MQTTClient(mqtt_as_config)
+        self.wlan = self.client._sta_if
         if autoconnect:
             self.run()
         self.callbacks = {} #{'topic' : callback}
         self.auto_send_topics = []
+        #Watchdog
+        self.wd = None
+        if watchdog:
+            self.init_watchdog(watchdog)
+        if sysinfo_period:
+            self.init_system_topics(sysinfo_period)
+        self.params_loaders = []
 
     #########################
     # DIVERS utilitaires    #
@@ -129,7 +138,7 @@ class FmPyIot:
         '''
         if topic is not None:
             logging.info(f'publish {topic} : {payload}')
-            asyncio.create_task(self.client.publish(self.get_topic(topic), str(payload), qos = qos))
+            asyncio.create_task(self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos))
 
     #########################
     # Gestion des Topics   #
@@ -193,6 +202,116 @@ class FmPyIot:
         finally:  # Prevent LmacRxBlk:1 errors.
             self.client.close()
             asyncio.new_event_loop()
+
+    #########################
+    # SYSTEM                #
+    #########################
+
+    def init_watchdog(self, watchdog_delai:int):
+        '''Create a new Topic with watchdog
+        watchdog_delai  :   delai (seconds) before restarting device
+        '''
+        self.wd = WDT(watchdog_delai)
+        self.wd.enable()
+        self.add_topic(Topic(
+                    "./WATCHDOG",
+                    send_period=int(watchdog_delai/3),
+                    reverse_topic=False,
+                    read=lambda topic, payload:"FEED",
+                    action=lambda topic, payload: self.wd.feed()
+                    ))
+
+    def init_system_topics(self, period:int):
+        '''Create system topics
+        '''
+        self.add_topic(Topic(
+                    "./SYSINFO",
+                    send_period=period,
+                    read=self.sysinfo
+                    ))
+        self.add_topic(Topic(
+                    "./SET_PARAMS",
+                    reverse_topic=False,
+                    action = self.set_params
+        ))
+        self.add_topic(Topic(
+                    "./_PARAMS",
+                    read = self.get_params
+        ))
+
+    def sysinfo(self)->dict:
+        '''renvoie les informations system
+        '''
+        return{
+            'uname' : list(os.uname()),
+            'ifconfig' : self.wlan.ifconfig(),
+            'wifi' : {k:self.wlan.config(k) for k in ['ssid', 'channel', 'txpower']},
+            'mac' : ubinascii.hexlify(self.wlan.config('mac'),':').decode(),
+            'mem_free' : gc.mem_free(),
+            'mem_alloc' : gc.mem_alloc(),
+            'statvfs' : os.statvfs('/')
+        }
+
+    params_json = "params.json"
+
+    def get_params(self)->dict:
+        '''Renvoie le contenu de params_json
+        '''
+        try:
+            with open(self.params_json,"r") as json_file:
+                return json.load(json_file)
+        except OSError as e:
+            print(e)
+    
+    def set_params(self, topic:bytes, payload:bytes):
+        '''Met à jour le fichier params_json en fonction de payload
+        '''
+        params = self.get_params()
+        try:
+            params.update(json.loads(payload))
+        except Exception as e:
+            print(e)
+        try:
+            with open(self.params_json,"W") as json_file:
+                json.dump(params, json_file)
+        except OSError as e:
+            print(e)
+        for loader in self.params_loaders:
+            try:
+                loader()
+            except Exception as e:
+                print(f"Error on params_loader {loader} : {e}")
+    
+    def set_params_loader(self, loader:function):
+        self.params_loaders.append(loader)
+    
+    network_status = {
+        network.STAT_IDLE : "Link DOWN", #(0 : CYW43_LINK_DOWN)
+        network.STAT_CONNECTING : "Link JOIN or Timeout", #(1 : CYW43_LINK_JOIN)
+        2 : "Link NO IP", #(2 : CYW43_LINK_NOIP)
+        network.STAT_GOT_IP : "Link UP (sucess)", #(3 : CYW43_LINK_UP)
+        network.STAT_CONNECT_FAIL : "Link FAIL", #(-1 : CYW43_LINK_FAIL)
+        network.STAT_NO_AP_FOUND : "Link NO NET", #(-2 : CYW43_LINK_NONET)
+        network.STAT_WRONG_PASSWORD : "Link BAD AUTH", #(-3 : CYW43_LINK_BADAUTH)
+    }
+    def str_network_status(self):
+        '''renvoie le status de la connection au format string
+        '''
+        return self.network_status[self.wlan.status()]
+
+    def __repr__(self):
+        repr = f"""FmPyIot(version2)({self.mqtt_base_topic})
+                WIFI : {self.str_network_status()}
+                WD : {self.wd}
+                callbacks : \n"""
+        for topic in self.callbacks:
+            repr += f"\t\t\t{topic}\n"
+        return repr
+    
+    def dm(self):
+        '''place de dispositif en mode debug'''
+        self.wd.disable()
+        print('Watchdog desactivate')
 
 
 if __name__=='__main__':
