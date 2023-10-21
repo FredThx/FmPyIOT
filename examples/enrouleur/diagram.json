@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "author": "Fred Thx",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-pi-pico",
+      "id": "pico",
+      "top": -33.44,
+      "left": 2.82,
+      "attrs": { "env": "micropython-20230426-v1.20.0" }
+    },
+    { "type": "chip-mp6050", "id": "chip1", "top": 119.72, "left": 193.86, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 219.97,
+      "left": -102.98,
+      "attrs": { "color": "green", "bounce": "0" }
+    },
+    { "type": "wokwi-slide-switch", "id": "sw1", "top": -34, "left": -131.3, "attrs": {} },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": -53.52,
+      "left": 137.69,
+      "attrs": { "color": "green", "bounce": "0" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 7.61,
+      "left": 139.47,
+      "attrs": { "color": "green", "bounce": "0" }
+    }
+  ],
+  "connections": [
+    [ "pico:GP17", "chip1:IN1", "orange", [ "h60.89", "v18.28" ] ],
+    [ "pico:GP16", "chip1:IN2", "orange", [ "h82.74", "v-14.21" ] ],
+    [ "pico:GP26", "chip1:VISEN", "green", [ "h40.75", "v114.28" ] ],
+    [ "btn1:2.l", "pico:GND.4", "black", [ "h-25.96", "v-122.4" ] ],
+    [ "pico:GP15", "btn1:1.l", "green", [ "h-119.51", "v71.26" ] ],
+    [ "sw1:2", "pico:GND.2", "black", [ "v0" ] ],
+    [ "sw1:3", "pico:GP13", "white", [ "v0" ] ],
+    [ "sw1:1", "pico:GP14", "magenta", [ "v0" ] ],
+    [ "chip1:GND", "pico:GND.5", "black", [ "h-55.24", "v-5.29" ] ],
+    [ "btn2:1.l", "pico:GND.8", "black", [ "h-27.83", "v39.03" ] ],
+    [ "btn2:1.r", "btn3:1.r", "black", [ "v-1.26", "h43.6", "v57.78" ] ],
+    [ "btn2:2.l", "pico:GP11", "gold", [ "h-36.08", "v-49.47", "h-128.27", "v151.76" ] ],
+    [ "btn3:2.l", "pico:GP12", "violet", [ "h-44.21", "v-92.82", "h-108.58", "v14.6" ] ]
+  ],
+  "dependencies": {}
+}
