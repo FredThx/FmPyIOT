@@ -7,12 +7,11 @@ class Topic:
     def __init__(self, topic:str, send_period = None, reverse_topic = True, **kwargs: function):
         '''Initialisation
         Arguments : 
-            - topic (car start with ./ for relative topic name)
+            - topic (can start with ./ for relative topic name)
             - send_period : period (seconds) for auto send timer
             - functions overloaded (ex : read=lambda : 42)
                 - read
                 - action
-                - payload
         '''
         self.topic = topic
         self.send_period = send_period
@@ -52,8 +51,8 @@ class Topic:
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
         # la fonction action pour prendre 2,1 ou 0 arguments
-        # Et je n'ai pas trouvé comment connaitre en micropython le combre d'arguments
-        # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda fucntion!
+        # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
+        # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         if self.action:
             try:
                 return str(self.action(topic, payload))
