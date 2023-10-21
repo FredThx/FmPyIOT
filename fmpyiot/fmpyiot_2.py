@@ -2,6 +2,9 @@ from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging
 from machine import Pin
+from fmpyiot.topics import Topic
+
+logging.basicConfig(level=logging.DEBUG)
 
 class FmPyIot:
     '''Un objet connecté via mqtt (et plus:todo)
@@ -44,7 +47,12 @@ class FmPyIot:
         self.client = MQTTClient(mqtt_as_config)
         if autoconnect:
             self.run()
+        self.callbacks = {} #{'topic' : callback}
+        self.auto_send_topics = []
 
+    #########################
+    # DIVERS utilitaires    #
+    #########################
     def get_topic(self, topic:str)-> str:
         '''Ajout base_topic quand './' devant
         '''
@@ -52,7 +60,6 @@ class FmPyIot:
             return self.mqtt_base_topic + topic[2:]
         else:
             return topic
-
 
     @staticmethod
     def led_function(led: None | int | Pin)-> function:
@@ -74,13 +81,27 @@ class FmPyIot:
         await asyncio.sleep(self.incoming_pulse_duration)
         self.led_incoming(False)
 
+
+    ####################################
+    # Utilisation de la lib mqtt_as    #
+    ####################################
     async def messages(self):
         ''' Traite tous les messages entrants
         '''
         async for topic, msg, retained in self.client.queue:
-            print(f'Topic: "{topic.decode()}" Message: "{msg.decode()}" Retained: {retained}')
+            topic = topic.decode()
+            payload = msg.decode()
+            print(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
             asyncio.create_task(self.pulse())
-            #TODO : gérer la liste des topics
+            if topic in self.callbacks:
+                callback = self.callbacks[topic]
+                if callback:
+                    try:
+                        asyncio.create_task(callback(topic, payload))
+                    except TypeError:
+                        pass #En fait callback(topic, payload) a déjà été executée ci-dessus
+            else:
+                logging.warning(f"Unknow topic : {topic}")
 
     async def down(self,):
         ''' Deamon qui gère la perte de connectivité
@@ -90,7 +111,7 @@ class FmPyIot:
             self.client.down.clear()
             self.led_wifi(False)
             self.outages += 1
-            print('WiFi or broker is down.')
+            logging.warning('WiFi or broker is down.')
 
     async def up(self):
         ''' Deamon qui gère la connection
@@ -99,25 +120,70 @@ class FmPyIot:
             await self.client.up.wait()
             self.client.up.clear()
             self.led_wifi(True)
-            print('We are connected to broker.')
-            await self.client.subscribe(self.get_topic("./mqtt_async_in"), 1)
+            logging.info('We are connected to broker.')
+            for topic in self.callbacks:
+                await self.client.subscribe(topic, 0)
+    
+    def publish(self, topic:str, payload:str, qos = 0):
+        '''Publish on mqtt (sauf si topic = None)
+        '''
+        if topic is not None:
+            logging.info(f'publish {topic} : {payload}')
+            asyncio.create_task(self.client.publish(self.get_topic(topic), str(payload), qos = qos))
+
+    #########################
+    # Gestion des Topics   #
+    #########################
+
+    def subscribe(self, topic:str, callback:function = None):
+        '''Subscibe to a mqtt topic 
+        callback : function(topic, payload)
+        '''
+        topic = self.get_topic(topic)
+        logging.info(f"Subscribe {topic} : callback={callback}")
+        #Ce serait bien de detecter ici si callback est une coroutine (sans l'executer) : ca éviterais de la faire à chaque fois
+        self.callbacks[topic]=callback
+
+    def add_topic(self, topic:Topic):
+        '''Add a new topic
+        - subscribe to reverse topic
+        '''
+        if topic.reverse_topic():
+            self.subscribe(
+                topic.reverse_topic(),
+                lambda _topic, _payload: self.publish(str(topic),topic.get_payload(_topic, _payload))
+                )
+        if topic.action:
+            self.subscribe(
+                str(topic),
+                lambda _topic, _payload: self.publish(topic.reverse_topic(),topic.do_action(_topic, _payload))
+                )
+        if topic.send_period:
+            self.auto_send_topics.append(topic)
+    
+    def publish_topic(self, topic:Topic):
+        '''publish
+        '''
+        logging.debug(f"publish_topic({topic})")
+        self.publish(str(topic),topic.get_payload())
+
+   
+    #########################
+    # Main                  #
+    #########################
 
     async def main(self):
         try:
             await self.client.connect()
         except OSError:
-            print('Connection failed.')
+            logging.warning('Connection failed.')
             return
         for task in (self.up, self.down, self.messages):
             asyncio.create_task(task())
-        #Juste pour tests
-        n = 0
         while True:
-            await asyncio.sleep(5)
-            print(f'publish {self.get_topic("./mqtt_async_out")} : {n}')
-            # If WiFi is down the following will pause for the duration.
-            await self.client.publish(self.get_topic("./mqtt_async_out"), f'{n} repubs: {self.client.REPUB_COUNT} outages: {self.outages}', qos = 1)
-            n += 1
+            await asyncio.sleep_ms(100)
+            for topic in self.auto_send_topics:
+                topic.auto_send(self.publish_topic)
 
     def run(self):
         try:
