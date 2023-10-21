@@ -4,7 +4,7 @@ import time
 class Topic:
     '''Topic (Device) on a FmPyIOT object
     '''
-    def __init__(self, topic:str, send_period = None, reverse_topic = True, **kwargs: function):
+    def __init__(self, topic:str, send_period:float = None, reverse_topic:bool = True, **kwargs: function):
         '''Initialisation
         Arguments : 
             - topic (can start with ./ for relative topic name)
