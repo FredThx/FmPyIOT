@@ -17,7 +17,11 @@ iot = FmPyIot(
     )
 
       
-#detection_topic = Topic("./detect", read=lambda topic, payload : detecteur())
+detection_topic = Topic("./detect", send_period= 5, read=lambda topic, payload : detecteur())
+test_incoming_topic = Topic("./mqtt_async_in", action = lambda topic, payload : print(f"Le test {topic} est ok : {payload}"))
 
-#iot.add_topic(detection_topic)
+
+iot.add_topic(detection_topic)
+iot.add_topic(test_incoming_topic)
+
 #iot.run()
