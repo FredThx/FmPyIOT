@@ -5,7 +5,7 @@ from machine import Pin
 def never_crash(fn):
     def never_crash_function(*args, **kwargs):
         try:
-            fn(*args, **kwargs)
+            return fn(*args, **kwargs)
         except Exception as e:
             print(f"Error : {e}")
             #logging.error(e)
