@@ -2,6 +2,15 @@ import time, logging
 from machine import Pin
 #from fmpyiot.fmpyiot_2 import FmPyIot
 
+def never_crash(fn):
+    def never_crash_function(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            print(f"Error : {e}")
+            #logging.error(e)
+    return never_crash_function
+
 class Topic:
     '''Topic (Device) on a FmPyIOT object
     '''
@@ -28,6 +37,7 @@ class Topic:
     def __str__(self)->str:
         return self.topic
 
+    @never_crash
     def get_payload(self, topic:str=None, payload:any=None)->any:
         ''' Read the device and return payload
         read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
@@ -42,7 +52,8 @@ class Topic:
                     return self.read()
         else:
             print(f"Error : {self} has to attribute 'read'")
-            
+    
+    @never_crash
     def do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing

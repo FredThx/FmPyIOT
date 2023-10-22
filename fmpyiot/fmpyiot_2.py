@@ -109,9 +109,6 @@ class FmPyIot:
                         asyncio.create_task(callback(topic, payload))
                     except TypeError: #Si la callback n'est pas une coroutine
                         pass #En fait callback(topic, payload) a déjà été executée ci-dessus
-                    except Exception as e: #Si la callback plante (pour le pas tuer la tache messages)
-                        logging.error(f"Error during callback for {topic}")
-                        logging.error(e)
             else:
                 logging.warning(f"Unknow topic : {topic}")
 
