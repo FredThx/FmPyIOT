@@ -89,8 +89,7 @@ class FmPyIot:
         self.led_incoming(True)
         await asyncio.sleep(self.incoming_pulse_duration)
         self.led_incoming(False)
-
-
+    
     ####################################
     # Utilisation de la lib mqtt_as    #
     ####################################
@@ -140,6 +139,11 @@ class FmPyIot:
             logging.info(f'publish {topic} : {payload}')
             asyncio.create_task(self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos))
 
+    async def a_publish(self, topic:str, payload:str, qos = 0):
+        if topic is not None:
+            logging.info(f'a_publish {topic} : {payload}')
+            await self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos)
+
     #########################
     # Gestion des Topics   #
     #########################
@@ -158,14 +162,22 @@ class FmPyIot:
         - subscribe to reverse topic
         '''
         if topic.reverse_topic():
+            async def callback(_topic, _payload):
+                return await self.a_publish(
+                    str(topic),
+                    await topic.a_get_payload(_topic, _payload))
             self.subscribe(
                 topic.reverse_topic(),
-                lambda _topic, _payload: self.publish(str(topic),topic.get_payload(_topic, _payload))
+                callback
                 )
         if topic.action:
+            async def callback(_topic, _payload):
+                return self.a_publish(
+                    topic.reverse_topic(),
+                    await topic.a_do_action(_topic,_payload))
             self.subscribe(
                 str(topic),
-                lambda _topic, _payload: self.publish(topic.reverse_topic(),topic.do_action(_topic, _payload))
+                callback
                 )
         if topic.send_period:
             self.auto_send_topics.append(topic)
@@ -177,8 +189,13 @@ class FmPyIot:
         '''
         logging.debug(f"publish_topic({topic})")
         self.publish(str(topic),topic.get_payload())
+    
+    async def a_publish_topic(self, topic:Topic):
+        logging.debug(f"publish_topic({topic})")
+        payload = await topic.a_get_payload()
+        await self.a_publish(str(topic),payload)
 
-   
+
     #########################
     # Main                  #
     #########################

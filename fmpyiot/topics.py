@@ -52,7 +52,8 @@ class Topic:
                     return self.read()
         else:
             print(f"Error : {self} has to attribute 'read'")
-    
+
+
     @never_crash
     def do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
@@ -90,7 +91,77 @@ class Topic:
 
     def attach(self, iot):
         pass
+
+    ################
+    # ASYNCIO      #
+    ################
+
+
+    async def a_get_payload(self, topic:str=None, payload:any=None)->any:
+        ''' Read the device and return payload
+        read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
+        '''
+        if self.read:
+            try:
+                return str(await self.a_run_callback(self.read, topic, payload))
+            except TypeError:
+                try:
+                    return str(await self.a_run_callback(self.read, payload))
+                except TypeError:
+                    return str(await self.a_run_callback(self.read))
+        else:
+            print(f"Error : {self} has to attribute 'read'")
+
+    async def a_do_action(self, topic:str, payload:str)->str:
+        '''Execute the action method and return (if exist) the value
+        action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
+        '''
+        # la fonction action pour prendre 2,1 ou 0 arguments
+        # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
+        # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
+        # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
+        logging.debug(f"a_do_action[{self}]({topic},{payload})...")
+        if self.action:
+            try:
+                return str(await self.a_run_callback(self.action, topic, payload))
+            except TypeError as e:
+                print(e)
+                try:
+                    return str(await self.a_run_callback(self.action, payload))
+                except TypeError as e:
+                    print(e)
+                    return str(await self.a_run_callback(self.action))
+        else:
+            print(f"Error : {self} has not attribute 'action'")
+
+    async def get_a_callback(self, callback):
+        '''Return a async callback
+        '''
+        async def callback(*_args, **_kwargs):
+            return await self.a_run_callback(self, callback, *_args, **_kwargs)
+        return callback
     
+    async def a_run_callback(self, callback, *args, **kwargs):
+        '''Execute de manière asynchone (ou pas) une callback
+        '''
+        #todo : never crash!
+        logging.debug(f"a_run_callback(callback={callback}, args={args}, kwargs={kwargs})")
+        routine = callback(*args, **kwargs)
+        if self.is_coroutine(routine):
+            logging.debug("It is a coroutine!")
+            return await routine
+        else:
+            logging.debug(f"It is not a coroutine. callback return value = {routine}")
+            return routine
+
+    def is_coroutine(self, fn):
+        return isinstance(fn, self.type_generator)
+
+    type_generator = type((lambda: (yield))())
+
+
+
+
 class TopicIrq(Topic):
     ''' Un topic basé sur l'intéruption matérielle d'un GPIO
     '''
