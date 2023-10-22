@@ -5,7 +5,7 @@ from machine import Pin
 time.sleep(5)
 
 from croquettes import Croquettes
-from fmpyiot.fmpyiot import FmPyIot
+from fmpyiot.fmpyiot_2 import FmPyIot
 from fmpyiot.topics import Topic
 
 croquettes = Croquettes(
@@ -23,22 +23,17 @@ iot = FmPyIot(
     password = "***REMOVED***",
     watchdog=300,
     sysinfo_period = 600,
-    async_mode=False)
+    led_wifi='LED',
+    )
 
 
 balance = Topic("./POIDS", read=croquettes.get_weight, send_period=20)
 dose = Topic("./DOSE", action = lambda topic, payload : croquettes.distribute(float(payload)))
 motor = Topic("./MOTOR", action = lambda topic, payload : croquettes.run_motor(float(payload)))
 
-def ftest():
-    time.sleep(2)
-    return iot.lock_timer
+iot.add_topic(balance)
+iot.add_topic(dose)
+iot.add_topic(motor)
 
-if True:
-    while not iot.connect():
-        print("Erreur lors de la connexion.... en retente!")
-    iot.add_topic(balance)
-    iot.add_topic(dose)
-    iot.add_topic(motor)
-    iot.set_params_loader(croquettes.load_params)
-    iot.run()
+iot.set_params_loader(croquettes.load_params)
+iot.run()

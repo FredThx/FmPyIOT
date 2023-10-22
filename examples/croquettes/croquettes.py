@@ -1,6 +1,6 @@
 from machine import Pin
-from hx711 import HX711
-from motor_I298 import MotorI298
+from devices.hx711 import HX711
+from devices.motor_I298 import MotorI298
 import json, time, math
 
 class Croquettes:
