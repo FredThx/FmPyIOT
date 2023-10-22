@@ -107,6 +107,7 @@ class FmPyIot:
                     try:
                         asyncio.create_task(callback(topic, payload))
                     except TypeError: #Si la callback n'est pas une coroutine
+                        logging.error("OUPS ON NE DEVRAIT PLUS PASSER PAR LA!")
                         pass #En fait callback(topic, payload) a déjà été executée ci-dessus
             else:
                 logging.warning(f"Unknow topic : {topic}")
@@ -259,7 +260,7 @@ class FmPyIot:
                     read = self.get_params
         ))
 
-    def sysinfo(self)->dict:
+    async def sysinfo(self)->dict:
         '''renvoie les informations system
         '''
         return{
