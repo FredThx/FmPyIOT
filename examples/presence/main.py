@@ -18,7 +18,7 @@ iot = FmPyIot(
     led_wifi=16
     )
 
-detection_topic = TopicIrq("./detect", pin=detecteur, trigger = Pin.IRQ_RISING , values=("NO", "DETECT"),)
+detection_topic = TopicIrq("./detect", pin=detecteur, trigger = Pin.IRQ_RISING)
 
 
 iot.add_topic(detection_topic)
