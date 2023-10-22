@@ -1,4 +1,4 @@
-import time
+import time, logging
 from machine import Pin
 #from fmpyiot.fmpyiot_2 import FmPyIot
 
@@ -50,6 +50,7 @@ class Topic:
         # la fonction action pour prendre 2,1 ou 0 arguments
         # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
+        logging.debug(f"do_action[{self}]({topic},{payload})...")
         if self.action:
             try:
                 return str(self.action(topic, payload))

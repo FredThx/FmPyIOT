@@ -100,15 +100,18 @@ class FmPyIot:
         async for topic, msg, retained in self.client.queue:
             topic = topic.decode()
             payload = msg.decode()
-            print(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
+            logging.info(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
             asyncio.create_task(self.pulse())
             if topic in self.callbacks:
                 callback = self.callbacks[topic]
                 if callback:
                     try:
                         asyncio.create_task(callback(topic, payload))
-                    except TypeError:
+                    except TypeError: #Si la callback n'est pas une coroutine
                         pass #En fait callback(topic, payload) a déjà été executée ci-dessus
+                    except Exception as e: #Si la callback plante (pour le pas tuer la tache messages)
+                        logging.error(f"Error during callback for {topic}")
+                        logging.error(e)
             else:
                 logging.warning(f"Unknow topic : {topic}")
 
@@ -153,25 +156,24 @@ class FmPyIot:
         #Ce serait bien de detecter ici si callback est une coroutine (sans l'executer) : ca éviterais de la faire à chaque fois
         self.callbacks[topic]=callback
 
-    def add_topic(self, topics:Topic | list[Topic]):
+    def add_topic(self, topic:Topic):
         '''Add a new topic
         - subscribe to reverse topic
         '''
-        for topic in [topics] if isinstance(topics, Topic) else topics:
-            if topic.reverse_topic():
-                self.subscribe(
-                    topic.reverse_topic(),
-                    lambda _topic, _payload: self.publish(str(topic),topic.get_payload(_topic, _payload))
-                    )
-            if topic.action:
-                self.subscribe(
-                    str(topic),
-                    lambda _topic, _payload: self.publish(topic.reverse_topic(),topic.do_action(_topic, _payload))
-                    )
-            if topic.send_period:
-                self.auto_send_topics.append(topic)
-            # Essentiellement pour IRQ
-            topic.attach(self)
+        if topic.reverse_topic():
+            self.subscribe(
+                topic.reverse_topic(),
+                lambda _topic, _payload: self.publish(str(topic),topic.get_payload(_topic, _payload))
+                )
+        if topic.action:
+            self.subscribe(
+                str(topic),
+                lambda _topic, _payload: self.publish(topic.reverse_topic(),topic.do_action(_topic, _payload))
+                )
+        if topic.send_period:
+            self.auto_send_topics.append(topic)
+        # Essentiellement pour IRQ
+        topic.attach(self)
     
     def publish_topic(self, topic:Topic):
         '''publish
