@@ -1,12 +1,14 @@
 
 import time
 from machine import Pin
-
-time.sleep(5)
-
 from croquettes import Croquettes
 from fmpyiot.fmpyiot_2 import FmPyIot
 from fmpyiot.topics import Topic
+
+time.sleep(5)
+
+#TODO : faire une version async de Croquettes
+# mais il va falloir gerer des locks!!
 
 croquettes = Croquettes(
         hx_clk = Pin(13), # GP13 = 17
@@ -25,7 +27,6 @@ iot = FmPyIot(
     sysinfo_period = 600,
     led_wifi='LED',
     )
-
 
 balance = Topic("./POIDS", read=croquettes.get_weight, send_period=20)
 dose = Topic("./DOSE", action = lambda topic, payload : croquettes.distribute(float(payload)))
