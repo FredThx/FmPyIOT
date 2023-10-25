@@ -81,6 +81,11 @@ class Topic:
         '''
         if self._reverse_topic and self.read:
             return f"{self}_"
+        
+    def reverse_topic_action(self)->str:
+        '''return the reverse topic name
+        '''
+        return f"{self}_"
     
     def auto_send(self, publisher: function):
         '''Method call by Fmpyiot every timer period
@@ -123,7 +128,7 @@ class Topic:
         logging.debug(f"a_do_action[{self}]({topic},{payload})...")
         if self.action:
             try:
-                return str(await self.a_run_callback(self.action, topic, payload))
+                return await self.a_run_callback(self.action, topic, payload)
             except TypeError as e:
                 print(e)
                 try:
@@ -151,7 +156,7 @@ class Topic:
             logging.debug("It is a coroutine!")
             return await routine
         else:
-            logging.debug(f"It is not a coroutine. callback return value = {routine}")
+            logging.debug(f"It is not a coroutine. callback return value = {routine}.")
             return routine
 
     def is_coroutine(self, fn):

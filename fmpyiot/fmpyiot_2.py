@@ -104,11 +104,7 @@ class FmPyIot:
             if topic in self.callbacks:
                 callback = self.callbacks[topic]
                 if callback:
-                    try:
-                        asyncio.create_task(callback(topic, payload))
-                    except TypeError: #Si la callback n'est pas une coroutine
-                        logging.error("OUPS ON NE DEVRAIT PLUS PASSER PAR LA!")
-                        pass #En fait callback(topic, payload) a déjà été executée ci-dessus
+                    asyncio.create_task(callback(topic, payload))
             else:
                 logging.warning(f"Unknow topic : {topic}")
 
@@ -162,9 +158,9 @@ class FmPyIot:
         '''Add a new topic
         - subscribe to reverse topic
         '''
-        if topic.reverse_topic():
+        if topic.reverse_topic() :
             async def callback(_topic, _payload):
-                return await self.a_publish(
+                await self.a_publish(
                     str(topic),
                     await topic.a_get_payload(_topic, _payload))
             self.subscribe(
@@ -173,9 +169,10 @@ class FmPyIot:
                 )
         if topic.action:
             async def callback(_topic, _payload):
-                return self.a_publish(
-                    topic.reverse_topic(),
-                    await topic.a_do_action(_topic,_payload))
+                logging.debug("Callback action")
+                payload = await topic.a_do_action(_topic,_payload)
+                logging.debug(f"payload = {payload}")
+                await self.a_publish(topic.reverse_topic_action(),payload)
             self.subscribe(
                 str(topic),
                 callback

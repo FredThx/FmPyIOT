@@ -28,6 +28,7 @@ async def set_led(_, val):
     led(int(val))
     print(f"led({led()})")
     await asyncio.sleep_ms(10)
+    return f"Led is {val}"
 
 async def blink_led(_,val):
     print(f"Blink = {val}")
@@ -41,15 +42,28 @@ async def blink_led(_,val):
         await asyncio.sleep(1)
 
 async def long_calculus(topic, payload):
+    print("start long calculus")
     await asyncio.sleep(10)
+    print("long calculus done")
     return int(payload)+1
 
-topic_led = Topic("./LED", action = set_led)
+async def short_calculus(topic, payload):
+    print("start short calculus")
+    await asyncio.sleep_ms(50)
+    print("short calculus done")
+    return int(payload)**2
+
+async def calc(topic, payload):
+    l=await asyncio.gather(long_calculus(topic, payload), short_calculus(topic, payload))
+    print(f"Result des calculs : {l}")
+    return sum(l)
+
+topic_led = Topic("./LED", action = set_led, reverse_topic = True)
 topic_blink_led = Topic("./LED_BLINK", action = blink_led)
-topic_long_calculus = Topic("./calc", read = long_calculus)
+topic_calc = Topic("./calc", read = calc)
 
 iot.add_topic(topic_led)
 iot.add_topic(topic_blink_led)
-iot.add_topic(topic_long_calculus)
+iot.add_topic(topic_calc)
 
 iot.run()
