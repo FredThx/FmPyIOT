@@ -32,6 +32,7 @@ class FmPyIot:
             incoming_pulse_duration = 0.3,
             keepalive = 120,
                  ):
+        self.routines = []
         self.outages = 0
         self.led_wifi = self.led_function(led_wifi)
         self.led_incoming = self.led_function(led_incoming)
@@ -58,7 +59,7 @@ class FmPyIot:
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
         self.params_loaders = []
-        self.routines = []
+        
 
     #########################
     # DIVERS utilitaires    #
@@ -160,6 +161,7 @@ class FmPyIot:
         '''Add a new topic
         - subscribe to reverse topic
         '''
+        # Subscribe read function for reverse topic
         if topic.reverse_topic() :
             async def callback(_topic, _payload):
                 await self.a_publish(
@@ -169,6 +171,7 @@ class FmPyIot:
                 topic.reverse_topic(),
                 callback
                 )
+        # Subscribe action function for topic
         if topic.action:
             async def callback(_topic, _payload):
                 logging.debug("Callback action")
@@ -179,8 +182,15 @@ class FmPyIot:
                 str(topic),
                 callback
                 )
+        # Add routine for auto send topics
         if topic.send_period:
-            self.auto_send_topics.append(topic)
+            #self.auto_send_topics.append(topic)
+            async def a_do_auto_send():
+                while True:
+                    await asyncio.sleep(topic.send_period)
+                    await self.a_publish_topic(topic)
+            self.add_routine(a_do_auto_send)
+
         # Essentiellement pour IRQ
         topic.attach(self)
     
@@ -199,32 +209,37 @@ class FmPyIot:
     # Routines autres       #
     #########################
 
-    def add_routine(self, routine:TopicRoutine):
-        '''Ajoute une routine qui sera executée dans le main
+    def add_routine(self, routine:TopicRoutine|callable):
+        '''Ajoute une routine qui sera executée dans le main comme tache
         '''
-        self.routines.append(routine.a_do_action)
-
-    async def run_routines(self):
-        for routine in self.routines:
-            await routine()
-
+        if isinstance(routine, Topic):
+            self.routines.append(routine.a_do_action)
+        elif callable(routine):
+            self.routines.append(routine)
+        else:
+            logging.error(f"{routine} is not a Topics and not callable.")
 
     #########################
     # Main                  #
     #########################
 
     async def main(self):
+        ''' Connect au broker, puis crée l'enble des taches asynchrones.
+        Et attend indéfiniment qu'lles termines.
+        '''
         try:
             await self.client.connect()
         except OSError:
             logging.warning('Connection failed.')
             return
-        for task in (self.up, self.down, self.messages, self.run_routines):
-            asyncio.create_task(task())
-        while True:
-            await asyncio.sleep_ms(100)
-            for topic in self.auto_send_topics:
-                topic.auto_send(self.a_publish_topic)
+        tasks = []
+        for task in (self.up, self.down, self.messages):
+            tasks.append(asyncio.create_task(task()))
+        for task in self.routines:
+            tasks.append(asyncio.create_task(task()))
+
+        for task in tasks:
+            await task #Mais on peut attendre ... indéfiniement.
 
     def run(self):
         try:
