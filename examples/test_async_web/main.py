@@ -22,14 +22,6 @@ iot = FmPyIot(
 led = Pin('LED')
 led_blink = False
 
-async def set_led(_, val):
-    global led
-    print(f"set_led({val})")
-    led(int(val))
-    print(f"led({led()})")
-    await asyncio.sleep_ms(10)
-    return f"Led is {val}"
-
 async def blink_led(_,val):
     print(f"Blink = {val}")
     global led_blink
@@ -53,21 +45,26 @@ async def short_calculus(topic, payload):
     print("short calculus done")
     return int(payload)**2
 
-async def calc(topic, payload):
+async def calc(topic, payload=42):
+    print(f"calc({topic},{payload})")
     l=await asyncio.gather(long_calculus(topic, payload), short_calculus(topic, payload))
     print(f"Result des calculs : {l}")
     return sum(l)
 
-topic_led = Topic("./LED", action = set_led, reverse_topic = True)
-topic_blink_led = Topic("./LED_BLINK", action = blink_led)
-topic_calc = Topic("./calc", read = calc)
-
+# Un topic pas en asynchrone (pas la peine pour allumer une led)
+topic_led = Topic("./LED", action = lambda topic, payload: led(int(payload)), reverse_topic = True)
 iot.add_topic(topic_led)
+# Topics en asynchone
+topic_blink_led = Topic("./LED_BLINK", action = blink_led)
 iot.add_topic(topic_blink_led)
+
+# A la fois vrai Topic (qui est activé par reception MQTT) et routine (qui est activé toutes les x secondes)
+topic_calc = Topic("./calc", read = calc, send_period=5)
 iot.add_topic(topic_calc)
 
 
-async def routine():
+# Des routines sans aucun topic
+async def routine_blink():
     while True:
         await asyncio.sleep(10)
         print("Routine : blink on!")
@@ -75,7 +72,7 @@ async def routine():
         await asyncio.sleep(5)
         print("Routine : blink off!")
         await iot.a_publish("./LED_BLINK",0)
-
-iot.add_routine(TopicRoutine(routine))
+topic_routine_blink = TopicRoutine(routine_blink)
+iot.add_routine(topic_routine_blink)
 
 iot.run()
