@@ -3,7 +3,7 @@ import time
 import uasyncio as asyncio
 from machine import Pin
 from fmpyiot.fmpyiot_2 import FmPyIot
-from fmpyiot.topics import Topic
+from fmpyiot.topics import Topic, TopicRoutine
 
 
 time.sleep(5)
@@ -65,5 +65,17 @@ topic_calc = Topic("./calc", read = calc)
 iot.add_topic(topic_led)
 iot.add_topic(topic_blink_led)
 iot.add_topic(topic_calc)
+
+
+async def routine():
+    while True:
+        await asyncio.sleep(10)
+        print("Routine : blink on!")
+        await iot.a_publish("./LED_BLINK",1)
+        await asyncio.sleep(5)
+        print("Routine : blink off!")
+        await iot.a_publish("./LED_BLINK",0)
+
+iot.add_routine(TopicRoutine(routine))
 
 iot.run()

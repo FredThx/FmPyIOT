@@ -124,7 +124,7 @@ class Topic:
         else:
             print(f"Error : {self} has to attribute 'read'")
 
-    async def a_do_action(self, topic:str, payload:str)->str:
+    async def a_do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
@@ -135,7 +135,7 @@ class Topic:
         logging.debug(f"a_do_action[{self}]({topic},{payload})...")
         if self.action:
             try:
-                return await self.a_run_callback(self.action, topic, payload)
+                return str(await self.a_run_callback(self.action, topic, payload))
             except TypeError as e:
                 print(e)
                 try:
@@ -211,3 +211,11 @@ class TopicIrq(Topic):
                 
         self.pin.irq(callback, self.trigger)
 
+
+class TopicRoutine(Topic):
+    ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
+    '''
+    def __init__(self,
+                 action:function = None):
+        super().__init__(None, action=action)
+    

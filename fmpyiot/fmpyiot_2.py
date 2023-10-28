@@ -2,7 +2,7 @@ from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
 from machine import Pin
-from fmpyiot.topics import Topic
+from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
 
 logging.basicConfig(level=logging.DEBUG)
@@ -58,6 +58,7 @@ class FmPyIot:
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
         self.params_loaders = []
+        self.routines = []
 
     #########################
     # DIVERS utilitaires    #
@@ -89,7 +90,8 @@ class FmPyIot:
         self.led_incoming(True)
         await asyncio.sleep(self.incoming_pulse_duration)
         self.led_incoming(False)
-    
+
+
     ####################################
     # Utilisation de la lib mqtt_as    #
     ####################################
@@ -193,6 +195,19 @@ class FmPyIot:
         payload = await topic.a_get_payload()
         await self.a_publish(str(topic),payload)
 
+    #########################
+    # Routines autres       #
+    #########################
+
+    def add_routine(self, routine:TopicRoutine):
+        '''Ajoute une routine qui sera executée dans le main
+        '''
+        self.routines.append(routine.a_do_action)
+
+    async def run_routines(self):
+        for routine in self.routines:
+            await routine()
+
 
     #########################
     # Main                  #
@@ -204,7 +219,7 @@ class FmPyIot:
         except OSError:
             logging.warning('Connection failed.')
             return
-        for task in (self.up, self.down, self.messages):
+        for task in (self.up, self.down, self.messages, self.run_routines):
             asyncio.create_task(task())
         while True:
             await asyncio.sleep_ms(100)
