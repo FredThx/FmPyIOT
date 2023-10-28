@@ -94,6 +94,13 @@ class Topic:
             publisher(self)
             self.last_send = time.time()
 
+    async def a_auto_send(self, publisher: function):
+        '''Method call by Fmpyiot every timer period
+        '''
+        if self.send_period and time.time()>self.last_send + self.send_period:
+            await publisher(self)
+            self.last_send = time.time()
+
     def attach(self, iot):
         pass
 

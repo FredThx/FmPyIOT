@@ -209,7 +209,7 @@ class FmPyIot:
         while True:
             await asyncio.sleep_ms(100)
             for topic in self.auto_send_topics:
-                topic.auto_send(self.publish_topic)
+                topic.auto_send(self.a_publish_topic)
 
     def run(self):
         try:
