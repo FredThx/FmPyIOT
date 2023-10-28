@@ -1,6 +1,5 @@
 import time, logging
 from machine import Pin
-#from fmpyiot.fmpyiot_2 import FmPyIot
 
 def never_crash(fn):
     def never_crash_function(*args, **kwargs):
@@ -137,11 +136,9 @@ class Topic:
             try:
                 return str(await self.a_run_callback(self.action, topic, payload))
             except TypeError as e:
-                print(e)
                 try:
                     return str(await self.a_run_callback(self.action, payload))
                 except TypeError as e:
-                    print(e)
                     return str(await self.a_run_callback(self.action))
         else:
             print(f"Error : {self} has not attribute 'action'")
