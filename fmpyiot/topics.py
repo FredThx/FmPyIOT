@@ -64,14 +64,14 @@ class Topic:
         logging.debug(f"do_action[{self}]({topic},{payload})...")
         if self.action:
             try:
-                return str(self.action(topic, payload))
+                return self.action(topic, payload)
             except TypeError as e:
                 #print(e)
                 try:
-                    return str(self.action(payload))
+                    return self.action(payload)
                 except TypeError as e:
                     #print(e)
-                    return str(self.action())
+                    return self.action()
         else:
             print(f"Error : {self} has not attribute 'action'")
 
@@ -114,12 +114,12 @@ class Topic:
         '''
         if self.read:
             try:
-                return str(await self.a_run_callback(self.read, topic, payload))
+                return await self.a_run_callback(self.read, topic, payload)
             except TypeError:
                 try:
-                    return str(await self.a_run_callback(self.read, payload))
+                    return await self.a_run_callback(self.read, payload)
                 except TypeError:
-                    return str(await self.a_run_callback(self.read))
+                    return await self.a_run_callback(self.read)
         else:
             print(f"Error : {self} has to attribute 'read'")
 
@@ -134,12 +134,12 @@ class Topic:
         logging.debug(f"a_do_action[{self}]({topic},{payload})...")
         if self.action:
             try:
-                return str(await self.a_run_callback(self.action, topic, payload))
+                return await self.a_run_callback(self.action, topic, payload)
             except TypeError as e:
                 try:
-                    return str(await self.a_run_callback(self.action, payload))
+                    return await self.a_run_callback(self.action, payload)
                 except TypeError as e:
-                    return str(await self.a_run_callback(self.action))
+                    return await self.a_run_callback(self.action)
         else:
             print(f"Error : {self} has not attribute 'action'")
 
