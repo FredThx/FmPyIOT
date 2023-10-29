@@ -1,10 +1,14 @@
 # # BUGS
 
-json.dump ne fonctione pas (depuis asyncio!)
+SYSINFO (et autre) : json format.
 
-ex : SYSINFO)
+# Divers
 
-# deamons a mettre ne place
+- wifi country
+- mqtt mqtt_client_name
+- mqtt log
+
+# Deamons a mettre en place
 
 ## Publier une donnée
 
@@ -27,13 +31,3 @@ ex : SYSINFO)
 Maintenant que le reseau est ok en async, ce devrait aller mieux
 
 # Serveur telnet
-
-# Asynchrone
-
-Maintenant que FmPyIot est asynchrone
-
-=> lui mettre des coroutines en entrée (action ou read)
-
-- les callback system (SYSINFO...)
-
-exemple croquettes.

@@ -15,6 +15,7 @@ Ensuite, les communications se font en WIFI + MQTT.
 Un projet se décrit à partir d'un fichier main.py dans lequel on va décrire son fonctionement
 
 Exemple
+
 ```python
 from devices.mydevice import MyDevice
 
@@ -23,21 +24,28 @@ from fmpyiot.topics import Topic
 
 mydevice = Mydevice()
 
-iot = FmPyIot(            
+iot = FmPyIot(  
     mqtt_host = "....",
     mqtt_base_topic = "....",
     ssid = '....',
     password = "....",
+    wotchdof = 100,
     watchdog=100,
     sysinfo_period = 600,
-    async_mode=False)
-
+    led_incoming = None,
+    led_wifi = None,
+)
+# En mode synchrone (lecture du capteur rapide)
 ma_mesure = Topic("./ma_mesure", read=lambda topic, payload : mydevice.read(), send_period=60)
+iot.add_topic(ma_mesure)
 
-while not iot.connect():
-    print("Erreur lors de la connexion.... on retente!")
-iot.add_topic(distance)
-iot.add_topic(temperature)
+# En mode asynchrone (si la lecture du capteur est longue, ou pour le style)
+async def co_mesure():
+    #Long traitement
+    await asyncio.sleep(3)
+    return 42
+iot.add_topic(Topic('/CO_TEST', read = co_mesure))
+
 iot.run()
 ```
 
@@ -45,6 +53,26 @@ iot.run()
 
 ## MAGICS TOPICS
 
+## Les topics system
+
+### ./SYSINFO
+
+Renvoie les données system
+
+```json
+{"ifconfig":["192.168.10.77","255.255.255.0","192.168.10.254","192.168.10.169"],"uname":["rp2","rp2","1.21.0","v1.21.0 on 2023-10-06 (GNU 13.2.0 MinSizeRel)","Raspberry Pi Pico W with RP2040"],"mac":"28:cd:c1:0f:4d:81","wifi":{"ssid":"WIFI_THOME2","channel":3,"txpower":31},"mem_free":119504,"mem_alloc":57776,"statvfs":[4096,4096,212,118,118,0,0,0,0,255]}
+```
+
+## Reverse topic
+
 Pour chaque topic "TOPIC", un reverse topic est généré : "TOPIC_" qui force l'envoie du topic.
 
-./SYSINFO_    =>  ./SYSINFO
+Si un topic est prévu en message sortant (ex : lecture d'un capteur), alors un topic permet de forcer la lecture de cette valeur.
+
+Si un topic est prévu en message entrant (ex : l'execution d'une action), alors un topic est créé pour récupérer la valeur de retour de l'action (ex : "OK" ou une valeur)
+
+|                      | MQTT entrant | MQTT sortant                          |
+| -------------------- | ------------ | ------------------------------------- |
+| Topic read "./TEMP"  | ./TEMP_      | ./TEMP                                |
+| Topic action "./LED" | ./LED        | ./LED_ (si action renvoie une valeur) |
+| Topic system SYSINFO | SYSINFO_     | SYSINFO                               |
