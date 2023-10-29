@@ -88,6 +88,14 @@ class FmPyIot:
         await asyncio.sleep(self.incoming_pulse_duration)
         self.led_incoming(False)
 
+    @staticmethod
+    def to_str(value:any)->str:
+        '''renvoie un string, éventuellement formaté en json
+        '''
+        if type(value)==str:
+            return value
+        else:
+            return json.dumps(value)
 
     ####################################
     # Utilisation de la lib mqtt_as    #
@@ -133,12 +141,12 @@ class FmPyIot:
         '''
         if topic is not None and payload is not None:
             logging.info(f'publish {topic} : {payload}')
-            asyncio.create_task(self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos))
+            asyncio.create_task(self.client.publish(self.get_topic(topic), self.to_str(payload), qos = qos))
 
     async def a_publish(self, topic:str, payload:str, qos = 0):
         if topic is not None and payload is not None:
             logging.info(f'a_publish {topic} : {payload}')
-            await self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos)
+            await self.client.publish(self.get_topic(topic), self.to_str(payload), qos = qos)
 
     #########################
     # Gestion des Topics   #
