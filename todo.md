@@ -1,6 +1,5 @@
 # # BUGS
 
-SYSINFO (et autre) : json format.
 
 # Divers
 
