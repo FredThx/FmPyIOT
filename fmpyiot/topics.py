@@ -70,12 +70,13 @@ class Topic:
         '''
         return f"{self}_"
 
-    async def auto_send_async(self, publisher: function):
+    async def send_async(self, publisher: function):
         '''Method call by Fmpyiot to send 
         '''
         if self.send_period:
             await asyncio.sleep(self.send_period)
-        await publisher(self)
+        payload = await self.get_payload_async()
+        await publisher(str(self), payload)
 
     def attach(self, iot):
         pass
@@ -181,8 +182,7 @@ class TopicIrq(Topic):
         def callback(pin):
             if time.time()>self.new_irq_time:
                 self.new_irq_time = time.time() + self.rate_limit
-                iot.publish_topic(self)
-                
+                asyncio.create_task(self.send_async(iot.publish_async))
         self.pin.irq(callback, self.trigger)
 
 

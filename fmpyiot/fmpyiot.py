@@ -187,19 +187,13 @@ class FmPyIot:
                 )
         # Add routine for auto send topics
         if topic.send_period:
-            async def do_auto_send_async():
+            async def send_topic_async():
                 while True:
-                    await topic.auto_send_async(self.publish_topic_async)
-            self.add_routine(do_auto_send_async)
+                    await topic.send_async(self.publish_async)
+            self.add_routine(send_topic_async)
 
         # Essentiellement pour IRQ
         topic.attach(self)
-    
-    
-    async def publish_topic_async(self, topic:Topic):
-        logging.debug(f"publish_topic({topic})")
-        payload = await topic.get_payload_async()
-        await self.publish_async(str(topic),payload)
 
     #########################
     # Routines autres       #
