@@ -2,8 +2,8 @@
 import time
 import uasyncio as asyncio
 from machine import Pin
-from fmpyiot.fmpyiot_2 import FmPyIot
-from fmpyiot.topics import Topic, TopicRoutine
+from fmpyiot.fmpyiot import FmPyIot
+from fmpyiot.topics import Topic, TopicRoutine, TopicIrq
 
 
 time.sleep(5)
@@ -45,15 +45,17 @@ async def short_calculus(topic, payload):
     print("short calculus done")
     return int(payload)**2
 
-async def calc(topic, payload=42):
+async def calc(topic, payload=None):
+    payload = payload or 42
     print(f"calc({topic},{payload})")
     l=await asyncio.gather(long_calculus(topic, payload), short_calculus(topic, payload))
     print(f"Result des calculs : {l}")
     return sum(l)
 
-# Un topic pas en asynchrone (pas la peine pour allumer une led)
-topic_led = Topic("./LED", action = lambda topic, payload: led(int(payload)), reverse_topic = True)
+# Un topic mode synchrone (pas la peine pour allumer une led)
+topic_led = Topic("./LED", action = lambda topic, payload: led(int(payload)))
 iot.add_topic(topic_led)
+
 # Topics en asynchone
 topic_blink_led = Topic("./LED_BLINK", action = blink_led)
 iot.add_topic(topic_blink_led)
@@ -68,11 +70,15 @@ async def routine_blink():
     while True:
         await asyncio.sleep(10)
         print("Routine : blink on!")
-        await iot.a_publish("./LED_BLINK",1)
+        await iot.publish_async("./LED_BLINK",1)
         await asyncio.sleep(5)
         print("Routine : blink off!")
-        await iot.a_publish("./LED_BLINK",0)
+        await iot.publish_async("./LED_BLINK",0)
 topic_routine_blink = TopicRoutine(routine_blink)
 iot.add_routine(topic_routine_blink)
+
+#Une detection de changement d'état sur une Pin
+iot.add_topic(TopicIrq("./LED", pin=Pin(15,Pin.IN), trigger = Pin.IRQ_RISING, values=("1","0")))
+
 
 iot.run()

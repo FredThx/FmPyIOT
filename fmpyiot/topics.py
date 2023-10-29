@@ -93,7 +93,7 @@ class Topic:
             publisher(self)
             self.last_send = time.time()
 
-    async def a_auto_send(self, publisher: function):
+    async def auto_send_async(self, publisher: function):
         '''Method call by Fmpyiot every timer period
         '''
         if self.send_period and time.time()>self.last_send + self.send_period:
@@ -108,22 +108,22 @@ class Topic:
     ################
 
 
-    async def a_get_payload(self, topic:str=None, payload:any=None)->any:
+    async def get_payload_async(self, topic:str=None, payload:any=None)->any:
         ''' Read the device and return payload
         read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
         if self.read:
             try:
-                return await self.a_run_callback(self.read, topic, payload)
+                return await self.run_callback_async(self.read, topic, payload)
             except TypeError:
                 try:
-                    return await self.a_run_callback(self.read, payload)
+                    return await self.run_callback_async(self.read, payload)
                 except TypeError:
-                    return await self.a_run_callback(self.read)
+                    return await self.run_callback_async(self.read)
         else:
             print(f"Error : {self} has to attribute 'read'")
 
-    async def a_do_action(self, topic:str=None, payload:str=None)->str:
+    async def do_action_async(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         '''
@@ -131,15 +131,15 @@ class Topic:
         # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
-        logging.debug(f"a_do_action[{self}]({topic},{payload})...")
+        logging.debug(f"do_action_async[{self}]({topic},{payload})...")
         if self.action:
             try:
-                return await self.a_run_callback(self.action, topic, payload)
+                return await self.run_callback_async(self.action, topic, payload)
             except TypeError as e:
                 try:
-                    return await self.a_run_callback(self.action, payload)
+                    return await self.run_callback_async(self.action, payload)
                 except TypeError as e:
-                    return await self.a_run_callback(self.action)
+                    return await self.run_callback_async(self.action)
         else:
             print(f"Error : {self} has not attribute 'action'")
 
@@ -147,14 +147,14 @@ class Topic:
         '''Return a async callback
         '''
         async def callback(*_args, **_kwargs):
-            return await self.a_run_callback(self, callback, *_args, **_kwargs)
+            return await self.run_callback_async(self, callback, *_args, **_kwargs)
         return callback
     
-    async def a_run_callback(self, callback, *args, **kwargs):
+    async def run_callback_async(self, callback, *args, **kwargs):
         '''Execute de manière asynchone (ou pas) une callback
         '''
         #todo : never crash!
-        logging.debug(f"a_run_callback(callback={callback}, args={args}, kwargs={kwargs})")
+        logging.debug(f"run_callback_async(callback={callback}, args={args}, kwargs={kwargs})")
         routine = callback(*args, **kwargs)
         if self.is_coroutine(routine):
             logging.debug("It is a coroutine!")
@@ -216,3 +216,30 @@ class TopicRoutine(Topic):
                  action:function = None):
         super().__init__(None, action=action)
     
+
+class TopicOnChange(Topic):
+    '''Un topic qui
+    '''
+    def __init__(self,
+                 topic:str, 
+                 read:function,
+                 variation:float=0,
+                 percent:bool=False,
+                 period:float=None,
+                 reverse_topic:bool = True
+                 ):
+        '''
+        - read          :   function for reading the value args : topic, payload
+        - variation     :   variation mini à partir de laquelle la valeur est renvoyé
+        - percent       :   si True, variaotion est exprimée en % de la valeur précédente
+        - period        :   period (s) between 2 read
+        - reverse_topic :   if True : a reverse topic is créated (to force reading)
+        '''
+        super().__init__(topic,
+                         send_period=period,
+                         reverse_topic=reverse_topic,
+                         read=read,
+                         )
+        self.last_value = None
+        self.percent = percent
+        self.min_variation = variation

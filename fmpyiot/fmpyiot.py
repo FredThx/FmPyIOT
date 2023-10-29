@@ -142,9 +142,9 @@ class FmPyIot:
             logging.info(f'publish {topic} : {payload}')
             asyncio.create_task(self.client.publish(self.get_topic(topic), self.to_str(payload), qos = qos))
 
-    async def a_publish(self, topic:str, payload:str, qos = 0):
+    async def publish_async(self, topic:str, payload:str, qos = 0):
         if topic is not None and payload is not None:
-            logging.info(f'a_publish {topic} : {payload}')
+            logging.info(f'publish_async {topic} : {payload}')
             await self.client.publish(self.get_topic(topic), self.to_str(payload), qos = qos)
 
     #########################
@@ -167,9 +167,9 @@ class FmPyIot:
         # Subscribe read function for reverse topic
         if topic.reverse_topic() :
             async def callback(_topic, _payload):
-                await self.a_publish(
+                await self.publish_async(
                     str(topic),
-                    await topic.a_get_payload(_topic, _payload))
+                    await topic.get_payload_async(_topic, _payload))
             self.subscribe(
                 topic.reverse_topic(),
                 callback
@@ -178,20 +178,20 @@ class FmPyIot:
         if topic.action:
             async def callback(_topic, _payload):
                 logging.debug("Callback action")
-                payload = await topic.a_do_action(_topic,_payload)
+                payload = await topic.do_action_async(_topic,_payload)
                 logging.debug(f"payload = {payload}")
-                await self.a_publish(topic.reverse_topic_action(),payload)
+                await self.publish_async(topic.reverse_topic_action(),payload)
             self.subscribe(
                 str(topic),
                 callback
                 )
         # Add routine for auto send topics
         if topic.send_period:
-            async def a_do_auto_send():
+            async def do_auto_send_async():
                 while True:
                     await asyncio.sleep(topic.send_period)
-                    await self.a_publish_topic(topic)
-            self.add_routine(a_do_auto_send)
+                    await self.publish_topic_async(topic)
+            self.add_routine(do_auto_send_async)
 
         # Essentiellement pour IRQ
         topic.attach(self)
@@ -202,10 +202,10 @@ class FmPyIot:
         logging.debug(f"publish_topic({topic})")
         self.publish(str(topic),topic.get_payload())
     
-    async def a_publish_topic(self, topic:Topic):
+    async def publish_topic_async(self, topic:Topic):
         logging.debug(f"publish_topic({topic})")
-        payload = await topic.a_get_payload()
-        await self.a_publish(str(topic),payload)
+        payload = await topic.get_payload_async()
+        await self.publish_async(str(topic),payload)
 
     #########################
     # Routines autres       #
@@ -215,7 +215,7 @@ class FmPyIot:
         '''Ajoute une routine qui sera executée dans le main comme tache
         '''
         if isinstance(routine, Topic):
-            self.routines.append(routine.a_do_action)
+            self.routines.append(routine.do_action_async)
         elif callable(routine):
             self.routines.append(routine)
         else:
