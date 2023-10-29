@@ -1,6 +1,5 @@
 # # BUGS
 
-
 # Divers
 
 - wifi country
@@ -8,11 +7,6 @@
 - mqtt log
 
 # Deamons a mettre en place
-
-## Publier une donnée
-
-    - si la valeur change ou n'importe quel test
-    - sur trigger : fait
 
 ## REPL via mqtt
 

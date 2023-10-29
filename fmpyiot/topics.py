@@ -37,6 +37,9 @@ class Topic:
     def __str__(self)->str:
         return self.topic
 
+    def is_auto_send(self)->bool:
+        return bool(self.send_period)
+
     @never_crash
     def do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
@@ -71,7 +74,7 @@ class Topic:
         return f"{self}_"
 
     async def send_async(self, publisher: function):
-        '''Method call by Fmpyiot to send 
+        '''Method call by Fmpyiot to send : topic, payload = read(...)
         '''
         if self.send_period:
             await asyncio.sleep(self.send_period)
@@ -109,7 +112,7 @@ class Topic:
         # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
-        logging.debug(f"do_action_async[{self}]({topic},{payload})...")
+        #logging.debug(f"do_action_async[{self}]({topic},{payload})...")
         if self.action:
             try:
                 return await self.run_callback_async(self.action, topic, payload)
@@ -132,13 +135,13 @@ class Topic:
         '''Execute de manière asynchone (ou pas) une callback
         '''
         #todo : never crash!
-        logging.debug(f"run_callback_async(callback={callback}, args={args}, kwargs={kwargs})")
+        #logging.debug(f"run_callback_async(callback={callback}, args={args}, kwargs={kwargs})")
         routine = callback(*args, **kwargs)
         if self.is_coroutine(routine):
-            logging.debug("It is a coroutine!")
+            #logging.debug("It is a coroutine!")
             return await routine
         else:
-            logging.debug(f"It is not a coroutine. callback return value = {routine}.")
+            #logging.debug(f"It is not a coroutine. callback return value = {routine}.")
             return routine
 
     def is_coroutine(self, fn):
@@ -221,4 +224,24 @@ class TopicOnChange(Topic):
         self.percent = percent
         self.min_variation = variation
 
+    async def send_async(self, publisher: function):
+        '''Method call by Fmpyiot to send : topic, payload = read(...)
+        '''
+        if self.send_period:
+            await asyncio.sleep(self.send_period)
+        payload = await self.get_payload_async()
+        if self.is_changed(payload):
+            await publisher(str(self), payload)
+    
+    
+    def is_auto_send(self)->bool:
+        return True
 
+    def is_changed(self, payload):
+        '''Check is payload change enough
+        '''
+        if self.last_value is None \
+            or not self.percent and abs(self.last_value -payload)>=self.min_variation \
+            or self.percent and abs((self.last_value - payload)/self.last_value)*100>=self.min_variation:
+            self.last_value = payload
+            return True

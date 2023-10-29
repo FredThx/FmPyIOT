@@ -3,7 +3,7 @@ import time
 import uasyncio as asyncio
 from machine import Pin
 from fmpyiot.fmpyiot import FmPyIot
-from fmpyiot.topics import Topic, TopicRoutine, TopicIrq
+from fmpyiot.topics import Topic, TopicRoutine, TopicIrq, TopicOnChange
 
 
 time.sleep(5)
@@ -80,5 +80,18 @@ iot.add_routine(topic_routine_blink)
 #Une detection de changement d'état sur une Pin
 iot.add_topic(TopicIrq("./LED", pin=Pin(15,Pin.IN), trigger = Pin.IRQ_RISING, values=("1","0")))
 
+#Un TopicOnChange
+g_compteur = 0
+def get_compteur():
+    global g_compteur
+    g_compteur += 1
+    return g_compteur
+
+def raz_compteur():
+    global g_compteur
+    g_compteur = 0
+
+iot.add_topic(TopicOnChange("./COMPTEUR",read = get_compteur, variation=10, period=1))
+iot.add_topic(Topic("./COMPTEUR", action = raz_compteur))
 
 iot.run()
