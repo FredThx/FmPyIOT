@@ -54,6 +54,11 @@ class FmPyIot:
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
         self.params_loaders = []
+        #Web
+        if web:
+            from nanoweb import Nanoweb
+            self.web = Nanoweb(web_port)
+            
         
 
     #########################
@@ -228,8 +233,13 @@ class FmPyIot:
         for task in self.routines:
             tasks.append(asyncio.create_task(task()))
 
+        #Web interface
+        if self.web:
+            tasks.append(asyncio.create_task(self.web.run()))
+
         for task in tasks:
             await task #Mais on peut attendre ... indéfiniement.
+
 
     def run(self):
         try:
