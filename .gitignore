@@ -1,3 +1,5 @@
 /.vscode
 /FmPyIOT.code-workspace
 /__pycache__
+*/firmware
+*.uf2
