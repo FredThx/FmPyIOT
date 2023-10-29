@@ -2,7 +2,7 @@
 import time
 from machine import Pin
 from croquettes import Croquettes
-from fmpyiot.fmpyiot_2 import FmPyIot
+from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.topics import Topic
 
 time.sleep(5)

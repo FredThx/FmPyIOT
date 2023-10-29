@@ -1,6 +1,6 @@
 from machine import Pin
 import time
-from fmpyiot.fmpyiot_2 import FmPyIot
+from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.topics import Topic, TopicIrq
 
 detecteur = Pin(15,Pin.IN)
