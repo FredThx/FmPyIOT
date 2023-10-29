@@ -17,7 +17,8 @@ iot = FmPyIot(
     watchdog=None,
     sysinfo_period = 600,
     #led_wifi='LED',
-    web=True
+    web=True,
+    web_credentials=(***REMOVED***, ***REMOVED***),
     )
 
 led = Pin('LED')
@@ -28,10 +29,5 @@ iot.add_topic(topic_led)
 #Une detection de changement d'état sur une Pin
 iot.add_topic(TopicIrq("./LED", pin=Pin(15,Pin.IN), trigger = Pin.IRQ_RISING, values=("1","0")))
 
-
-@iot.web.route("/")
-async def hello(request):
-    await request.write("HTTP/1.1 200 OK\r\n\r\n")
-    await request.write("Hello")
 
 iot.run()

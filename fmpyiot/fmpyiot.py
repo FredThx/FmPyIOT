@@ -4,6 +4,7 @@ import logging, os, ubinascii, gc, json, network
 from machine import Pin
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
+from ubinascii import a2b_base64 as base64_decode
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -23,6 +24,7 @@ class FmPyIot:
             log_mqtt_level = logging.INFO,
             web = False,
             web_port = 80,
+            web_credentials = None,
             led_wifi = None,
             led_incoming = None,
             incoming_pulse_duration = 0.3,
@@ -58,7 +60,7 @@ class FmPyIot:
         if web:
             from nanoweb import Nanoweb
             self.web = Nanoweb(web_port)
-            
+            self.web_credentials = web_credentials
         
 
     #########################
@@ -235,6 +237,7 @@ class FmPyIot:
 
         #Web interface
         if self.web:
+            self.init_web()
             tasks.append(asyncio.create_task(self.web.run()))
 
         for task in tasks:
@@ -357,10 +360,50 @@ class FmPyIot:
         return repr
     
     def dm(self):
-        '''place de dispositif en mode debug'''
+        '''place le dispositif en mode debug'''
         self.wd.disable()
         print('Watchdog desactivate')
 
+########################
+#  WEB SERVER        ###
+########################
+
+    def init_web(self):
+        '''Initialise un servezur web par defaut
+        '''
+        @self.web.route("/")
+        @self.authenticate()
+        async def hello(request):
+            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await request.write(f"Hello {self}")
+
+    def authenticate(self):
+        async def fail(request):
+            await request.write("HTTP/1.1 401 Unauthorized\r\n")
+            await request.write('WWW-Authenticate: Basic realm="Restricted"\r\n\r\n')
+            await request.write("<h1>Unauthorized</h1>")
+
+        def decorator(func):
+            async def wrapper(request):
+                header = request.headers.get('Authorization', None)
+                if header is None:
+                    return await fail(request)
+
+                # Authorization: Basic XXX
+                kind, authorization = header.strip().split(' ', 1)
+                if kind != "Basic":
+                    return await fail(request)
+
+                authorization = base64_decode(authorization.strip()) \
+                    .decode('ascii') \
+                    .split(':')
+
+                if self.web_credentials and list(self.web_credentials) != list(authorization):
+                    return await fail(request)
+
+                return await func(request)
+            return wrapper
+        return decorator
 
 if __name__=='__main__':
     iot=FmPyIot(
