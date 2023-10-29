@@ -1,182 +1,65 @@
-import os, network, time, json, gc, _thread
-import logging
-import rp2
-from machine import Timer
+from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
+import uasyncio as asyncio
+import logging, os, ubinascii, gc, json, network
+from machine import Pin
+from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
-from umqtt.simple import MQTTClient
-from fmpyiot.topics import Topic
-from uping import ping
-from fmpyiot.fwebiot import FwebIot
-#from fmpyiot.flog_iot import FLogIot
-import ubinascii
 
-class  FmPyIot:
-    ''' Un object connecté à base de micro python
+logging.basicConfig(level=logging.DEBUG)
+
+class FmPyIot:
+    '''Un objet connecté via mqtt (et plus:todo)
     '''
-    def __init__(self, 
+    def __init__(self,
             mqtt_host:str, mqtt_client_name:str = None, mqtt_base_topic:str = None,
             ssid:str = None, password:str = None,
-            callback:function = None,
-            timeout:int = 60,
             autoconnect:bool = False,
             watchdog:int = 100,
-            mqtt_check_period:int = 100, #ms
             debug:bool = True,
             sysinfo_period:int = 600, #s
             country = 'FR',
-            async_mode = True,
             mqtt_log = "./LOG",
             log_console_level = logging.DEBUG,
             log_mqtt_level = logging.INFO,
             web = False,
-            web_port = 80
-            ):
-        '''Initialisation
-        mqtt_host           :     mqtt host (ip or name)
-        mqtt_client_name    :     (optional) mqtt client name (default : nodename+mac)
-        mqtt_base_topic     :     (optional) mqtt base topic : added to all topics starting with "./"
-        ssid                :       wifi SSID
-        password            :       wifi password
-        callback            :       function called with all incoming messages. args : topic, payload
-        timeout             :       (seconds) for wifi connection
-        watchdog            :       optional (seconds)
-        mqtt_check_period   :       (default : 1s) : interval de temps entre deux vérification de messages mqtt
-        debug             :       False : no debug print
-        sysinfo_period  :       temps entre deux envoi des info systems
-        country             :       for wifi (default : 'FR')
-        async_mode          :       True : pub, sub managed by timer
-                                    False : pub, sub, manage by run()
-        mqtt_log            :       mqtt topic for logs (default : './LOG')
-        log_echo            :       if True, print also logs on stdout
-        '''
-        rp2.country(country)
-        self.wlan = network.WLAN(network.STA_IF)
-        self.wlan.active(True)
-        self.wlan.config(pm = 0xa11140) #disable power-saving mode
-        self.ssid = ssid
-        self.password = password
-        self.timeout = timeout
-        if mqtt_client_name is None:
-            mqtt_client_name = f"{os.uname().nodename}-{self.wlan.config('mac')}"
-        self.mqtt_sub = MQTTClient(f"{mqtt_client_name}_sub", mqtt_host, keepalive=7200)
-        self.mqtt_pub = MQTTClient(f"{mqtt_client_name}_pub", mqtt_host, keepalive=7200)
-        self.mqtt_sub.set_callback(self.on_mqtt_message)
+            web_port = 80,
+            led_wifi = None,
+            led_incoming = None,
+            incoming_pulse_duration = 0.3,
+            keepalive = 120,
+                 ):
+        self.routines = []
+        self.outages = 0
+        self.led_wifi = self.led_function(led_wifi)
+        self.led_incoming = self.led_function(led_incoming)
+        self.incoming_pulse_duration = incoming_pulse_duration
         self.mqtt_base_topic = mqtt_base_topic + "/" if mqtt_base_topic[-1]!="/" else ""
-        self.mqtt_check_period = mqtt_check_period
-        self.callback = callback
-        self.callbacks = {} #{topic:callback, ...}
-        self.debug = debug
-        self.auto_send_topics = []
-        self.stopped = False
-        self.timer = None
-        self.params_loaders = []
-        #self.logger = FLogIot(self, log_console_level, log_mqtt_level, mqtt_log)
-        if async_mode:
-            self.timer=Timer(-1)
-        #Connect
+        # mqtt_as_config : default mqtt_as config
+        mqtt_as_config['server'] = mqtt_host
+        mqtt_as_config['ssid']     = ssid
+        mqtt_as_config['wifi_pw']  = password
+        mqtt_as_config['will'] = (self.get_topic("./BYE"), 'Goodbye cruel world!', False, 0)
+        mqtt_as_config['keepalive'] = keepalive
+        mqtt_as_config["queue_len"] = 1  # Use event interface with default queue
+        MQTTClient.DEBUG = True
+        self.client = MQTTClient(mqtt_as_config)
+        self.wlan = self.client._sta_if
         if autoconnect:
-            self.connect()
+            self.run()
+        self.callbacks = {} #{'topic' : callback}
+        self.auto_send_topics = []
         #Watchdog
         self.wd = None
         if watchdog:
             self.init_watchdog(watchdog)
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
-        #Interface web
-        if web:
-            self.fwebiot = FwebIot(iot=self, port=web_port)
-        else:
-            self.fwebiot = None
+        self.params_loaders = []
+        
 
-    def connect(self):
-        self.logging("Try to connect IOT")
-        if self.wifi_connect():
-            try:
-                self.logging("Try to connect to mqtt broker")
-                self.mqtt_sub.connect()
-                self.mqtt_pub.connect()
-            except OSError:
-                return False
-            else:
-                self.logging("mqtt connected.")
-                self.resubscribe_all()
-                if self.timer:
-                    self.lock_timer=False
-                    self.timer.init(mode = Timer.PERIODIC, period = self.mqtt_check_period, callback =self.on_timer)
-                return True
-        else:
-            self.logging("Error Wifi not connected.")
-
-    def on_timer(self, tim:Timer):
-        '''Function call every self.mqtt_check_period ms
-        Check messages from mqtt broker.
-            if connection lost, retry to connect
-        '''
-        if not self.stopped:
-            if not self.lock_timer:
-                self.lock_timer=True
-                self.do_mqtt_events()
-                self.lock_timer=False
-    
-    def run(self):
-        '''if async mode, start the timer
-        else, loop forever
-        '''
-        self.stopped = False
-        if self.timer:
-            self.lock_timer=False
-            self.timer.init(mode = Timer.PERIODIC, period = self.mqtt_check_period, callback =self.on_timer)
-        else:
-            while not self.stopped:
-                self.do_mqtt_events()
-                if self.fwebiot:
-                    self.fwebiot.listen()
-                time.sleep_ms(self.mqtt_check_period)
-
-
-    def do_mqtt_events(self):
-        '''Check incoming mqtt message and send topics messages
-        '''
-        if not self.check_wlan():
-            self.connect()
-        try:
-            self.mqtt_sub.check_msg()
-        except OSError as e:
-            self.logging(f"Error during check_msg : {e}.\n Try to reconnect...")
-            if self.timer:
-                self.timer.deinit()
-            time.sleep(10)
-            self.connect()
-        else:
-            #self.logging("check_msg ok ")
-            for topic in self.auto_send_topics:
-                topic.auto_send(self.publish_topic)
-
-    def wifi_connect(self):
-        if self.wlan.isconnected():
-            self.logging("wifi already connected.")
-            return True
-        else:
-            self.logging(f"Try to connect WIFI {self.ssid}")
-            #bssids = [ap[1] for ap in self.wlan.scan() if ap[0].decode()==self.ssid]
-            #self.logging(f"Found {len(bssids)} bssi.")
-            #for bssid in bssids:
-            self.wlan.connect(self.ssid,self.password)#, bssid = bssid)
-            #self.logging(f"Connection ({self.ssid} - {bssid}) en cours .", end="")
-            timeout = time.time() + self.timeout
-            while not self.wlan.isconnected() and time.time() < timeout:
-                self.logging(".",end="")
-                time.sleep(1)
-            if self.wlan.isconnected():
-                self.logging("WIFI connected.")
-                return True
-            else:
-                self.wlan.disconnect()
-                self.logging(f"Erreur : {self.str_network_status()}")
-
-    def stop(self, stopped = True):
-        self.stopped = stopped
-
+    #########################
+    # DIVERS utilitaires    #
+    #########################
     def get_topic(self, topic:str)-> str:
         '''Ajout base_topic quand './' devant
         '''
@@ -185,78 +68,189 @@ class  FmPyIot:
         else:
             return topic
 
-    def publish_topic(self, topic:Topic):
-        '''publish
+    @staticmethod
+    def led_function(led: None | int | Pin)-> function:
+        '''Renvoie une fonction qui pilote une led
+        (intéret : led peut être None ou int ou Pin)
         '''
-        self.publish(str(topic),topic.get_payload())
+        if led is None : return lambda _:None
+        if type(led)!=Pin:
+            led = Pin(led)
+        led.init(Pin.OUT,value = 0)
+        def func(v:bool):
+            led(v)
+        return func
 
-    def publish(self, topic:str, payload:any):
-        '''publish msg to mqtt broker
+    async def pulse(self):
+        ''' Pulses incoming LED each time a subscribed msg arrives.
         '''
-        if topic and payload is not None:
-            topic = self.get_topic(topic)
-            payload = json.dumps(payload)
-            self.logging(f"publish {topic}=>{payload}")
-            try:
-                self.mqtt_pub.ping()
-            except OSError:
-                self.connect()
-            finally:
-                self.mqtt_pub.publish(topic, payload)
+        self.led_incoming(True)
+        await asyncio.sleep(self.incoming_pulse_duration)
+        self.led_incoming(False)
+
+
+    ####################################
+    # Utilisation de la lib mqtt_as    #
+    ####################################
+    async def messages(self):
+        ''' Traite tous les messages entrants
+        '''
+        async for topic, msg, retained in self.client.queue:
+            topic = topic.decode()
+            payload = msg.decode()
+            logging.info(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
+            asyncio.create_task(self.pulse())
+            if topic in self.callbacks:
+                callback = self.callbacks[topic]
+                if callback:
+                    asyncio.create_task(callback(topic, payload))
+            else:
+                logging.warning(f"Unknow topic : {topic}")
+
+    async def down(self,):
+        ''' Deamon qui gère la perte de connectivité
+        '''
+        while True:
+            await self.client.down.wait()  # Pause until connectivity changes
+            self.client.down.clear()
+            self.led_wifi(False)
+            self.outages += 1
+            logging.warning('WiFi or broker is down.')
+
+    async def up(self):
+        ''' Deamon qui gère la connection
+        '''
+        while True:
+            await self.client.up.wait()
+            self.client.up.clear()
+            self.led_wifi(True)
+            logging.info('We are connected to broker.')
+            for topic in self.callbacks:
+                await self.client.subscribe(topic, 0)
     
+    def publish(self, topic:str, payload:str, qos = 0):
+        '''Publish on mqtt (sauf si topic = None)
+        '''
+        if topic is not None and payload is not None:
+            logging.info(f'publish {topic} : {payload}')
+            asyncio.create_task(self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos))
+
+    async def a_publish(self, topic:str, payload:str, qos = 0):
+        if topic is not None and payload is not None:
+            logging.info(f'a_publish {topic} : {payload}')
+            await self.client.publish(self.get_topic(topic), json.dumps(payload), qos = qos)
+
+    #########################
+    # Gestion des Topics   #
+    #########################
 
     def subscribe(self, topic:str, callback:function = None):
         '''Subscibe to a mqtt topic 
         callback : function(topic, payload)
         '''
         topic = self.get_topic(topic)
-        self.logging(f"Subscribe {topic} : callback={callback}")
-        try:
-            self.mqtt_sub.ping()
-        except Exception as e:
-            self.logging("Error : mqtt not connected.")
-        else:
-            self.mqtt_sub.subscribe(topic)
-        if callback:
-            self.callbacks[bytes(topic,'utf-8')]=callback
-
-    def resubscribe_all(self):
-        '''Re-crée les subscriptions auprès du broker
-        '''
-        for topic, callback in self.callbacks.items():
-            self.logging(f"resubscribe {topic}")
-            self.mqtt_sub.subscribe(topic)
-
-    def on_mqtt_message(self, topic, payload):
-        '''on receive mqtt message
-        '''
-        self.logging(f"Reception de {topic}=>{payload}")
-        if self.callback:
-            self.callback(topic, payload)
-        if topic in self.callbacks:
-            self.callbacks[topic](topic, payload)
-    
-    def logging(self, txt, end = '\n'):
-        if self.debug:
-            print(txt,end=end)
+        logging.info(f"Subscribe {topic} : callback={callback}")
+        #Ce serait bien de detecter ici si callback est une coroutine (sans l'executer) : ca éviterais de la faire à chaque fois
+        self.callbacks[topic]=callback
 
     def add_topic(self, topic:Topic):
         '''Add a new topic
         - subscribe to reverse topic
         '''
-        if topic.reverse_topic():
+        # Subscribe read function for reverse topic
+        if topic.reverse_topic() :
+            async def callback(_topic, _payload):
+                await self.a_publish(
+                    str(topic),
+                    await topic.a_get_payload(_topic, _payload))
             self.subscribe(
                 topic.reverse_topic(),
-                lambda _topic, _payload: self.publish(str(topic),topic.get_payload(_topic, _payload))
+                callback
                 )
+        # Subscribe action function for topic
         if topic.action:
+            async def callback(_topic, _payload):
+                logging.debug("Callback action")
+                payload = await topic.a_do_action(_topic,_payload)
+                logging.debug(f"payload = {payload}")
+                await self.a_publish(topic.reverse_topic_action(),payload)
             self.subscribe(
                 str(topic),
-                lambda _topic, _payload: self.publish(topic.reverse_topic(),topic.do_action(_topic, _payload))
+                callback
                 )
+        # Add routine for auto send topics
         if topic.send_period:
-            self.auto_send_topics.append(topic)
+            #self.auto_send_topics.append(topic)
+            async def a_do_auto_send():
+                while True:
+                    await asyncio.sleep(topic.send_period)
+                    await self.a_publish_topic(topic)
+            self.add_routine(a_do_auto_send)
+
+        # Essentiellement pour IRQ
+        topic.attach(self)
     
+    def publish_topic(self, topic:Topic):
+        '''publish
+        '''
+        logging.debug(f"publish_topic({topic})")
+        self.publish(str(topic),topic.get_payload())
+    
+    async def a_publish_topic(self, topic:Topic):
+        logging.debug(f"publish_topic({topic})")
+        payload = await topic.a_get_payload()
+        await self.a_publish(str(topic),payload)
+
+    #########################
+    # Routines autres       #
+    #########################
+
+    def add_routine(self, routine:TopicRoutine|callable):
+        '''Ajoute une routine qui sera executée dans le main comme tache
+        '''
+        if isinstance(routine, Topic):
+            self.routines.append(routine.a_do_action)
+        elif callable(routine):
+            self.routines.append(routine)
+        else:
+            logging.error(f"{routine} is not a Topics and not callable.")
+
+    #########################
+    # Main                  #
+    #########################
+
+    async def main(self):
+        ''' Connect au broker, puis crée l'enble des taches asynchrones.
+        Et attend indéfiniment qu'lles termines.
+        '''
+        try:
+            await self.client.connect()
+        except OSError:
+            logging.warning('Connection failed.')
+            return
+        tasks = []
+        for task in (self.up, self.down, self.messages):
+            tasks.append(asyncio.create_task(task()))
+        for task in self.routines:
+            tasks.append(asyncio.create_task(task()))
+
+        for task in tasks:
+            await task #Mais on peut attendre ... indéfiniement.
+
+    def run(self):
+        try:
+            asyncio.run(self.main())
+        except KeyboardInterrupt:
+            pass
+        finally:  # Prevent LmacRxBlk:1 errors.
+            logging.info("Main routine stopped.")
+            self.client.close()
+            asyncio.new_event_loop()
+
+    #########################
+    # SYSTEM                #
+    #########################
+
     def init_watchdog(self, watchdog_delai:int):
         '''Create a new Topic with watchdog
         watchdog_delai  :   delai (seconds) before restarting device
@@ -270,7 +264,7 @@ class  FmPyIot:
                     read=lambda topic, payload:"FEED",
                     action=lambda topic, payload: self.wd.feed()
                     ))
-    
+
     def init_system_topics(self, period:int):
         '''Create system topics
         '''
@@ -289,7 +283,7 @@ class  FmPyIot:
                     read = self.get_params
         ))
 
-    def sysinfo(self)->dict:
+    async def sysinfo(self)->dict:
         '''renvoie les informations system
         '''
         return{
@@ -301,7 +295,7 @@ class  FmPyIot:
             'mem_alloc' : gc.mem_alloc(),
             'statvfs' : os.statvfs('/')
         }
-    
+
     params_json = "params.json"
 
     def get_params(self)->dict:
@@ -348,41 +342,13 @@ class  FmPyIot:
         '''renvoie le status de la connection au format string
         '''
         return self.network_status[self.wlan.status()]
-    
-    def check_wlan(self):
-        '''Check wlan status (ping on mqtt) and kill wlan if test fall
-        return True is wlan is ok, False otherwise
-        '''
-        try:
-            assert ping(self.mqtt_pub.server,count=3,quiet=True)[1]>0,"Wlan error"
-        except Exception as e:
-            print(e)
-            self.wlan.deinit()
-            self.wlan.active(True)
-            return False
-        else:
-            return True
-
-    @staticmethod
-    def str_mqtt_status(mqtt_client):
-        if mqtt_client:
-            try:
-                mqtt_client.ping()
-            except Exception:
-                return "Error"
-            else:
-                return "Ok"
-        else:
-            return "Non connected."
 
     def __repr__(self):
-        repr = f"""FmPyIot({self.mqtt_base_topic})
+        repr = f"""FmPyIot(version2)({self.mqtt_base_topic})
                 WIFI : {self.str_network_status()}
-                MQTT_sub : {self.str_mqtt_status(self.mqtt_sub)}
-                MQTT_pub : {self.str_mqtt_status(self.mqtt_pub)}
                 WD : {self.wd}
                 callbacks : \n"""
-        for topic, callback in self.callbacks.items():
+        for topic in self.callbacks:
             repr += f"\t\t\t{topic}\n"
         return repr
     
@@ -390,4 +356,17 @@ class  FmPyIot:
         '''place de dispositif en mode debug'''
         self.wd.disable()
         print('Watchdog desactivate')
-    
+
+
+if __name__=='__main__':
+    iot=FmPyIot(
+        mqtt_host="***REMOVED***",
+        mqtt_base_topic= "test",
+        ssid = 'WIFI_THOME2',
+        password = "***REMOVED***",
+        watchdog=100,
+        sysinfo_period = 600,
+        led_incoming="LED", #internal
+        led_wifi=16
+        )
+    iot.run()
