@@ -47,7 +47,6 @@ class FmPyIot:
         if autoconnect:
             self.run()
         self.callbacks = {} #{'topic' : callback}
-        self.auto_send_topics = []
         #Watchdog
         self.wd = None
         if watchdog:
@@ -188,7 +187,6 @@ class FmPyIot:
                 )
         # Add routine for auto send topics
         if topic.send_period:
-            #self.auto_send_topics.append(topic)
             async def a_do_auto_send():
                 while True:
                     await asyncio.sleep(topic.send_period)
