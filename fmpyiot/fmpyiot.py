@@ -189,8 +189,7 @@ class FmPyIot:
         if topic.send_period:
             async def do_auto_send_async():
                 while True:
-                    await asyncio.sleep(topic.send_period)
-                    await self.publish_topic_async(topic)
+                    await topic.auto_send_async(self.publish_topic_async)
             self.add_routine(do_auto_send_async)
 
         # Essentiellement pour IRQ

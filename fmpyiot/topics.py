@@ -1,5 +1,6 @@
 import time, logging
 from machine import Pin
+import uasyncio as asyncio
 
 def never_crash(fn):
     def never_crash_function(*args, **kwargs):
@@ -85,20 +86,13 @@ class Topic:
         '''return the reverse topic name
         '''
         return f"{self}_"
-    
-    def auto_send(self, publisher: function):
-        '''Method call by Fmpyiot every timer period
-        '''
-        if self.send_period and time.time()>self.last_send + self.send_period:
-            publisher(self)
-            self.last_send = time.time()
 
     async def auto_send_async(self, publisher: function):
-        '''Method call by Fmpyiot every timer period
+        '''Method call by Fmpyiot to send 
         '''
-        if self.send_period and time.time()>self.last_send + self.send_period:
-            await publisher(self)
-            self.last_send = time.time()
+        if self.send_period:
+            await asyncio.sleep(self.send_period)
+        await publisher(self)
 
     def attach(self, iot):
         pass
