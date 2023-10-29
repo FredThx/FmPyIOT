@@ -195,11 +195,6 @@ class FmPyIot:
         # Essentiellement pour IRQ
         topic.attach(self)
     
-    def publish_topic(self, topic:Topic):
-        '''publish
-        '''
-        logging.debug(f"publish_topic({topic})")
-        self.publish(str(topic),topic.get_payload())
     
     async def publish_topic_async(self, topic:Topic):
         logging.debug(f"publish_topic({topic})")

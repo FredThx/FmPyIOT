@@ -38,23 +38,6 @@ class Topic:
         return self.topic
 
     @never_crash
-    def get_payload(self, topic:str=None, payload:any=None)->any:
-        ''' Read the device and return payload
-        read function can accept arguments : (inital topic, initial payload), just initial payload or nothing
-        '''
-        if self.read:
-            try:
-                return self.read(topic, payload)
-            except TypeError:
-                try:
-                    return self.read(payload)
-                except TypeError:
-                    return self.read()
-        else:
-            print(f"Error : {self} has to attribute 'read'")
-
-
-    @never_crash
     def do_action(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
@@ -237,3 +220,5 @@ class TopicOnChange(Topic):
         self.last_value = None
         self.percent = percent
         self.min_variation = variation
+
+
