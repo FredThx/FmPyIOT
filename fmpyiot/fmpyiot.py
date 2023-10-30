@@ -31,6 +31,7 @@ class FmPyIot:
             keepalive = 120,
                  ):
         self.routines = []
+        self.topics= []
         self.outages = 0
         self.led_wifi = self.led_function(led_wifi)
         self.led_incoming = self.led_function(led_incoming)
@@ -201,6 +202,8 @@ class FmPyIot:
 
         # Essentiellement pour IRQ
         topic.attach(self)
+        # Essentiellment pour webserver
+        self.topics.append(topic)
 
     #########################
     # Routines autres       #
@@ -369,13 +372,15 @@ class FmPyIot:
 ########################
 
     def init_web(self):
-        '''Initialise un servezur web par defaut
+        '''Initialise un serveur web par defaut
         '''
         @self.web.route("/")
         @self.authenticate()
         async def hello(request):
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
-            await request.write(f"Hello {self}")
+            await request.write(f"<p>{self}</p>")
+            for topic in self.topics:
+                await request.write(f"<p> {await topic.to_html_async()} </p>")
 
     def authenticate(self):
         async def fail(request):

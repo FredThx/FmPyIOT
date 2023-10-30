@@ -154,6 +154,9 @@ class Topic:
 
     type_generator = type((lambda: (yield))())
 
+    async def to_html_async(self):
+        return f'<span class="topic">{self.topic}</span> :'
+
 class TopicRead(Topic):
     '''Un topic de type read
     '''
@@ -163,6 +166,11 @@ class TopicRead(Topic):
                  reverse_topic:bool|str = True,
                  ):
         super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic)
+    
+    async def to_html_async(self):
+        html = await super().to_html_async()
+        html += str(await self.get_payload_async())
+        return html
 
 class TopicAction(Topic):
     '''Un topic de type action
@@ -171,6 +179,11 @@ class TopicAction(Topic):
                  action:function = None,
                 reverse_topic:bool|str = True,):
         super().__init__(topic=topic, action=action)
+
+    async def to_html_async(self):
+        html = await super().to_html_async()
+        html += '<button class="button_action" type="button">action</button'
+        return html
 
 
 class TopicIrq(Topic):
@@ -209,6 +222,11 @@ class TopicIrq(Topic):
                 asyncio.create_task(self.send_async(iot.publish_async))
         self.pin.irq(callback, self.trigger)
 
+    async def to_html_async(self):
+        html = await super().to_html_async()
+        html += str(await self.get_payload_async())
+        return html
+
 
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
@@ -216,7 +234,9 @@ class TopicRoutine(Topic):
     def __init__(self,
                  action:function = None):
         super().__init__(None, action=action)
-    
+
+    async def to_html_async(self):
+        return await super().to_html_async() + "Routine"
 
 class TopicOnChange(Topic):
     '''Un topic qui
