@@ -3,7 +3,7 @@ import time
 import uasyncio as asyncio
 from machine import Pin
 from fmpyiot.fmpyiot import FmPyIot
-from fmpyiot.topics import Topic, TopicRoutine, TopicIrq, TopicOnChange
+from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange
 
 
 time.sleep(5)
@@ -23,8 +23,7 @@ iot = FmPyIot(
 
 led = Pin('LED')
 
-topic_led = Topic("./LED", action = lambda topic, payload: led(int(payload)))
-iot.add_topic(topic_led)
+iot.add_topic(TopicAction("./LED", lambda topic, payload: led(not led())))
 
 #Une detection de changement d'état sur une Pin
 iot.add_topic(TopicIrq("./LED", pin=Pin(15,Pin.IN), trigger = Pin.IRQ_RISING, values=("1","0")))

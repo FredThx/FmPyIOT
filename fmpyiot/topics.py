@@ -150,6 +150,13 @@ class Topic:
     type_generator = type((lambda: (yield))())
 
 
+class TopicAction(Topic):
+    '''Un topic de type action
+    '''
+    def __init__(self, topic:str,
+                 action:function = None,
+                reverse_topic:bool = True,):
+        super().__init__(topic=topic, action=action)
 
 
 class TopicIrq(Topic):
