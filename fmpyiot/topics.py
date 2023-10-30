@@ -16,7 +16,7 @@ class Topic:
     '''
     def __init__(self, topic:str,
                  send_period:float = None,
-                 reverse_topic:bool = True,
+                 reverse_topic:bool|str = True,
                  read:function = None,
                  action:function = None):
         '''Initialisation
@@ -65,13 +65,18 @@ class Topic:
     def reverse_topic(self)->str:
         '''return the reverse topic name
         '''
-        if self._reverse_topic and self.read:
+        if type(self._reverse_topic)==str:
+            return self._reverse_topic
+        elif self._reverse_topic and self.read:
             return f"{self}_"
         
     def reverse_topic_action(self)->str:
         '''return the reverse topic name
         '''
-        return f"{self}_"
+        if type(self._reverse_topic)==str:
+            return self.reverse_topic
+        else:
+            return f"{self}_"
 
     async def send_async(self, publisher: function):
         '''Method call by Fmpyiot to send : topic, payload = read(...)
@@ -149,13 +154,22 @@ class Topic:
 
     type_generator = type((lambda: (yield))())
 
+class TopicRead(Topic):
+    '''Un topic de type read
+    '''
+    def __init__(self, topic:str,
+                 read:function = None,
+                 send_period:float = None,
+                 reverse_topic:bool|str = True,
+                 ):
+        super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic)
 
 class TopicAction(Topic):
     '''Un topic de type action
     '''
     def __init__(self, topic:str,
                  action:function = None,
-                reverse_topic:bool = True,):
+                reverse_topic:bool|str = True,):
         super().__init__(topic=topic, action=action)
 
 
