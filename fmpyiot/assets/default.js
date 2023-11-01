@@ -23,6 +23,9 @@ function init_vars() {
             $('#'+key).html(data['./SYSINFO'][key]);
         });
     });
+    $.get("/api/topics", function(html) {
+        $('#list-topics').html(html);
+    });
 }
 
 $(document).ready(function() {

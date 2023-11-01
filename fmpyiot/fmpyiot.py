@@ -454,6 +454,15 @@ class FmPyIot:
                     request,
                     f'./{self.assets_dir}/index.html')
 
+        @self.web.route('/api/topics')
+        @self.authenticate()
+        async def get_html_topics(request):
+            '''Renvoie sous forme html la liste des topics et leurs valeurs, boutons actions, ....
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await request.write(self.get_html_topics())
+            await request.write
+
         @self.web.route('/assets/*')
         @self.authenticate()
         async def assets(request):
@@ -570,7 +579,17 @@ class FmPyIot:
             logging.debug(f"request={request}")
             logging.info("rebbot device")
             machine_reset()
- 
+    
+    def get_html_topics(self):
+        '''renvoie du code html
+        '''
+        html = """<h3> Test Topics </h3>
+                    <div><span class="text-primary">./LED</span><span class = "text-secondary"> : 0</span></div>
+                    <div><span class="text-primary">./voltage</span><span class = "text-secondary"> : 42.56</span></div>
+                    <div><span class="text-primary">./LED</span><<a class="btn btn-danger" href="./api/action/topic?payload=42" role="button">ACTION</a></div>
+            """
+        return html
+
 if __name__=='__main__':
     iot=FmPyIot(
         mqtt_host="***REMOVED***",
