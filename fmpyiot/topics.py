@@ -106,8 +106,6 @@ class Topic:
                     return await self.run_callback_async(self.read, payload)
                 except TypeError:
                     return await self.run_callback_async(self.read)
-        else:
-            print(f"Error : {self} has to attribute 'read'")
 
     async def do_action_async(self, topic:str=None, payload:str=None)->str:
         '''Execute the action method and return (if exist) the value
