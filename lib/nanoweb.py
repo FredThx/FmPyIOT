@@ -27,6 +27,8 @@ class Request:
         self.write = None
         self.close = None
 
+    def __str__(self):
+        return f"request(url={self.url}, method={self.method}, route={self.route})"
 
 async def write(request, data):
     await request.write(
