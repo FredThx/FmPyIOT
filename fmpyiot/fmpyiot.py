@@ -315,7 +315,10 @@ class FmPyIot:
             with open(self.params_json,"r") as json_file:
                 return json.load(json_file)
         except OSError as e:
-            print(e)
+            logging.warning(f"Error reading {self.params_json} : {e}")
+            logging.info(f"create new empty file {self.params_json}")
+            self.write_params({})
+
     
     def set_params(self, topic:bytes, payload:bytes):
         '''Met à jour le fichier params_json en fonction de payload
@@ -324,17 +327,22 @@ class FmPyIot:
         try:
             params.update(json.loads(payload))
         except Exception as e:
-            print(e)
-        try:
-            with open(self.params_json,"W") as json_file:
-                json.dump(params, json_file)
-        except OSError as e:
-            print(e)
+            logging.error(f"Error reading file {self.params_json} : {e}")
+        self.write_params(params)
         for loader in self.params_loaders:
             try:
                 loader()
             except Exception as e:
                 print(f"Error on params_loader {loader} : {e}")
+    
+    def write_params(self, params):
+        '''Ecrit le fichier params
+        '''
+        try:
+            with open(self.params_json,"w") as json_file:
+                json.dump(params, json_file)
+        except OSError as e:
+            logging.error(f"Error writing file {self.params_json} : {e}")
     
     def set_params_loader(self, loader:function):
         self.params_loaders.append(loader)
