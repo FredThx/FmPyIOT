@@ -49,9 +49,21 @@ $(document).ready(function() {
         e.preventDefault();
     }).on('submit', '#list', function(e) {
         var file = $(this).find('select').val()[0];
-        if (file) {
-            window.location = '/api/download/' + file;
-        }
+            if (file) {
+                var button = document.activeElement['value'];
+                if (button=="Download"){
+                    window.location = '/api/download/' + file;
+                }
+                if (button=="Delete"){
+                    $.ajax({
+                        async: false,
+                        url: "/api/delete/" + file,
+                        method: 'DELETE',
+                    }).done(function() {
+                        update_files();
+                    });
+                }
+            }
 
         e.preventDefault();
     });

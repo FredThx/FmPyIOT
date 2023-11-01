@@ -12,36 +12,81 @@
     <link rel="stylesheet" href="default.css">
     
 <main>
-  <div class="px-4 py-5 my-5 text-center">
+  <div class="px-4 py-5 my-2 text-center">
     <h1 class="display-5 fw-bold" id = "name">{name}</h1>
     <div class="col-lg-6 mx-auto">
       <p class="lead mb-4" id = "description">{description}</p>
-      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <!--<div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
         <a class="btn btn-danger" href="./action=DOSE&payload=20" role="button">Verse 20g</a>
       </div>
+    -->
     </div>
   </div>
 
-  <div class="b-example-divider"></div>
-
-<!-- Tabs navs --><nav>
-  <div class="nav nav-tabs" id="nav-tab" role="tablist">
-    <button class="nav-link active" id="nav-topics-tab" data-bs-toggle="tab" data-bs-target="#nav-topics" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
-      topics
+<!-- Tabs navs -->
+<nav>
+  <div class="nav nav-tabs flex-column flex-sm-row" id="nav-tab" role="tablist">
+    <button class="nav-link active flex-sm-fill text-sm-center" id="nav-topics-tab" data-bs-toggle="tab" data-bs-target="#nav-topics" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
+      Topics
     </button>
-    <button class="nav-link" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
-      sysinfo
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
+      Sysinfo
+    </button>
+    <!-- Gestion des fichiers-->
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-files-tab" data-bs-toggle="tab" data-bs-target="#nav-files" type="button" role="tab" aria-controls="nav-files" aria-selected="false">
+      Mise à jour
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-repl-tab" data-bs-toggle="tab" data-bs-target="#nav-repl" type="button" role="tab" aria-controls="nav-repl" aria-selected="false">
+      REPL
     </button>
   </div>
 </nav>
-<div class="tab-content" id="nav-tabContent">
-  <div class="tab-pane fade show active" id="nav-topics" role="tabpanel" aria-labelledby="nav-topics-tab">
+<!-- Tabs navs content -->
+<div class="tab-content flex-column flex-sm-row" id="nav-tabContent">
+  <!-- Topics-->
+  <div class="tab-pane fade show active flex-sm-fill text-sm-center" id="nav-topics" role="tabpanel" aria-labelledby="nav-topics-tab">
     <h3>Topics</h3>
     <p>TODO....</p>
   </div>
-  <div class="tab-pane fade" id="nav-sysinfo" role="tabpanel" aria-labelledby="nav-sysinfo-tab">
+  <!--SYSINFO-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-sysinfo" role="tabpanel" aria-labelledby="nav-sysinfo-tab">
     <h3>Information system</h3>
     <p>TODO....</p>
+  </div>
+  <!--Gestion des fichiers-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
+    <h1>Gestion des fichiers</h1>
+      <p>Attention, zone de risque!!!!</p>
+      
+      <h2>1. Fichiers présents</h2>
+        <p class="alert alert-info" role="alert">
+            Liste limitée à la racinne.
+        </p>
+        <form id="list">
+            <select multiple></select>
+            <br>
+            <input class="btn btn-primary mt-2" type="submit" name="download" value="Download">
+            <input class="btn btn-primary mt-2" type="submit" name="delete" value="Delete">
+        </form>
+
+        <h2>2. Upload</h2>
+        <p class="alert alert-info" role="alert">
+            Select one or more files and upload them.
+        </p>
+        <form id="upload" action="/api/upload/" method="POST">
+            <label for="files">Files to upload:</label>
+            <input id="files" name="files" type="file" multiple>
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+        <div id="status" class="alert alert-primary" role="alert">
+            N/A
+        </div>
+  </div>
+  <!--REPL-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
+    <h3>REPL</h3>
+    <p>Une console REPL .... a faire!</p>
   </div>
 </div>
 </main>      
