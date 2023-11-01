@@ -461,7 +461,6 @@ class FmPyIot:
             '''
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
             await request.write(self.get_html_topics())
-            await request.write
 
         @self.web.route('/assets/*')
         @self.authenticate()
@@ -483,7 +482,7 @@ class FmPyIot:
         @self.web.route('/api/status')
         @self.authenticate()
         async def api_status(request):
-            '''API qui va renvoyer (json) le status 
+            '''API qui va renvoyer (json) le status avec toutes les valeurs des topics
             '''
             logging.debug(f"request={request}")
             await request.write("HTTP/1.1 200 OK\r\n")
@@ -492,7 +491,7 @@ class FmPyIot:
             for topic in self.topics:
                 payload = await topic.get_payload_async(topic.topic, None)
                 if payload:
-                    topics[topic.topic] = payload
+                    topics[topic.topic] = {'payload' : payload, 'id': topic.get_id()}
             await request.write(json.dumps(topics))
 
         @self.web.route('/api/ls')
@@ -583,11 +582,7 @@ class FmPyIot:
     def get_html_topics(self):
         '''renvoie du code html
         '''
-        html = """<h3> Test Topics </h3>
-                    <div><span class="text-primary">./LED</span><span class = "text-secondary"> : 0</span></div>
-                    <div><span class="text-primary">./voltage</span><span class = "text-secondary"> : 42.56</span></div>
-                    <div><span class="text-primary">./LED</span><<a class="btn btn-danger" href="./api/action/topic?payload=42" role="button">ACTION</a></div>
-            """
+        html = "".join([topic.to_html() for topic in self.topics])
         return html
 
 if __name__=='__main__':

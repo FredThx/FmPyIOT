@@ -9,18 +9,19 @@ function update_files() {
 
 function update_status() {
     $.getJSON("/api/status", function(data) {
-        var sysinfo = data["./SYSINFO"]
+        var sysinfo = data["./SYSINFO"].payload
         $('#json_sysinfo').html(JSON.stringify(sysinfo, undefined, 2));
-        $.each([], function(index, key) {
-            $('#' + key).html(data[key]);
-        });
+        Object.entries(data).forEach(entry => {
+            const [topic,data_topic] = entry;
+            $('#' + data_topic.id).html(data_topic.payload);
+            });
     });
 }
 
 function init_vars() {
     $.getJSON("/api/status", function(data) {
         $.each(['name', 'description'], function(index, key) {
-            $('#'+key).html(data['./SYSINFO'][key]);
+            $('#'+key).html(data['./SYSINFO'].payload[key]);
         });
     });
     $.get("/api/topics", function(html) {

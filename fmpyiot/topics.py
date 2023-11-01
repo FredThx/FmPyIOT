@@ -1,4 +1,4 @@
-import time, logging
+import time, logging, re
 from machine import Pin
 import uasyncio as asyncio
 
@@ -152,9 +152,38 @@ class Topic:
 
     type_generator = type((lambda: (yield))())
 
-    async def to_html_async(self):
-        return f'<span class="topic">{self.topic}</span> :'
+    ################
+    # WEB      #
+    ################
 
+    
+    def to_html(self)->str:
+        '''renvoie un code html représantant le topic (sans valeur)
+        '''
+        html = ""
+        if self.read:    
+            html+= self.html_reader()
+        if self.action:
+            html+= self.html_actionner()
+        return html
+    
+    def get_id(self)->str:
+        return "T"+re.sub(r'\W','_',self.topic)
+    
+    def html_reader(self)->str:
+        '''renvoie le code html pour "topic : valeur"
+        '''
+        return f'<div><span class = "topic">{self.topic}</span><span class="topic-sep"> = </span><span class="topic-value" id = "{self.get_id()}"></span></div>'
+
+    def html_actionner(self)->str:
+        '''Renvoie le code html d'un bouton + 2 paramètres(topic et payload)
+        '''
+        id = "action_"+self.get_id()
+        button = f'<input class="btn btn-primary mt-2" type="submit" name="{id}" value="{id}">'
+        _topic = f'<span><input type = "text" class="form_control" id = "_topic_{id}" placeholder="_topic"></span>'
+        _payload = f'<span><input type = "text" class="form_control" id = "_payload_{id} placeholder = "_payload""></span>'
+        return f'<div>{button}<span>(</span>{_topic}<span>,</span>{_payload}<span>)</span></div>'
+    
 class TopicRead(Topic):
     '''Un topic de type read
     '''
@@ -164,11 +193,6 @@ class TopicRead(Topic):
                  reverse_topic:bool|str = True,
                  ):
         super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic)
-    
-    async def to_html_async(self):
-        html = await super().to_html_async()
-        html += str(await self.get_payload_async())
-        return html
 
 class TopicAction(Topic):
     '''Un topic de type action
@@ -177,11 +201,6 @@ class TopicAction(Topic):
                  action:function = None,
                 reverse_topic:bool|str = True,):
         super().__init__(topic=topic, action=action)
-
-    async def to_html_async(self):
-        html = await super().to_html_async()
-        html += '<button class="button_action" type="button">action</button'
-        return html
 
 
 class TopicIrq(Topic):
@@ -220,12 +239,6 @@ class TopicIrq(Topic):
                 asyncio.create_task(self.send_async(iot.publish_async))
         self.pin.irq(callback, self.trigger)
 
-    async def to_html_async(self):
-        html = await super().to_html_async()
-        html += str(await self.get_payload_async())
-        return html
-
-
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
     '''
@@ -233,11 +246,8 @@ class TopicRoutine(Topic):
                  action:function = None):
         super().__init__(None, action=action)
 
-    async def to_html_async(self):
-        return await super().to_html_async() + "Routine"
-
 class TopicOnChange(Topic):
-    '''Un topic qui
+    '''Un topic qui sera envpyé quand la valeur change
     '''
     def __init__(self,
                  topic:str, 
