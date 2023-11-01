@@ -30,8 +30,8 @@ class FmPyIot:
             incoming_pulse_duration = 0.3,
             keepalive = 120,
                  ):
-        self.routines = []
-        self.topics= []
+        self.routines:list[TopicRoutine] = []
+        self.topics:list[Topic]= []
         self.outages = 0
         self.led_wifi = self.led_function(led_wifi)
         self.led_incoming = self.led_function(led_incoming)
