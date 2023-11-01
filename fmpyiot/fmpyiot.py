@@ -5,6 +5,7 @@ from machine import Pin
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
 from ubinascii import a2b_base64 as base64_decode
+import nanoweb as naw
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -59,8 +60,7 @@ class FmPyIot:
         self.params_loaders = []
         #Web
         if web:
-            from nanoweb import Nanoweb
-            self.web = Nanoweb(web_port)
+            self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials
         
 
@@ -371,18 +371,9 @@ class FmPyIot:
 #  WEB SERVER        ###
 ########################
 
-    def init_web(self):
-        '''Initialise un serveur web par defaut
-        '''
-        @self.web.route("/")
-        @self.authenticate()
-        async def hello(request):
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
-            await request.write(f"<p>{self}</p>")
-            for topic in self.topics:
-                await request.write(f"<p> {await topic.to_html_async()} </p>")
-
     def authenticate(self):
+        '''Décorateur pour BASIC authentification (self.web_credentials)
+        '''
         async def fail(request):
             await request.write("HTTP/1.1 401 Unauthorized\r\n")
             await request.write('WWW-Authenticate: Basic realm="Restricted"\r\n\r\n')
@@ -410,6 +401,116 @@ class FmPyIot:
             return wrapper
         return decorator
 
+    @staticmethod
+    async def api_send_response(request, code=200, message="OK"):
+        await request.write("HTTP/1.1 %i %s\r\n" % (code, message))
+        await request.write("Content-Type: application/json\r\n\r\n")
+        await request.write('{"status": true}')
+
+    def init_web(self):
+        '''Initialise un serveur web par defaut
+        '''
+        @self.web.route("/")
+        @self.authenticate()
+        async def index(request):
+            '''Page principale
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await request.write("<!DOCTYPE html>")
+            await request.write("<html>")
+            await request.write('<head><title>FmPyIot</title><meta http-equiv="refresh" content="1"></head>')
+            await request.write(f"<p>{self}</p>")
+            for topic in self.topics:
+                await request.write(f"<p> {await topic.to_html_async()} </p>")
+            await request.write("</html>")
+
+        @self.web.route('/api/status')
+        @self.authenticate()
+        async def api_status(request):
+            '''API qui va renvoyer (json) le status 
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n")
+            await request.write("Content-Type: application/json\r\n\r\n")
+            topics = {}
+            for topic in self.topics:
+                payload = await topic.get_payload_async(topic.topic, None)
+                if payload:
+                    topics[topic.topic] = payload
+            await request.write(json.dumps(topics))
+
+        @self.web.route('/api/ls')
+        @self.authenticate()
+        async def api_ls(request):
+            '''List device files (only on root)
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n")
+            await request.write("Content-Type: application/json\r\n\r\n")
+            await request.write('{"files": [%s]}' % ', '.join(
+                '"' + f + '"' for f in sorted(os.listdir('.'))
+            ))
+
+        @self.web.route('/api/download/*')
+        @self.authenticate()
+        async def api_download(request):
+            '''Download file from device
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n")
+            filename = request.url[len(request.route.rstrip("*")) - 1:].strip("/")
+            await request.write("Content-Type: application/octet-stream\r\n")
+            await request.write("Content-Disposition: attachment; filename=%s\r\n\r\n"
+                                % filename)
+            logging.info(f"Download file : {filename}")
+            await naw.send_file(request, filename)
+
+        @self.web.route('/api/delete/*')
+        @self.authenticate()
+        async def api_delete(request):
+            '''Delete file on device
+            '''
+            if request.method != "DELETE":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            filename = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            try:
+                os.remove(filename)
+                logging.info(f"Delete file : {filename}")
+            except OSError as e:
+                raise naw.HttpError(request, 500, "Internal error")
+            await self.api_send_response(request)
+
+        @self.web.route('/api/upload/*')
+        @self.authenticate()
+        async def upload(request):
+            '''Upload file to device
+            '''
+            if request.method != "PUT":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            bytesleft = int(request.headers.get('Content-Length', 0))
+            if not bytesleft:
+                await request.write("HTTP/1.1 204 No Content\r\n\r\n")
+                return
+            output_file = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            tmp_file = output_file + '.tmp'
+            try:
+                with open(tmp_file, 'wb') as o:
+                    while bytesleft > 0:
+                        chunk = await request.read(min(bytesleft, 64))
+                        o.write(chunk)
+                        bytesleft -= len(chunk)
+                    o.flush()
+            except OSError:
+                raise naw.HttpError(request, 500, "Internal error")
+            try:
+                os.remove(output_file)
+            except OSError:
+                pass
+            try:
+                os.rename(tmp_file, output_file)
+            except OSError:
+                raise naw.HttpError(request, 500, "Internal error")
+            logging.info(f"File uploaded : {output_file}")
+            await self.api_send_response(request, 201, "Created")
+
+ 
 if __name__=='__main__':
     iot=FmPyIot(
         mqtt_host="***REMOVED***",
