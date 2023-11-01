@@ -19,6 +19,7 @@ iot = FmPyIot(
     #led_wifi='LED',
     web=True,
     web_credentials=(***REMOVED***, ***REMOVED***),
+    name = "FmPyIot TEST"
     )
 
 led = Pin('LED')
