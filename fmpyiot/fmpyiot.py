@@ -1,7 +1,7 @@
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
-from machine import Pin
+from machine import Pin, reset as machine_reset
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
 from ubinascii import a2b_base64 as base64_decode
@@ -561,7 +561,15 @@ class FmPyIot:
                 raise naw.HttpError(request, 500, "Internal error")
             logging.info(f"File uploaded : {output_file}")
             await self.api_send_response(request, 201, "Created")
-
+            
+        @self.web.route('/api/reboot')
+        @self.authenticate()
+        async def reboot(request):
+            '''Upload file to device
+            '''
+            logging.debug(f"request={request}")
+            logging.info("rebbot device")
+            machine_reset()
  
 if __name__=='__main__':
     iot=FmPyIot(

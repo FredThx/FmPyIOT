@@ -32,12 +32,14 @@
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
       Sysinfo
     </button>
-    <!-- Gestion des fichiers-->
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-files-tab" data-bs-toggle="tab" data-bs-target="#nav-files" type="button" role="tab" aria-controls="nav-files" aria-selected="false">
       Mise à jour
     </button>
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-repl-tab" data-bs-toggle="tab" data-bs-target="#nav-repl" type="button" role="tab" aria-controls="nav-repl" aria-selected="false">
       REPL
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-sys-tab" data-bs-toggle="tab" data-bs-target="#nav-sys" type="button" role="tab" aria-controls="nav-sys" aria-selected="false">
+      Système
     </button>
   </div>
 </nav>
@@ -87,6 +89,14 @@
   <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
     <h3>REPL</h3>
     <p>Une console REPL .... a faire!</p>
+  </div>
+  <!--SYSTEM-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-sys" role="tabpanel" aria-labelledby="nav-sys-tab">
+    <h3 class="ms-5">Système</h3>
+    <br>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <a class="btn btn-danger" href="./api/reboot" role="button">Reboot</a>
+    </div>
   </div>
 </div>
 </main>      
