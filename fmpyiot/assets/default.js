@@ -9,6 +9,8 @@ function update_files() {
 
 function update_status() {
     $.getJSON("/api/status", function(data) {
+        var sysinfo = data["./SYSINFO"]
+        $('#json_sysinfo').html(JSON.stringify(sysinfo, undefined, 2));
         $.each([], function(index, key) {
             $('#' + key).html(data[key]);
         });
