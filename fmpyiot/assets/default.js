@@ -49,28 +49,38 @@ $(document).ready(function() {
                 update_files();
             });
         });
-
         $('#status').html(success + " file(s) uploaded successfully.");
-
         e.preventDefault();
     }).on('submit', '#list', function(e) {
         var file = $(this).find('select').val()[0];
-            if (file) {
-                var button = document.activeElement['value'];
-                if (button=="Download"){
-                    window.location = '/api/download/' + file;
-                }
-                if (button=="Delete"){
-                    $.ajax({
-                        async: false,
-                        url: "/api/delete/" + file,
-                        method: 'DELETE',
-                    }).done(function() {
-                        update_files();
-                    });
-                }
+        if (file) {
+            var button = document.activeElement['value'];
+            if (button=="Download"){
+                window.location = '/api/download/' + file;
             }
-
+            if (button=="Delete"){
+                $.ajax({
+                    async: false,
+                    url: "/api/delete/" + file,
+                    method: 'DELETE',
+                }).done(function() {
+                    update_files();
+                });
+            }
+        }
+        e.preventDefault();
+    }).on('submit', '#form-list-topics', function(e){
+        let button = document.activeElement['value'];
+        let datas = {
+            'topic' : document.getElementById("_topic_"+button).value,
+            'payload' : document.getElementById("_payload_"+button).value
+            };
+        $.ajax({
+            async : false,
+            url : '/api/action/'+button,
+            method:'POST',
+            data: datas,
+        })
         e.preventDefault();
     });
 

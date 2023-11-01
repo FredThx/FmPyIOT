@@ -437,6 +437,27 @@ class FmPyIot:
             if e.args[0] != uerrno.ENOENT:
                 raise
             raise naw.HttpError(request, 404, "File Not Found")
+    @staticmethod
+    async def get_post_data(request):
+        """ get Post data 
+        """
+        await request.write("HTTP/1.1 200 Ok\r\n")
+        if request.method != "POST":
+            raise naw.HttpError(request, 501, "Not Implemented")
+        try:
+            content_length = int(request.headers['Content-Length'])
+            content_type = request.headers['Content-Type']
+        except KeyError:
+            raise naw.HttpError(request, 400, "Bad Request")
+        data = (await request.read(content_length)).decode()
+        if content_type == 'application/json':
+            result = json.loads(data)
+        elif content_type.split(';')[0] == 'application/x-www-form-urlencoded':
+            result = {}
+            for chunk in data.split('&'):
+                key, value = chunk.split('=', 1)
+                result[key]=value
+        return result
 
     def init_web(self):
         '''Initialise un serveur web par defaut
@@ -578,6 +599,24 @@ class FmPyIot:
             logging.debug(f"request={request}")
             logging.info("rebbot device")
             machine_reset()
+
+        @self.web.route('/api/action/*')
+        @self.authenticate()
+        async def action(request):
+            '''Execute l'action liés à un topic
+            '''
+            logging.debug(f"request={request}")
+            data = await self.get_post_data(request)
+            logging.debug(f"POST : data={data}")
+            topic_id = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            topic_id = topic_id[7:]
+            topics = [topic for topic in self.topics if topic.get_id()==topic_id]
+            if not topics:
+                logging.error(f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
+                raise Exception("Erreur en lien avec topic.get_id()")
+            topic = topics[0]
+            await topic.do_action_async(data.get('topic'),data.get('payload'))
+
     
     def get_html_topics(self):
         '''renvoie du code html

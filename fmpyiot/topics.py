@@ -181,7 +181,7 @@ class Topic:
         id = "action_"+self.get_id()
         button = f'<input class="btn btn-primary mt-2" type="submit" name="{id}" value="{id}">'
         _topic = f'<span><input type = "text" class="form_control" id = "_topic_{id}" placeholder="_topic"></span>'
-        _payload = f'<span><input type = "text" class="form_control" id = "_payload_{id} placeholder = "_payload""></span>'
+        _payload = f'<span><input type = "text" class="form_control" id = "_payload_{id}" placeholder = "_payload"></span>'
         return f'<div>{button}<span>(</span>{_topic}<span>,</span>{_payload}<span>)</span></div>'
     
 class TopicRead(Topic):
