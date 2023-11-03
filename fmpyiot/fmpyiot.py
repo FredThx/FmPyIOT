@@ -51,8 +51,6 @@ class FmPyIot:
         MQTTClient.DEBUG = True
         self.client = MQTTClient(mqtt_as_config)
         self.wlan = self.client._sta_if
-        if autoconnect:
-            self.run()
         self.callbacks = {} #{'topic' : callback}
         #Watchdog
         self.wd = None
@@ -67,6 +65,9 @@ class FmPyIot:
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials
+        #Auto run
+        if autoconnect:
+            self.run()
         
 
     #########################
@@ -229,14 +230,18 @@ class FmPyIot:
     #########################
 
     async def main(self):
-        ''' Connect au broker, puis crée l'enble des taches asynchrones.
-        Et attend indéfiniment qu'lles termines.
+        ''' Connect au broker, puis crée l'ensemble des taches asynchrones.
+        Et attend indéfiniment qu'elles terminent.
         '''
-        try:
-            await self.client.connect()
-        except OSError:
-            logging.warning('Connection failed.')
-            return
+        is_connect = False
+        while not is_connect:
+            try:
+                await self.client.connect()
+                is_connect = True
+            except OSError:
+                logging.warning('Connection failed.')
+                logging.info("Connect restart in 5 secondes ...")
+                await asyncio.sleep(5)
         tasks = []
         for task in (self.up, self.down, self.messages):
             tasks.append(asyncio.create_task(task()))
