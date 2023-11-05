@@ -13,13 +13,9 @@
     
 <main>
   <div class="px-4 py-5 my-2 text-center">
-    <h1 class="display-5 fw-bold" id = "name">{name}</h1>
+    <h1 class="display-5 fw-bold" id = "name"></h1>
     <div class="col-lg-6 mx-auto">
-      <p class="lead mb-4" id = "description">{description}</p>
-      <!--<div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-        <a class="btn btn-danger" href="./action=DOSE&payload=20" role="button">Verse 20g</a>
-      </div>
-    -->
+      <p class="lead mb-4" id = "description"></p>
     </div>
   </div>
 
@@ -31,6 +27,9 @@
     </button>
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
       Sysinfo
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-params-tab" data-bs-toggle="tab" data-bs-target="#nav-params" type="button" role="tab" aria-controls="nav-params" aria-selected="false">
+      Paramètres
     </button>
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-files-tab" data-bs-toggle="tab" data-bs-target="#nav-files" type="button" role="tab" aria-controls="nav-files" aria-selected="false">
       Mise à jour
@@ -56,6 +55,10 @@
   <div class="tab-pane fade flex-sm-fill text-sm" id="nav-sysinfo" role="tabpanel" aria-labelledby="nav-sysinfo-tab">
     <h3 class="ms-5">Informations system</h3>
     <pre id="pre-json-sysinfo"><code id="json_sysinfo"></code></pre>
+  </div>
+  <!--PARAMS-->
+  <div class="tab-pane fade flex-sm-fill text-sm" id="nav-params" role="tabpanel" aria-labelledby="nav-params-tab">
+    <h3 class="ms-5">Paramètres de l'objet</h3>
   </div>
   <!--Gestion des fichiers-->
   <div class="tab-pane fade flex-sm-fill text-sm-center ms-5" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
@@ -90,7 +93,10 @@
   <!--REPL-->
   <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
     <h3>REPL</h3>
-    <p>Une console REPL .... a faire!</p>
+    <div>
+      <textarea id="REPL-output" rows = "15" cols = "100" readonly = "true"></textarea>
+      <div><input id="RELP_input" placeholder="CMD"></input></div>
+    </div>
   </div>
   <!--SYSTEM-->
   <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-sys" role="tabpanel" aria-labelledby="nav-sys-tab">

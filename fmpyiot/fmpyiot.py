@@ -4,6 +4,7 @@ import logging, os, ubinascii, gc, json, network
 from machine import Pin, reset as machine_reset
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
+from fmpyiot.repl import REPL
 from ubinascii import a2b_base64 as base64_decode
 import nanoweb as naw
 import uerrno
@@ -11,7 +12,7 @@ import uerrno
 logging.basicConfig(level=logging.DEBUG)
 
 class FmPyIot:
-    '''Un objet connecté via mqtt (et plus:todo)
+    '''Un objet connecté via mqtt et http
     '''
     def __init__(self,
             mqtt_host:str, mqtt_client_name:str = None, mqtt_base_topic:str = None,
@@ -242,6 +243,7 @@ class FmPyIot:
                 logging.warning('Connection failed.')
                 logging.info("Connect restart in 5 secondes ...")
                 await asyncio.sleep(5)
+        logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
         for task in (self.up, self.down, self.messages):
             tasks.append(asyncio.create_task(task()))
@@ -250,9 +252,12 @@ class FmPyIot:
 
         #Web interface
         if self.web:
+            #REPL
+            self.REPL=REPL()
             self.init_web()
             tasks.append(asyncio.create_task(self.web.run()))
 
+        #Attente infinie
         for task in tasks:
             await task #Mais on peut attendre ... indéfiniement.
 
@@ -621,6 +626,18 @@ class FmPyIot:
                 raise Exception("Erreur en lien avec topic.get_id()")
             topic = topics[0]
             await topic.do_action_async(data.get('topic'),data.get('payload'))
+
+        @self.web.route('/api/repl')
+        @self.authenticate()
+        async def repl(request):
+            '''renvoie les dernières ligne du REPL
+            '''
+            if request.method != "GET":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            new_lines = self.REPL.read()
+            await request.write("HTTP/1.1 200 OK\r\n")
+            await request.write("Content-Type: application/json\r\n\r\n")
+            await request.write(json.dumps({'repl' : new_lines}))
 
     
     def get_html_topics(self):

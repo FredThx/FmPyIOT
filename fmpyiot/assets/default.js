@@ -1,3 +1,5 @@
+//Mise à jour de la liste des fichier présents sur le device
+//TODO : recursif
 function update_files() {
     $('#list select option').remove();
     $.getJSON("/api/ls", function(data) {
@@ -7,6 +9,10 @@ function update_files() {
     });
 }
 
+//Mise à jour du status : ("./SYSINFO")
+//  - #json_sysinfo
+//  - valeurs des topics
+// Est executée toutes les secondes
 function update_status() {
     $.getJSON("/api/status", function(data) {
         var sysinfo = data["./SYSINFO"].payload
@@ -18,6 +24,9 @@ function update_status() {
     });
 }
 
+//Initialisation des valeurs
+//  - #name, #descriptions, #list_topics
+//Est executé au chargement
 function init_vars() {
     $.getJSON("/api/status", function(data) {
         $.each(['name', 'description'], function(index, key) {
@@ -29,6 +38,25 @@ function init_vars() {
     });
 }
 
+// Mise à jour de REPL
+// Est executé toutes les 500 ms
+REPL_lines = []
+function update_repl(){
+    $.getJSON("/api/repl", function(data){
+        data.repl.forEach(function(line){
+            len_REPL_lines = REPL_lines.push(line);
+            if (len_REPL_lines>100){
+                REPL_lines.shift();
+            }
+            var textarea = $('#REPL-output');
+            textarea.val(REPL_lines.join('\n'));
+            textarea.scrollTop(textarea[0].scrollHeight);
+        })
+    })
+
+}
+
+// gestion des evenements
 $(document).ready(function() {
     $(document).on('submit', '#upload', function(e) {
         var form = $(this);
@@ -84,7 +112,9 @@ $(document).ready(function() {
         e.preventDefault();
     });
 
+    // main
     setInterval(update_status, 1000);
+    setInterval(update_repl, 500);
 
     init_vars();
     update_files();
