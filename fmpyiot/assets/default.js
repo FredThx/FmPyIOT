@@ -50,14 +50,35 @@ function update_repl(){
                 REPL_lines.shift();
             }
             let textarea = $('#REPL-output');
-            let input = $('#REPL-input');
-            let bt_input = $("#REPL-input-btn");
             textarea.val(REPL_lines.join('\n'));
             textarea.scrollTop(textarea[0].scrollHeight);
-            input.width(textarea.width()-bt_input.width()-20);
+            update_width_cmd()
         })
     })
 
+}
+
+function do_repl_cmd(){
+    let cmd = $("#REPL-input").val();
+    if (cmd){
+        $.ajax({
+            async : true,
+            url : '/api/repl/cmd',
+            method:'POST',
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify({'cmd' : cmd}),
+        }).done(function(r){
+            $("#REPL-input").val("");
+        });
+    }
+}
+
+function update_width_cmd(){
+    let textarea = $('#REPL-output');
+    let input = $('#REPL-input');
+    let bt_input = $("#REPL-input-btn");
+    input.width(textarea.width()-bt_input.width()-20);
 }
 
 //Quand la page est chargée
@@ -109,10 +130,12 @@ $(document).ready(function() {
             'payload' : document.getElementById("_payload_"+button).value
             };
         $.ajax({
-            async : false,
+            async : true,
             url : '/api/action/'+button,
             method:'POST',
-            data: datas,
+            contentType: "application/json",
+            dataType: "json",
+            data: JSON.stringify(datas),
         })
         e.preventDefault();
     });
@@ -123,13 +146,25 @@ $(document).ready(function() {
             async: false,
             url: "/api/logging-level/" + level,
             method: 'POST',
-        })
-    })
+        });
+        e.preventDefault();
+    });
+
+    $("#REPL-input-btn").on("click", function(e){
+        do_repl_cmd();
+        e.preventDefault();
+    });
+    /*
+    $("#REPL-input").on("keypress", function(e){
+        do_repl_cmd();
+        e.preventDefault();
+    });*/
+
 
     // main
     setInterval(update_status, 1000);
     setInterval(update_repl, 500);
-
+    update_width_cmd()
     init_vars();
     update_files();
     update_status();

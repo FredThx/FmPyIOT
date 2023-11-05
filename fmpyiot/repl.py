@@ -49,7 +49,7 @@ class ReplStream(uio.IOBase):
         '''Execute une commande
         '''
         self._newline()
-        self.lines.append(f">>>{cmd}")
+        self.queue.put(f">>>{cmd}")
         result = None
         try:
             result = eval(cmd)#toto : gerer globals et locals pour limiter
@@ -57,10 +57,13 @@ class ReplStream(uio.IOBase):
             try:
                 exec(cmd)#toto : gerer globals et locals pour limiter
             except Exception as e2:
-                self.lines.append(str(e2))
+                self.queue.put(str(e2))
         if result:
             self._newline()
-            self.lines.append(result)
+            self.queue.put(result)
+            return result
+        else:
+            return ""
 
 class Queue:
     def __init__(self, size:int):
@@ -125,3 +128,6 @@ class REPL():
         while line:=self.queue.read():
             lines.append(line)
         return lines
+
+    async def exec(self, cmd:str):
+        return self.stream.exec(cmd)

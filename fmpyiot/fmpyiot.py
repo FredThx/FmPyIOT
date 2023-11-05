@@ -651,6 +651,24 @@ class FmPyIot:
             await request.write("HTTP/1.1 200 OK\r\n")
             await request.write("Content-Type: application/json\r\n\r\n")
             await request.write(json.dumps({'repl' : new_lines}))
+        
+        @self.web.route('/api/repl/cmd')
+        @self.authenticate()
+        async def repl(request):
+            '''renvoie les dernières ligne du REPL
+            '''
+            if request.method != "POST":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            try:
+                data = await self.get_post_data(request)
+                cmd = data['cmd']
+            except:
+                raise naw.HttpError(request, 400, "Bad request")
+            rep = await self.REPL.exec(cmd)
+            await request.write("HTTP/1.1 200 OK\r\n")
+            await request.write("Content-Type: application/json\r\n\r\n")
+            await request.write(json.dumps({'rep' : rep}))
+            
 
         @self.web.route('/api/logging-level/*')
         @self.authenticate()
@@ -662,6 +680,7 @@ class FmPyIot:
             except:
                 raise naw.HttpError(request, 400, "Bad request")
             self.set_logging_level(level)
+            await self.api_send_response()
     
     def get_html_topics(self):
         '''renvoie du code html
