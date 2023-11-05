@@ -94,25 +94,25 @@ Si un topic est prévu en message entrant (ex : l'execution d'une action), alors
 
 ### Visualiser les valeurs des Topics / Exécuter les actions
 
-![1699181056625](image/readme/topics.png)
+![topics](image/readme/topics.png)
 
 ### visualiser les informations system
 
-![1699181163079](image/readme/sysinfo.png)
+![sysinfo](image/readme/sysinfo.png)
 
 ### Modifier des paramètres (todo)
 
 ### Upload/download les fichiers
 
-![1699181194181](image/readme/files.png)
+![files](image/readme/files.png)
 
 ### avoir une console REPL
 
-![1699181207273](image/readme/repl.png)
+![repl](image/readme/repl.png)
 
 ### un petit menu system
 
-![1699181220867](image/readme/system.png)
+![system](image/readme/system.png)
 
 # Thanks
 
