@@ -32,6 +32,7 @@ function init_vars() {
         $.each(['name', 'description'], function(index, key) {
             $('#'+key).html(data['./SYSINFO'].payload[key]);
         });
+        $('#REPL-logging-level-select').val(data['./SYSINFO'].payload['logging_level']);
     });
     $.get("/api/topics", function(html) {
         $('#list-topics').html(html);
@@ -48,16 +49,20 @@ function update_repl(){
             if (len_REPL_lines>100){
                 REPL_lines.shift();
             }
-            var textarea = $('#REPL-output');
+            let textarea = $('#REPL-output');
+            let input = $('#REPL-input');
+            let bt_input = $("#REPL-input-btn");
             textarea.val(REPL_lines.join('\n'));
             textarea.scrollTop(textarea[0].scrollHeight);
+            input.width(textarea.width()-bt_input.width()-20);
         })
     })
 
 }
 
-// gestion des evenements
+//Quand la page est chargée
 $(document).ready(function() {
+    // gestion des evenements
     $(document).on('submit', '#upload', function(e) {
         var form = $(this);
         var success = 0;
@@ -111,6 +116,15 @@ $(document).ready(function() {
         })
         e.preventDefault();
     });
+
+    $("#REPL-logging-level-select").on("change", function(e){
+        let level = $("#REPL-logging-level-select").val();
+        $.ajax({
+            async: false,
+            url: "/api/logging-level/" + level,
+            method: 'POST',
+        })
+    })
 
     // main
     setInterval(update_status, 1000);

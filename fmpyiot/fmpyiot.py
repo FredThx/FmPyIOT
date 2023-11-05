@@ -22,6 +22,7 @@ class FmPyIot:
             debug:bool = True,
             sysinfo_period:int = 600, #s
             country:str = 'FR',
+            logging_level = logging.DEBUG,
             mqtt_log:str = "./LOG",
             log_console_level:int = logging.DEBUG,
             log_mqtt_level:int = logging.INFO,
@@ -35,6 +36,7 @@ class FmPyIot:
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
+        self.set_logging_level(logging_level)
         self.routines:list[TopicRoutine] = []
         self.topics:list[Topic]= []
         self.outages = 0
@@ -74,6 +76,15 @@ class FmPyIot:
     #########################
     # DIVERS utilitaires    #
     #########################
+
+    @staticmethod
+    def set_logging_level(level:int):
+        '''Change le niveau de log
+        level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL)
+        '''
+        logging.basicConfig(level=level)
+        logging.info(f"Logging level updated to : {logging.getLevelName(level)}")
+
     def get_topic(self, topic:str)-> str:
         '''Ajout base_topic quand './' devant
         '''
@@ -320,7 +331,8 @@ class FmPyIot:
             'mac' : ubinascii.hexlify(self.wlan.config('mac'),':').decode(),
             'mem_free' : gc.mem_free(),
             'mem_alloc' : gc.mem_alloc(),
-            'statvfs' : os.statvfs('/')
+            'statvfs' : os.statvfs('/'),
+            'logging_level' : logging.root.level,
         }
 
     params_json = "params.json"
@@ -639,6 +651,16 @@ class FmPyIot:
             await request.write("Content-Type: application/json\r\n\r\n")
             await request.write(json.dumps({'repl' : new_lines}))
 
+        @self.web.route('/api/logging-level/*')
+        @self.authenticate()
+        async def logging_level(request):
+            if request.method != "POST":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            try:
+                level = int(request.url[len(request.route.rstrip("*")) - 1:].strip("\/"))
+            except:
+                raise naw.HttpError(request, 400, "Bad request")
+            self.set_logging_level(level)
     
     def get_html_topics(self):
         '''renvoie du code html

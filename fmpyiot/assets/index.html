@@ -72,8 +72,8 @@
         <form id="list">
             <select multiple></select>
             <br>
-            <input class="btn btn-primary mt-2" type="submit" name="download" value="Download">
-            <input class="btn btn-primary mt-2" type="submit" name="delete" value="Delete">
+            <input class="btn btn-primary btn-sm" type="submit" name="download" value="Download">
+            <input class="btn btn-primary btn-sm" type="submit" name="delete" value="Delete">
         </form>
 
         <h2>2. Upload</h2>
@@ -84,7 +84,7 @@
             <label for="files">Files to upload:</label>
             <input id="files" name="files" type="file" multiple>
             <br>
-            <input type="submit" value="Upload">
+            <input class="btn btn-primary btn-sm" type="submit" value="Upload">
         </form>
         <div id="status" class="alert alert-primary" role="alert">
             N/A
@@ -92,10 +92,28 @@
   </div>
   <!--REPL-->
   <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
-    <h3>REPL</h3>
+    <br>
+    <div>
+      <span><label for = "REPL-logging-level-select"></label>Logging level :</span>
+      <span>
+        <select id="REPL-logging-level-select">
+          <option value="10">Debug</option>
+          <option value="20">Info</option>
+          <option value="30">Warning</option>
+          <option value="40">Error</option>
+          <option value="50">Critical</option>
+        </select>
+      </span>
+    </div>
+    <br>
     <div>
       <textarea id="REPL-output" rows = "15" cols = "100" readonly = "true"></textarea>
-      <div><input id="RELP_input" placeholder="CMD"></input></div>
+      <div>
+        <input id="REPL-input" placeholder="CMD"></input>
+        <span class="input-group-btn">
+          <button id = "REPL-input-btn" class="btn btn-primary btn-sm" type = "button">Ok</button>
+        </span>
+      </div>
     </div>
   </div>
   <!--SYSTEM-->
