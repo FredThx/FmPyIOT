@@ -36,7 +36,6 @@ class FmPyIot:
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
-        self.set_logging_level(logging_level)
         self.routines:list[TopicRoutine] = []
         self.topics:list[Topic]= []
         self.outages = 0
@@ -51,10 +50,12 @@ class FmPyIot:
         mqtt_as_config['will'] = (self.get_topic("./BYE"), 'Goodbye cruel world!', False, 0)
         mqtt_as_config['keepalive'] = keepalive
         mqtt_as_config["queue_len"] = 1  # Use event interface with default queue
-        MQTTClient.DEBUG = True
+        #MQTTClient.DEBUG = True
         self.client = MQTTClient(mqtt_as_config)
         self.wlan = self.client._sta_if
         self.callbacks = {} #{'topic' : callback}
+        #Logging level
+        self.set_logging_level(logging_level)
         #Watchdog
         self.wd = None
         if watchdog:
@@ -77,12 +78,12 @@ class FmPyIot:
     # DIVERS utilitaires    #
     #########################
 
-    @staticmethod
-    def set_logging_level(level:int):
+    def set_logging_level(self, level:int):
         '''Change le niveau de log
         level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL)
         '''
         logging.basicConfig(level=level)
+        self.client.DEBUG = level <= logging.DEBUG
         logging.info(f"Logging level updated to : {logging.getLevelName(level)}")
 
     def get_topic(self, topic:str)-> str:
