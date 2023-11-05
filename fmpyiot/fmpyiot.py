@@ -622,6 +622,7 @@ class FmPyIot:
             logging.debug(f"request={request}")
             logging.info("rebbot device")
             machine_reset()
+            await self.api_send_response(request, 200, "OK")
 
         @self.web.route('/api/action/*')
         @self.authenticate()
@@ -636,9 +637,11 @@ class FmPyIot:
             topics = [topic for topic in self.topics if topic.get_id()==topic_id]
             if not topics:
                 logging.error(f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
+                await self.api_send_response(request, 400, f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
                 raise Exception("Erreur en lien avec topic.get_id()")
             topic = topics[0]
             await topic.do_action_async(data.get('topic'),data.get('payload'))
+            await self.api_send_response(request, 200, 'ok')
 
         @self.web.route('/api/repl')
         @self.authenticate()
