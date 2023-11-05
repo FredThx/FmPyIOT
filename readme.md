@@ -31,8 +31,7 @@ iot = FmPyIot(
     mqtt_base_topic = "....",
     ssid = '....',
     password = "....",
-    wotchdof = 100,
-    watchdog=100,
+    watchdog = 100,
     sysinfo_period = 600,
     led_incoming = None,
     led_wifi = None,
@@ -53,6 +52,20 @@ iot.add_topic(Topic('/CO_TEST', read = co_mesure))
 
 iot.run()
 ```
+
+## Installation
+
+- Installez micropython sur votre µcontroleur.
+- Uploader [/lib]()
+- Uploader [/FmPyIot]()
+- créer un fichier ``boot.py`` vide
+- créer un fichier ``main.py`` selon l'exemple ci-dessus
+  - avec IP du broker MQTT
+  - SSID et pass de votre réseau WIFI
+  - ...
+  - créer les topics
+  - ajouter les topics
+- boot le µc
 
 ## Description
 
@@ -113,6 +126,24 @@ Si un topic est prévu en message entrant (ex : l'execution d'une action), alors
 ### un petit menu system
 
 ![system](image/readme/system.png)
+
+## API
+
+le microcontrôleur et le navigateur internet communiquent à travers cette API :
+
+|                                     | Method          | url                                                                                                | params                                                                               | output                                                 |
+| ----------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| Les topics en HTML                  | GET             | /api/topics                                                                                        |                                                                                      | code HTML de la page topics                            |
+| Le status de l'IOT                  | GET             | /api/status                                                                                        |                                                                                      | json de sysinfo                                        |
+| Liste des fichiers                  | GET             | /api/ls                                                                                            |                                                                                      | json :``json {'files' : ['main.py', 'boot.py', ....}`` |
+| Download fichier                    | GET             | /api/download/{nom du fichier}                                                                     |                                                                                      |                                                        |
+| Delete fichier                      | DELETE          | /api/delete/{nom_fichier}                                                                          |                                                                                      | 200, OK                                                |
+| Upload fichier                      | PUT             | /api/upload/{nom_fichier}}                                                                         | fichier binary                                                                       | 201, Created                                           |
+| Reboot                              | GET&#124; POST | /api/reboot                                                                                        |                                                                                      | 200, Ok                                                |
+| Execute une action d'un topic       | POST            | /api/action/{topic_id}<br />``topic_id = "T"+re.sub(r'\W','_',self.topic)``                       | json :``json {'topic' : ..., 'payload':...}``<br />Souvent topic est ici facultatif | 200,OK                                                 |
+| Les dernières lignes de la console | GET             | /api/repl                                                                                          |                                                                                      | json :``json {"repl" : ['...', '...', ...]}``          |
+| Execution d'une commande python     | POST            | /api/repl/cmd                                                                                      | json :``json {"cmd" : "print(f'Hello {iot.name}')"}``                                | json :``json {"rep": ""}``                            |
+| Niveau du logging                   | POST            | /api/logging-level/{level}<br />level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL) | 200, OK                                                                              |                                                        |
 
 # Thanks
 
