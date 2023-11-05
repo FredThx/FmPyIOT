@@ -43,19 +43,20 @@ function init_vars() {
 // Est executé toutes les 500 ms
 REPL_lines = []
 function update_repl(){
+    let textarea = $('#REPL-output');
     $.getJSON("/api/repl", function(data){
         data.repl.forEach(function(line){
             len_REPL_lines = REPL_lines.push(line);
             if (len_REPL_lines>100){
                 REPL_lines.shift();
             }
-            let textarea = $('#REPL-output');
             textarea.val(REPL_lines.join('\n'));
             textarea.scrollTop(textarea[0].scrollHeight);
-            update_width_cmd()
         })
     })
-
+    let input = $('#REPL-input');
+    let bt_input = $("#REPL-input-btn");
+    input.width(textarea.width()-bt_input.width()-20);
 }
 
 function do_repl_cmd(){
@@ -72,13 +73,6 @@ function do_repl_cmd(){
             $("#REPL-input").val("");
         });
     }
-}
-
-function update_width_cmd(){
-    let textarea = $('#REPL-output');
-    let input = $('#REPL-input');
-    let bt_input = $("#REPL-input-btn");
-    input.width(textarea.width()-bt_input.width()-20);
 }
 
 //Quand la page est chargée
@@ -164,7 +158,6 @@ $(document).ready(function() {
     // main
     setInterval(update_status, 1000);
     setInterval(update_repl, 500);
-    update_width_cmd()
     init_vars();
     update_files();
     update_status();
