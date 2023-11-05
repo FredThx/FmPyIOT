@@ -16,9 +16,7 @@
 
 # Serveur web
 
-A méliorer un peu l'érgonomie
-
-CMD pour REPL
+Ne faire les mise à jour (repl, topics, sysinfo) que quand l'onglet est activé.
 
 # Divers
 

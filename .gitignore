@@ -3,3 +3,5 @@
 /__pycache__
 */firmware
 *.uf2
+Thumbs.db
+/_bricolos
