@@ -1,3 +1,7 @@
 /.vscode
 /FmPyIOT.code-workspace
 /__pycache__
+*/firmware
+*.uf2
+Thumbs.db
+/_bricolos

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FmPyiot ***</title>
+  </head>
+  <body>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js" integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="default.css">
+    
+<main>
+  <div class="px-4 py-5 my-2 text-center">
+    <h1 class="display-5 fw-bold" id = "name"></h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4" id = "description"></p>
+    </div>
+  </div>
+
+<!-- Tabs navs -->
+<nav>
+  <div class="nav nav-tabs flex-column flex-sm-row" id="nav-tab" role="tablist">
+    <button class="nav-link active flex-sm-fill text-sm-center" id="nav-topics-tab" data-bs-toggle="tab" data-bs-target="#nav-topics" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
+      Topics
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
+      Sysinfo
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-params-tab" data-bs-toggle="tab" data-bs-target="#nav-params" type="button" role="tab" aria-controls="nav-params" aria-selected="false">
+      Paramètres
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-files-tab" data-bs-toggle="tab" data-bs-target="#nav-files" type="button" role="tab" aria-controls="nav-files" aria-selected="false">
+      Mise à jour
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-repl-tab" data-bs-toggle="tab" data-bs-target="#nav-repl" type="button" role="tab" aria-controls="nav-repl" aria-selected="false">
+      REPL
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-sys-tab" data-bs-toggle="tab" data-bs-target="#nav-sys" type="button" role="tab" aria-controls="nav-sys" aria-selected="false">
+      Système
+    </button>
+  </div>
+</nav>
+<!-- Tabs navs content -->
+<div class="tab-content flex-column flex-sm-row" id="nav-tabContent">
+  <!-- Topics-->
+  <div class="tab-pane fade show active flex-sm-fill text-sm" id="nav-topics" role="tabpanel" aria-labelledby="nav-topics-tab">
+    <h3>Topics</h3>
+    <form id = "form-list-topics">
+      <div id = "list-topics"></div>
+    </form>
+  </div>
+  <!--SYSINFO-->
+  <div class="tab-pane fade flex-sm-fill text-sm" id="nav-sysinfo" role="tabpanel" aria-labelledby="nav-sysinfo-tab">
+    <h3 class="ms-5">Informations system</h3>
+    <pre id="pre-json-sysinfo"><code id="json_sysinfo"></code></pre>
+  </div>
+  <!--PARAMS-->
+  <div class="tab-pane fade flex-sm-fill text-sm" id="nav-params" role="tabpanel" aria-labelledby="nav-params-tab">
+    <h3 class="ms-5">Paramètres de l'objet</h3>
+  </div>
+  <!--Gestion des fichiers-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center ms-5" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
+    <h1>Gestion des fichiers</h1>
+      <p>Attention, zone de risque!!!!</p>
+      
+      <h2>1. Fichiers présents</h2>
+        <p class="alert alert-info" role="alert">
+            Liste limitée à la racinne.
+        </p>
+        <form id="list">
+            <select multiple></select>
+            <br>
+            <input class="btn btn-primary btn-sm" type="submit" name="download" value="Download">
+            <input class="btn btn-primary btn-sm" type="submit" name="delete" value="Delete">
+        </form>
+
+        <h2>2. Upload</h2>
+        <p class="alert alert-info" role="alert">
+            Select one or more files and upload them.
+        </p>
+        <form id="upload" action="/api/upload/" method="POST">
+            <label for="files">Files to upload:</label>
+            <input id="files" name="files" type="file" multiple>
+            <br>
+            <input class="btn btn-primary btn-sm" type="submit" value="Upload">
+        </form>
+        <div id="status" class="alert alert-primary" role="alert">
+            N/A
+        </div>
+  </div>
+  <!--REPL-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
+    <br>
+    <div>
+      <span><label for = "REPL-logging-level-select"></label>Logging level :</span>
+      <span>
+        <select id="REPL-logging-level-select">
+          <option value="10">Debug</option>
+          <option value="20">Info</option>
+          <option value="30">Warning</option>
+          <option value="40">Error</option>
+          <option value="50">Critical</option>
+        </select>
+      </span>
+    </div>
+    <br>
+    <div>
+      <textarea id="REPL-output" rows = "15" cols = "100" readonly = "true"></textarea>
+      <div>
+        <input id="REPL-input" placeholder="CMD"></input>
+        <span class="input-group-btn">
+          <button id = "REPL-input-btn" class="btn btn-primary btn-sm" type = "button">Ok</button>
+        </span>
+      </div>
+    </div>
+  </div>
+  <!--SYSTEM-->
+  <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-sys" role="tabpanel" aria-labelledby="nav-sys-tab">
+    <h3 class="ms-5">Système</h3>
+    <br>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+      <a class="btn btn-danger" href="./api/reboot" role="button">Reboot</a>
+    </div>
+  </div>
+</div>
+</main>      
+  <script src="default.js"></script>
+  </body>
+</html>

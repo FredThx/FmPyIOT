@@ -1,0 +1,19 @@
+{
+    "name": "mp6050",
+    "author": "Fred Thx",
+    "pins": [
+      "VM",
+      "GND",
+      "IN2",
+      "IN1",
+      "VISEN",
+      "NOT_SLEEP",
+      "VIN",
+      "GND",
+      "OUT2",
+      "OUT1",
+      "ISET",
+      "V3P3"
+    ],
+    "controls": []
+  }

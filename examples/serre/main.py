@@ -1,6 +1,3 @@
-# main.py -- put your code here!
-
-
 from devices.ds18b20 import DS18b20
 from devices.fdht import DHT22
 from devices.fluxldr import LuxLDR
@@ -21,7 +18,11 @@ iot = FmPyIot(
     password = "***REMOVED***",
     watchdog=100,
     sysinfo_period = 600,
-    async_mode=False)
+    web=True,
+    name="Serre de Fred",
+    description="Une petite serre pour des salades.",
+    web_credentials=(***REMOVED***, ***REMOVED***),
+    )
 
 temperature = Topic("./temperatures", read=lambda topic, payload : ds.read_all(), send_period=60)
 humidity = Topic("./humidity", read = lambda topic, payload : dht.read_humidity(), send_period=60)
@@ -29,11 +30,8 @@ luminosite = Topic("./luminosite", read = lambda topic, payload : ldr.read(), se
 led_topic = Topic('./LED', action = lambda payload : led.value(int(payload)))
 
 
-if True:
-    while not iot.connect():
-        print("Erreur lors de la connexion.... en retente!")
-    iot.add_topic(temperature)
-    iot.add_topic(humidity)
-    iot.add_topic(luminosite)
-    iot.add_topic(led_topic)
-    iot.run()
+iot.add_topic(temperature)
+iot.add_topic(humidity)
+iot.add_topic(luminosite)
+iot.add_topic(led_topic)
+iot.run()

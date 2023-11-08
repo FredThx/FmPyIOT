@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+firmware = './firmware/rp2-pico-w-20230816-unstable-v1.20.0-379-ga18d62e06.uf2'
+elf = './firmware/rp2-pico-w-20230816-unstable-v1.20.0-379-ga18d62e06.elf'
+rfc2217ServerPort = 4000
