@@ -4,6 +4,7 @@ from machine import Pin
 
 proxi = Pin(17, Pin.IN)
 led = Pin(16,Pin.OUT)
+led_verte = Pin(12, Pin.OUT)
 relais = Pin(14,Pin.OUT)
 buzzer = Pin(15, Pin.OUT)
 bt_reset = Pin(13,Pin.IN)
