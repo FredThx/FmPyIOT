@@ -19,39 +19,42 @@ Principe:
 Auteur : Fredthx pour Olfa
 date : 28/10/203
 '''
-from machine import Pin
+from machine import Pin, Timer
 
 
 
 proxi = Pin(17, Pin.IN)
-led = Pin(16,Pin.OUT)
+led_red = Pin(16,Pin.OUT)
+led_green = Pin(12,Pin.OUT)
 relais = Pin(14,Pin.OUT)
 buzzer = Pin(15, Pin.OUT)
+bt_reset = Pin(13,Pin.IN)
 
 # Par défault
 led_green.on()
 led_red.off()
 
 # Callback des intéruptions
-def on_pin_change(pin):
-    print(f"{pin} is falling!")
-    if pin == bt_reset: # Si RAZ
-        led_red.off()
-        led_green.on()
-        relais.off()
-        buzzer.off()
-    else: # Si detection
-        led_red.on()
-        led_green.off()
-        relais.on()
-        buzzer.on()
-# Les intéruptions
-proxi.irq(
-    on_pin_change,
-    Pin.IRQ_FALLING
-    )
+def on_pin_irq(pin):
+    pin.irq(None) #Disable IRQ
+    Timer(period = 10, mode=Timer.ONE_SHOT, callback=lambda tim:on_pin_change(pin))
 
-bt_reset.irq(
-    on_pin_change,
-    Pin.IRQ_FALLING
-    )
+def on_pin_change(pin):
+    #print(f"{pin} is probably falling! value = {pin()}")
+    if pin.value()==0:
+        print(f"{pin} is falling!")
+        if pin == bt_reset: # Si RAZ
+            led_red.off()
+            led_green.on()
+            relais.off()
+            buzzer.off()
+        else: # Si detection
+            led_red.on()
+            led_green.off()
+            relais.on()
+            buzzer.on()
+    pin.irq(on_pin_irq, Pin.IRQ_FALLING)
+
+# Les intéruptions
+proxi.irq(on_pin_irq, Pin.IRQ_FALLING)
+bt_reset.irq(on_pin_irq, Pin.IRQ_FALLING)
