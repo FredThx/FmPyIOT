@@ -8,7 +8,7 @@ from fmpyiot.topics import Topic
 
 ds = DS18b20(14)
 dht = DHT22(16)
-ldr = LuxLDR(channel = 0, R= 10_000, k=0.9)
+ldr = LuxLDR(channel = 0, R= 10_000, k=0.9) #Channel0 = ADC0 = GPIO26
 led = Pin(17,Pin.OUT)
 
 iot = FmPyIot(            
@@ -24,7 +24,7 @@ iot = FmPyIot(
     web_credentials=(***REMOVED***, ***REMOVED***),
     )
 
-temperature = Topic("./temperatures", read=lambda topic, payload : ds.read_all(), send_period=60)
+temperature = Topic("./temperatures", read=lambda topic, payload : ds.read_all_async(), send_period=60)
 humidity = Topic("./humidity", read = lambda topic, payload : dht.read_humidity(), send_period=60)
 luminosite = Topic("./luminosite", read = lambda topic, payload : ldr.read(), send_period=60)
 led_topic = Topic('./LED', action = lambda payload : led.value(int(payload)))
