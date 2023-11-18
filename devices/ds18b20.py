@@ -1,12 +1,14 @@
 from machine import Pin
 from onewire import OneWire
 import time, ds18x20
-
+import uasyncio as asyncio
 
 
 class DS18b20:
     ''' Un ou des capteur(s) de température ds18x20 sur un bus onewire
     '''
+    delais_before_read_ds = 750 #ms
+
     def __init__(self, pin:Pin|int = None, ow:OneWire = None, rom: bytearray = None):
         '''
         pin     :   machine.Pin object or int where is connected a ow bus
@@ -35,7 +37,7 @@ class DS18b20:
     def bytearray_to_str(rom:bytearray):
         return ",".join(hex(b) for b in rom)
 
-    def read(self, rom:bytearray = None, delais:int = 750)-> float:
+    def read(self, rom:bytearray = None)-> float:
         '''
         rom (optional)  :   device address
         delais          :   delais for reading devices (ms)
@@ -47,7 +49,7 @@ class DS18b20:
                 rom = roms[0]
         if rom is not None:
             self.ds.convert_temp()
-            time.sleep_ms(delais)
+            time.sleep_ms(self.delais_before_read_ds)
             try:
                 temp = self.ds.read_temp(rom)
             except Exception as e:
@@ -57,8 +59,34 @@ class DS18b20:
         else:
             print(f"Error reading {self} : {len(roms)} devices found.")
     
+    async def read_async(self, rom:bytearray = None)-> float:
+        '''
+        rom (optional)  :   device address
+        delais          :   delais for reading devices (ms)
+        '''
+        rom = rom or self.rom
+        if not rom:
+            roms = self.ds.scan()
+            if len(roms)==1:
+                rom = roms[0]
+        if rom is not None:
+            self.ds.convert_temp()
+            await asyncio.sleep_ms(self.delais_before_read_ds)
+            try:
+                temp = self.ds.read_temp(rom)
+            except Exception as e:
+                print(f"Error during temperature reading : {e}")
+            else:
+                return temp if temp!=85 else None
+        else:
+            print(f"Error reading {self} : {len(roms)} devices found.")
+
     def read_all(self)->dict:
         self.ds.convert_temp()
-        time.sleep_ms(750)
+        time.sleep_ms(self.delais_before_read_ds)
         return {self.bytearray_to_str(rom) : self.ds.read_temp(rom) for rom in self.ds.scan()}
 
+    async def read_all_async(self)->dict:
+        self.ds.convert_temp()
+        await asyncio.sleep_ms(self.delais_before_read_ds)
+        return {self.bytearray_to_str(rom) : self.ds.read_temp(rom) for rom in self.ds.scan()}
