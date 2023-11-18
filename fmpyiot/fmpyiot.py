@@ -684,12 +684,18 @@ class FmPyIot:
                 raise naw.HttpError(request, 400, "Bad request")
             self.set_logging_level(level)
             await self.api_send_response()
+
+        @self.web.route('/api/hello')
+        async def hello(request):
+            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await request.write("FmPyIOT")
     
-    def get_html_topics(self):
+    def get_html_topics(self)->str:
         '''renvoie du code html
         '''
         html = "".join([topic.to_html() for topic in self.topics])
         return html
+    
 
 if __name__=='__main__':
     iot=FmPyIot(
