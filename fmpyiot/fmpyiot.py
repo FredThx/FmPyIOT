@@ -683,7 +683,7 @@ class FmPyIot:
             except:
                 raise naw.HttpError(request, 400, "Bad request")
             self.set_logging_level(level)
-            await self.api_send_response()
+            await self.api_send_response(request)
 
         @self.web.route('/api/hello')
         async def hello(request):
