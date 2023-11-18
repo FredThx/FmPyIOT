@@ -15,10 +15,10 @@ niveau_haut = Pin(15, Pin.OUT)
 
 
 iot = FmPyIot(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = "192.168.0.11",
+    ssid = 'OLFA_PRESSES',
+    password = "79073028",
     mqtt_base_topic = "OLFA/CUVE-SCIURE",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=100,
     sysinfo_period = 600,
     led_wifi='LED',
@@ -34,6 +34,7 @@ iot.add_topic(TopicRead("./distance", lambda topic, payload : ultra_sonic.get_di
 async def test_distance():
     while True:
         distance = await ultra_sonic.get_distance_async()
+        print(distance)
         if distance < 1000: #Niveau haut
             niveau_haut.on()
         else:
