@@ -688,7 +688,7 @@ class FmPyIot:
         @self.web.route('/api/hello')
         async def hello(request):
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
-            await request.write("FmPyIOT")
+            await request.write(f"FmPyIOT/{self.name}")
     
     def get_html_topics(self)->str:
         '''renvoie du code html
