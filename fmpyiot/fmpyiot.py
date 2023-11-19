@@ -547,7 +547,7 @@ class FmPyIot:
             await request.write("HTTP/1.1 200 OK\r\n")
             await request.write("Content-Type: application/json\r\n\r\n")
             await request.write('{"files": [%s]}' % ', '.join(
-                '"' + f + '"' for f in sorted(os.listdir('.'))
+                '"' + f + '"' for f in sorted(os.listdir('.')) if "." in f 
             ))
 
         @self.web.route('/api/download/*')
