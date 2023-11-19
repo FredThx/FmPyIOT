@@ -4,7 +4,7 @@ from machine import Pin
 from croquettes import Croquettes
 from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.topics import Topic
-
+import logging
 time.sleep(5)
 
 #TODO : faire une version async de Croquettes
@@ -26,6 +26,10 @@ iot = FmPyIot(
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
+    web=True,
+    web_credentials=(***REMOVED***, ***REMOVED***),
+    name = "Les croquettes du futur des chats",
+    logging_level=logging.INFO,
     )
 
 balance = Topic("./POIDS", read=croquettes.get_weight, send_period=20)
