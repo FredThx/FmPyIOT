@@ -82,7 +82,7 @@ $(document).ready(function() {
         var form = $(this);
         var success = 0;
         $.each($('#files').prop('files'), function(index, file) {
-            $('#status').html("Sending " + file.name);
+            $('#status-upload').html("Sending " + file.name);
 
             $.ajax({
                 async: false,
@@ -131,6 +131,25 @@ $(document).ready(function() {
             dataType: "json",
             data: JSON.stringify(datas),
         })
+        e.preventDefault();
+    }).on('submit', '#upload-folder', function(e){
+        var form = $(this);
+        var success = 0;
+        $.each($('#files-folder').prop('files'), function(index, file) {
+            $('#status-upload-folder').html("Sending " + file.name);
+            $.ajax({
+                async: false,
+                url: form.attr('action') + file.webkitRelativePath,
+                method: 'PUT',
+                data: file,
+                processData: false,  // tell jQuery not to process the data
+                contentType: false,  // tell jQuery not to set contentType
+            }).done(function() {
+                success++;
+                update_files();
+            });
+        });
+        $('#status-upload-folder').html(success + " file(s) uploaded successfully.");
         e.preventDefault();
     });
 

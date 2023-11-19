@@ -63,8 +63,7 @@
   <!--Gestion des fichiers-->
   <div class="tab-pane fade flex-sm-fill text-sm-center ms-5" id="nav-files" role="tabpanel" aria-labelledby="nav-files-tab">
     <h1>Gestion des fichiers</h1>
-      <p>Attention, zone de risque!!!!</p>
-      
+      <p class="text-danger" >Attention, zone de risque!!!!</p>
       <h2>1. Fichiers présents</h2>
         <p class="alert alert-info" role="alert">
             Liste limitée à la racinne.
@@ -76,9 +75,9 @@
             <input class="btn btn-primary btn-sm" type="submit" name="delete" value="Delete">
         </form>
 
-        <h2>2. Upload</h2>
+        <h2>2. Upload Files</h2>
         <p class="alert alert-info" role="alert">
-            Select one or more files and upload them.
+            Selectionne 1 ou plusieurs fichier à télécharger.
         </p>
         <form id="upload" action="/api/upload/" method="POST">
             <label for="files">Files to upload:</label>
@@ -86,9 +85,23 @@
             <br>
             <input class="btn btn-primary btn-sm" type="submit" value="Upload">
         </form>
-        <div id="status" class="alert alert-primary" role="alert">
+        <div id="status-upload" class="alert alert-primary" role="alert">
             N/A
         </div>
+        <h2>3. Upload folder</h2>
+        <p class="alert alert-info" role="alert">
+          Selectionne le repertoire qui contient les sources
+      </p>
+      <form id="upload-folder" action="/api/upload/" method="POST">
+          <label for="files-folder">Repertoire (lib ou fmpyiot) à uploader:</label>
+          <input id="files-folder" type="file" webkitdirectory = "true" directory/>
+          <br>
+          <input class="btn btn-primary btn-sm" type="submit" value="Update">
+      </form>
+      <div id="status-upload-folder" class="alert alert-primary" role="alert">
+          N/A
+      </div>
+
   </div>
   <!--REPL-->
   <div class="tab-pane fade flex-sm-fill text-sm-center" id="nav-repl" role="tabpanel" aria-labelledby="nav-repl-tab">
