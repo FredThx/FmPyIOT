@@ -20,8 +20,9 @@ class MotorI298:
         self.pinB.init(mode=Pin.OUT)
         self.pinB.low()
         self.pin_ena = pin_ena
-        self.pin_ena.init(mode=Pin.OUT)
-        self.pin_ena.low()
+        if pin_ena:
+            self.pin_ena.init(mode=Pin.OUT)
+            self.pin_ena.low()
         self.duty = duty
         self.freq = freq
         self.pwm = None
