@@ -2,7 +2,7 @@
 import time
 from machine import Pin
 from croquettes import Croquettes
-from fmpyiot.fmpyiot import FmPyIot
+from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic
 import logging
 time.sleep(5)
@@ -18,7 +18,7 @@ croquettes = Croquettes(
         motor_pin_ena = Pin(6) # GP6 = 9
         )
 
-iot = FmPyIot(
+iot = FmPyIotWeb(
     mqtt_host = "***REMOVED***",
     mqtt_base_topic = "T-HOME/CROQ3",
     ssid = 'WIFI_THOME2',
@@ -26,7 +26,6 @@ iot = FmPyIot(
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
-    web=True,
     web_credentials=(***REMOVED***, ***REMOVED***),
     name = "Les croquettes du futur des chats",
     logging_level=logging.INFO,

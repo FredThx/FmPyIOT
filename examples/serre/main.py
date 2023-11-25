@@ -3,7 +3,7 @@ from devices.fdht import DHT22
 from devices.fluxldr import LuxLDR
 from machine import Pin
 
-from fmpyiot.fmpyiot import FmPyIot
+from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic
 
 ds = DS18b20(14)
@@ -11,14 +11,13 @@ dht = DHT22(16)
 ldr = LuxLDR(channel = 0, R= 10_000, k=0.9) #Channel0 = ADC0 = GPIO26
 led = Pin(17,Pin.OUT)
 
-iot = FmPyIot(            
+iot = FmPyIotWeb(
     mqtt_host = "***REMOVED***",
     mqtt_base_topic = "T-HOME/SERRE",
     ssid = 'WIFI_THOME2',
     password = "***REMOVED***",
     watchdog=100,
     sysinfo_period = 600,
-    web=True,
     name="Serre de Fred",
     description="Une petite serre pour des salades.",
     web_credentials=(***REMOVED***, ***REMOVED***),

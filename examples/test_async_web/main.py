@@ -2,14 +2,14 @@
 import time
 import uasyncio as asyncio
 from machine import Pin, ADC
-from fmpyiot.fmpyiot import FmPyIot
+from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
 import logging
 
 time.sleep(5)
 
 
-iot = FmPyIot(
+iot = FmPyIotWeb(
     mqtt_host = "***REMOVED***",
     mqtt_base_topic = "T-HOME/TEST",
     ssid = 'WIFI_THOME2',
