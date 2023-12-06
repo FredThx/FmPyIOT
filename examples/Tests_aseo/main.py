@@ -10,6 +10,10 @@ bts = {
 
 
 while True:
+    run=False
     for direction, pin in bts.items():
         if pin.value() == 0:
             motor.run(direction)
+            run=True
+    if not run:
+        motor.stop()

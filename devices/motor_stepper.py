@@ -36,6 +36,9 @@ class StepperMotor:
                 [0,0,1,1]]
         self.step_index = 0
 
+    def stop(self):
+        for pin in self.pins:
+            pin(0)
 
     def run(self, steps:int, delay:float=None):
         ''' Do a number of steps (negative value => reverse direction)
