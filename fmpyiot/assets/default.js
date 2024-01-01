@@ -15,7 +15,7 @@ function update_files() {
 // Est executée toutes les secondes
 function update_status() {
     $.getJSON("/api/status", function(data) {
-        var sysinfo = data["./SYSINFO"].payload
+        var sysinfo = data["./SYSINFO"].payload;
         $('#json_sysinfo').html(JSON.stringify(sysinfo, undefined, 2));
         Object.entries(data).forEach(entry => {
             const [topic,data_topic] = entry;

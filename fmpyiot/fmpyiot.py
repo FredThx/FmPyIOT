@@ -31,8 +31,9 @@ class FmPyIot:
         self.logger = logging.getLogger()
         self.client = None
         self.set_logging_level(logging_level)
-        if log_file:
-            file_handler = RotatingFileHandler(log_file, maxBytes=log_maxBytes, backupCount = log_backupCount)
+        self.log_file = log_file
+        if self.log_file:
+            file_handler = RotatingFileHandler(self.log_file, maxBytes=log_maxBytes, backupCount = log_backupCount)
             file_handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
             self.logger.addHandler(file_handler)
         logging.info("FmPyIOT start.")
@@ -313,6 +314,9 @@ class FmPyIot:
                     "./_PARAMS",
                     read = self.get_params
         ))
+        #self.add_topic(Topic('./LOGS',
+        #            read = self.get_logs
+        #))
 
     async def sysinfo(self)->dict:
         '''renvoie les informations system
@@ -398,6 +402,18 @@ class FmPyIot:
         '''place le dispositif en mode debug'''
         self.wd.disable()
         print('Watchdog desactivate')
+
+    def get_logs(self, index=0):
+        '''Renvoie le contenu d'un fichier log
+        '''
+        if self.log_file:
+            file_name = self.log_file
+            if index>0:
+                file_name += f'.{index}'
+            try:
+                return open(file_name,'r').read()
+            except OSError as e:
+                logging.error(e)
 
 if __name__=='__main__':
     iot=FmPyIot(
