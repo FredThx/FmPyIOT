@@ -146,6 +146,12 @@ class Topic:
         else:
             #logging.debug(f"It is not a coroutine. callback return value = {routine}.")
             return routine
+    
+    def get_routine(self, publisher):
+        async def _send_topic_async():
+            while True:
+                await self.send_async(publisher)
+        return _send_topic_async
 
     def is_coroutine(self, fn):
         return isinstance(fn, self.type_generator)
@@ -166,7 +172,7 @@ class Topic:
         if self.action:
             html+= self.html_actionner()
         return html
-    
+
     def get_id(self)->str:
         return "T"+re.sub(r'\W','_',self.topic)
     
@@ -243,8 +249,27 @@ class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
     '''
     def __init__(self,
-                 action:function = None):
-        super().__init__(None, action=action)
+                 action:function = None, send_period = None):
+        super().__init__(None, action=action, send_period= send_period)
+        self.none_topic_id = 0
+
+    def get_id(self)->str:
+        self.none_topic_id += 1
+        return "T"+re.sub(r'\W','_',f"Routine{self.none_topic_id-1}")
+    
+    def is_auto_send(self) -> bool:
+        return True
+    
+    def get_routine(self, publisher):
+        '''renvoie la routine 
+        '''
+        if self.send_period:
+            async def routine():
+                await self.do_action_async()
+                await asyncio.sleep(self.send_period)
+            return routine
+        else:
+            return self.do_action_async
 
 class TopicOnChange(Topic):
     '''Un topic qui sera envpyé quand la valeur change

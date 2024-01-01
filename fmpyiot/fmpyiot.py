@@ -200,7 +200,7 @@ class FmPyIot:
                 callback
                 )
         # Subscribe action function for topic
-        if topic.action:
+        if topic.action and topic.topic:
             async def callback(_topic, _payload):
                 logging.debug("Callback action")
                 payload = await topic.do_action_async(_topic,_payload)
@@ -210,12 +210,10 @@ class FmPyIot:
                 str(topic),
                 callback
                 )
+            
         # Add routine for auto send topics
         if topic.is_auto_send():
-            async def _send_topic_async():
-                while True:
-                    await topic.send_async(self.publish_async)
-            self.add_routine(_send_topic_async)
+            self.add_routine(topic.get_routine(self.publish_async))        
 
         # Essentiellement pour IRQ
         topic.attach(self)
@@ -231,8 +229,10 @@ class FmPyIot:
         '''
         if isinstance(routine, Topic):
             self.routines.append(routine.do_action_async)
+            logging.info(f"New routine added for Toppic {routine}")
         elif callable(routine):
             self.routines.append(routine)
+            logging.info(f"New routine added for callable {routine}")
         else:
             logging.error(f"{routine} is not a Topics and not callable.")
 
