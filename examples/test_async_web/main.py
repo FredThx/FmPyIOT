@@ -31,6 +31,10 @@ iot.add_topic(TopicRead("./voltage", lambda topic, payload : ADC(Pin(29)).read_u
 #  d'état sur une Pin
 iot.add_topic(TopicIrq("./LED", pin=Pin(16,Pin.IN), trigger = Pin.IRQ_RISING, values=("1","0")))
 
+
+## Des routines
+
+### A partir d'une routine infinie
 leds = [Pin(i,Pin.OUT) for i in range(0,16)]
 index_leds = 0
 async def run_leds():
@@ -41,9 +45,9 @@ async def run_leds():
         index_leds = (index_leds+1)%len(leds)
         leds[index_leds].value(1)
         await asyncio.sleep(0.1)
-
 iot.add_topic(TopicRoutine(run_leds))
 
+### A partir d'une function et d'une période
 leds2 = [Pin(i,Pin.OUT) for i in range(17,22)]
 index_leds2 = 0
 def run_leds2():
@@ -52,7 +56,9 @@ def run_leds2():
     leds2[index_leds2].value(0)
     index_leds2 = (index_leds2+1)%len(leds2)
     leds2[index_leds2].value(1)
-    
-iot.add_topic(TopicRoutine(run_leds2,send_period=0.5))
+iot.add_topic(TopicRoutine(run_leds2,send_period=0.05))
+
+
+
 
 iot.run()
