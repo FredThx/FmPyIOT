@@ -40,8 +40,19 @@ async def run_leds():
         leds[index_leds].value(0)
         index_leds = (index_leds+1)%len(leds)
         leds[index_leds].value(1)
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
+
+iot.add_topic(TopicRoutine(run_leds))
+
+leds2 = [Pin(i,Pin.OUT) for i in range(17,22)]
+index_leds2 = 0
+def run_leds2():
+    global leds2
+    global index_leds2
+    leds2[index_leds2].value(0)
+    index_leds2 = (index_leds2+1)%len(leds2)
+    leds2[index_leds2].value(1)
     
-iot.add_topic(TopicRoutine(run_leds,send_period=None))
+iot.add_topic(TopicRoutine(run_leds2,send_period=0.5))
 
 iot.run()

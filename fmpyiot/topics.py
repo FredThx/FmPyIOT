@@ -265,8 +265,9 @@ class TopicRoutine(Topic):
         '''
         if self.send_period:
             async def routine():
-                await self.do_action_async()
-                await asyncio.sleep(self.send_period)
+                while True:
+                    await self.do_action_async()
+                    await asyncio.sleep(self.send_period)
             return routine
         else:
             return self.do_action_async
