@@ -270,6 +270,11 @@ class TopicRoutine(Topic):
             return routine
         else:
             return self.do_action_async
+        
+    def to_html(self)->str:
+        '''renvoie un code html représantant le topic (sans valeur)
+        '''
+        return ""
 
 class TopicOnChange(Topic):
     '''Un topic qui sera envpyé quand la valeur change
