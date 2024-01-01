@@ -1,6 +1,7 @@
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
+from logging.handlers import RotatingFileHandler
 from machine import Pin
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
@@ -18,11 +19,24 @@ class FmPyIot:
             watchdog:int = 100,
             sysinfo_period:int = 600, #s
             logging_level = logging.DEBUG,
+            log_file = "fmpyiot.log",
+            log_maxBytes = 10_000,
+            log_backupCount = 3,
             led_wifi:Pin|int = None,
             led_incoming:Pin|int = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
+        #Logging level
+        self.logger = logging.getLogger()
+        self.client = None
+        self.set_logging_level(logging_level)
+        if log_file:
+            file_handler = RotatingFileHandler(log_file, maxBytes=log_maxBytes, backupCount = log_backupCount)
+            file_handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+            self.logger.addHandler(file_handler)
+        logging.info("FmPyIOT start.")
+        # Initialisations
         self.routines:list[TopicRoutine] = []
         self.topics:list[Topic]= []
         self.outages = 0
@@ -41,7 +55,6 @@ class FmPyIot:
         self.client = MQTTClient(mqtt_as_config)
         self.wlan = self.client._sta_if
         self.callbacks = {} #{'topic' : callback}
-        #Logging level
         self.set_logging_level(logging_level)
         #Watchdog
         self.wd = None
@@ -64,8 +77,10 @@ class FmPyIot:
         '''Change le niveau de log
         level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL)
         '''
-        logging.basicConfig(level=level)
-        self.client.DEBUG = level <= logging.DEBUG
+        #logging.basicConfig(level=level)
+        self.logger.setLevel(level)
+        if self.client:
+            self.client.DEBUG = level <= logging.DEBUG
         logging.info(f"Logging level updated to : {logging.getLevelName(level)}")
 
     def get_topic(self, topic:str)-> str:
