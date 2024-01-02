@@ -58,7 +58,14 @@ def run_leds2():
     leds2[index_leds2].value(1)
 iot.add_topic(TopicRoutine(run_leds2,send_period=0.05))
 
+### A partir d'une function async pas infinie et d'une période
+async def run_leds_once():
+    global leds
+    for i in range(len(leds)-1,-1,-1):
+        leds[i].value(1)
+        await asyncio.sleep(0.1)
+        leds[i].value(0)
 
-
+iot.add_topic(TopicRoutine(run_leds_once, send_period=5))
 
 iot.run()
