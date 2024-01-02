@@ -321,16 +321,19 @@ class FmPyIot:
     async def sysinfo(self)->dict:
         '''renvoie les informations system
         '''
+        statvfs_keys = ['f_bsize ', 'f_frsize ', 'f_blocks', 'f_bfree', 'f_bavail', 'f_files', 'f_ffree', 'f_favail', 'f_flag', 'fnamemax']
+        ifconfig_keys = ['ip', 'subnet', 'gateway', 'dns']
+        uname_keys = ['sysname', 'nodename', 'release', 'version', 'machine']
         return{
             'name' : self.name,
             'description' : self.description,
-            'uname' : list(os.uname()),
-            'ifconfig' : self.wlan.ifconfig(),
+            'uname' : dict(zip(uname_keys, list(os.uname()))),
+            'ifconfig' : dict(zip(ifconfig_keys, self.wlan.ifconfig())),
             'wifi' : {k:self.wlan.config(k) for k in ['ssid', 'channel', 'txpower']},
             'mac' : ubinascii.hexlify(self.wlan.config('mac'),':').decode(),
             'mem_free' : gc.mem_free(),
             'mem_alloc' : gc.mem_alloc(),
-            'statvfs' : os.statvfs('/'),
+            'statvfs' : dict(zip(statvfs_keys,os.statvfs('/'))),
             'logging_level' : logging.root.level,
         }
 
