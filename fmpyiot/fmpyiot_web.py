@@ -1,9 +1,7 @@
 import uasyncio as asyncio
-import logging, os, ubinascii, gc, json, network
+import logging, os, json
 from machine import Pin, reset as machine_reset
 from fmpyiot.fmpyiot import FmPyIot
-from fmpyiot.topics import Topic, TopicRoutine
-from fmpyiot.wd import WDT
 from fmpyiot.repl import REPL
 from ubinascii import a2b_base64 as base64_decode
 import nanoweb as naw
