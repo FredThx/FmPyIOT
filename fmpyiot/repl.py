@@ -10,7 +10,6 @@ class ReplStream(uio.IOBase):
     def __init__(self, size = 100):
         self.queue:Queue = Queue(size)
         self.current_line:str = ""
-        self.debug = []
 
     def _putc(self, c):
         '''Ajout un byte au REPL
@@ -24,7 +23,6 @@ class ReplStream(uio.IOBase):
     def write(self, buf):
         '''Utilisé par dupterm
         '''
-        self.debug.append(len(buf))
         i = 0
         while i < len(buf):
             c = buf[i]    
