@@ -50,7 +50,7 @@ class FmPyIotWeb(FmPyIot):
             self.run()
         
     def get_web_task(self)-> asyncio.Task:
-        self.REPL=REPL()
+        self.REPL=REPL(size=20)
         self.init_web()
         return asyncio.create_task(self.web.run())
 
