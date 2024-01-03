@@ -303,7 +303,7 @@ class FmPyIotWeb(FmPyIot):
         @self.web.route('/api/repl/cmd')
         @self.authenticate()
         async def repl(request):
-            '''renvoie les dernières ligne du REPL
+            '''Envoie une commande python au REPL
             '''
             if request.method != "POST":
                 raise naw.HttpError(request, 501, "Not Implemented")
