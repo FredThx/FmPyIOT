@@ -110,8 +110,8 @@ class Queue:
 class REPL():
     '''Une classe pour dupliquer le REPL avec lecture async
     '''
-    def __init__(self):
-        self.stream = ReplStream()
+    def __init__(self, size=None):
+        self.stream = ReplStream() if size is None else ReplStream(size)
         os.dupterm(self.stream)
 
     def deinit(self):
