@@ -255,7 +255,7 @@ class FmPyIot:
                 await asyncio.sleep(5)
         logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
-        for task in (self.up, self.down, self.messages):
+        for task in (self.up, self.down, self.messages, self.garbage_collector_async):
             tasks.append(asyncio.create_task(task()))
         for task in self.routines:
             tasks.append(asyncio.create_task(task()))
@@ -297,6 +297,16 @@ class FmPyIot:
                     action=lambda topic, payload: self.wd.feed()
                     ))
 
+    @staticmethod
+    async def garbage_collector_async(period=30):
+        '''Routine for permanent garbage collector
+        '''
+        while True:
+            await asyncio.sleep(period)
+            before = gc.mem_alloc()
+            gc.collect()
+            logging.debug(f"garbage collector : {before - gc.mem_alloc()} bytes saved.")
+
     def init_system_topics(self, period:int):
         '''Create system topics
         '''
@@ -324,6 +334,7 @@ class FmPyIot:
         statvfs_keys = ['f_bsize ', 'f_frsize ', 'f_blocks', 'f_bfree', 'f_bavail', 'f_files', 'f_ffree', 'f_favail', 'f_flag', 'fnamemax']
         ifconfig_keys = ['ip', 'subnet', 'gateway', 'dns']
         uname_keys = ['sysname', 'nodename', 'release', 'version', 'machine']
+        gc.collect()
         return{
             'name' : self.name,
             'description' : self.description,
