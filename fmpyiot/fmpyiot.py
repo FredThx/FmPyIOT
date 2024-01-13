@@ -2,7 +2,7 @@ from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
 from logging.handlers import RotatingFileHandler
-from machine import Pin
+from machine import Pin, RTC
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
 
@@ -61,9 +61,14 @@ class FmPyIot:
         self.wd = None
         if watchdog:
             self.init_watchdog(watchdog)
+        #RTC
+        self.rtc = RTC()
+        self.rtc_is_updated = False
+        self.set_rtc_from_params()
+        #Divers
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
-        self.params_loaders = []
+        self.params_loaders = [self.set_rtc_from_params]
         self.web=None
         #Auto run
         if autoconnect:
@@ -120,6 +125,7 @@ class FmPyIot:
             return value
         else:
             return json.dumps(value)
+        
 
     ####################################
     # Utilisation de la lib mqtt_as    #
@@ -255,7 +261,7 @@ class FmPyIot:
                 await asyncio.sleep(5)
         logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
-        for task in (self.up, self.down, self.messages, self.garbage_collector_async):
+        for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async):
             tasks.append(asyncio.create_task(task()))
         for task in self.routines:
             tasks.append(asyncio.create_task(task()))
@@ -324,9 +330,26 @@ class FmPyIot:
                     "./_PARAMS",
                     read = self.get_params
         ))
+        self.add_topic(Topic(
+                    "/FmPyIOT/datetime_",
+                    send_period=3600, #toutes les heures
+                    read = lambda topic, payload : "_",
+                    reverse_topic=False
+                     ))
+        self.add_topic(Topic(
+                    "/FmPyIOT/datetime",
+                    reverse_topic=False,
+                    action = self.set_rtc
+                     ))
         #self.add_topic(Topic('./LOGS',
         #            read = self.get_logs
         #))
+
+    async def get_rtc_async(self):
+        while not self.rtc_is_updated:
+            await self.publish_async("/FmPyIOT/datetime_","_")
+            await asyncio.sleep(10)
+
 
     async def sysinfo(self)->dict:
         '''renvoie les informations system
@@ -360,6 +383,7 @@ class FmPyIot:
             logging.warning(f"Error reading {self.params_json} : {e}")
             logging.info(f"create new empty file {self.params_json}")
             self.write_params({})
+            return {}
 
     
     def set_params(self, topic:bytes, payload:bytes):
@@ -367,7 +391,7 @@ class FmPyIot:
         '''
         params = self.get_params()
         try:
-            params.update(json.loads(payload))
+            params[topic] = json.loads(payload)
         except Exception as e:
             logging.error(f"Error reading file {self.params_json} : {e}")
         self.write_params(params)
@@ -389,6 +413,20 @@ class FmPyIot:
     def set_params_loader(self, loader:function):
         self.params_loaders.append(loader)
     
+    def set_rtc_from_params(self):
+        params = self.get_params()
+        try:
+            self.rtc.datetime(params['rtc'])
+        except Exception as e:
+            logging.error(str(e))
+
+    def set_rtc(self, payload):
+        rtc = tuple(json.loads(payload))
+        self.rtc.datetime(rtc)
+        self.set_params("rtc",json.dumps(rtc))
+        logging.info(f"Set RTC {rtc}")
+        self.rtc_is_updated = True
+
     network_status = {
         network.STAT_IDLE : "Link DOWN", #(0 : CYW43_LINK_DOWN)
         network.STAT_CONNECTING : "Link JOIN or Timeout", #(1 : CYW43_LINK_JOIN)
