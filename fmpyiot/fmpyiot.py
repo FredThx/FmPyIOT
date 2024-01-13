@@ -27,6 +27,10 @@ class FmPyIot:
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
+        #RTC
+        self.rtc = RTC()
+        self.rtc_is_updated = False
+        self.set_rtc_from_params()
         #Logging level
         self.logger = logging.getLogger()
         self.client = None
@@ -34,7 +38,7 @@ class FmPyIot:
         self.log_file = log_file
         if self.log_file:
             file_handler = RotatingFileHandler(self.log_file, maxBytes=log_maxBytes, backupCount = log_backupCount)
-            file_handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(message)s"))
+            file_handler.setFormatter(logging.Formatter("%(levelname)s:%(name)s: %(asctime)s : %(message)s"))
             self.logger.addHandler(file_handler)
         logging.info("FmPyIOT start.")
         # Initialisations
@@ -61,10 +65,6 @@ class FmPyIot:
         self.wd = None
         if watchdog:
             self.init_watchdog(watchdog)
-        #RTC
-        self.rtc = RTC()
-        self.rtc_is_updated = False
-        self.set_rtc_from_params()
         #Divers
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
