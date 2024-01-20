@@ -2,7 +2,7 @@ from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
 from logging.handlers import RotatingFileHandler
-from machine import Pin, RTC
+import machine
 from fmpyiot.topics import Topic, TopicRoutine
 from fmpyiot.wd import WDT
 
@@ -22,13 +22,13 @@ class FmPyIot:
             log_file = "fmpyiot.log",
             log_maxBytes = 10_000,
             log_backupCount = 3,
-            led_wifi:Pin|int = None,
-            led_incoming:Pin|int = None,
+            led_wifi:machine.Pin|int = None,
+            led_incoming:machine.Pin|int = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
         #RTC
-        self.rtc = RTC()
+        self.rtc = machine.RTC()
         self.rtc_is_updated = False
         self.set_rtc_from_params()
         #Logging level
@@ -98,14 +98,14 @@ class FmPyIot:
             return topic
 
     @staticmethod
-    def led_function(led: None | int | Pin)-> function:
+    def led_function(led: None | int | machine.Pin)-> function:
         '''Renvoie une fonction qui pilote une led
         (intéret : led peut être None ou int ou Pin)
         '''
         if led is None : return lambda _:None
-        if type(led)!=Pin:
-            led = Pin(led)
-        led.init(Pin.OUT,value = 0)
+        if type(led)!=machine.Pin:
+            led = machine.Pin(led)
+        led.init(machine.Pin.OUT,value = 0)
         def func(v:bool):
             led(v)
         return func
@@ -261,7 +261,7 @@ class FmPyIot:
                 await asyncio.sleep(5)
         logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
-        for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async):
+        for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async, self.hardware_watchdog_async):
             tasks.append(asyncio.create_task(task()))
         for task in self.routines:
             tasks.append(asyncio.create_task(task()))
@@ -269,6 +269,7 @@ class FmPyIot:
         #Web interface
         if self.web:
             tasks.append(self.get_web_task())
+        
 
         #Attente infinie
         for task in tasks:
@@ -302,6 +303,15 @@ class FmPyIot:
                     read=lambda topic, payload:"FEED",
                     action=lambda topic, payload: self.wd.feed()
                     ))
+    
+    async def hardware_watchdog_async(self):
+        '''Create async hardware watchdog
+        '''
+        wd = machine.WDT(timeout=8388)
+        while True:
+            await asyncio.sleep(1)
+            wd.feed()
+            logging.debug("hardware watchdog feeded.")
 
     @staticmethod
     async def garbage_collector_async(period=30):
