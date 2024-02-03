@@ -1,6 +1,6 @@
 import uasyncio as asyncio
 import logging, os, json
-from machine import Pin, reset as machine_reset
+from machine import Pin, reset as machine_reset, bootloader as machine_bootloader
 from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.repl import REPL
 from ubinascii import a2b_base64 as base64_decode
@@ -260,12 +260,24 @@ class FmPyIotWeb(FmPyIot):
         @self.web.route('/api/reboot')
         @self.authenticate()
         async def reboot(request):
-            '''Upload file to device
+            '''Reboot the device
             '''
             logging.debug(f"request={request}")
-            logging.info("rebbot device")
-            machine_reset()
+            logging.info("reboot device")
             await self.api_send_response(request, 200, "OK")
+            machine_reset()
+            
+
+        @self.web.route('/api/bootloader')
+        @self.authenticate()
+        async def bootloader(request):
+            '''Reset the device and enter its bootloader
+            '''
+            logging.debug(f"request={request}")
+            logging.info("Reset the device and enter its bootloader")
+            await self.api_send_response(request, 200, "OK")
+            machine_bootloader()
+            
 
         @self.web.route('/api/action/*')
         @self.authenticate()
