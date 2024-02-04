@@ -1,11 +1,12 @@
 
 import time, json
 import uasyncio as asyncio
-from machine import Pin, ADC, SPI
+from machine import Pin, ADC, SPI, RTC
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
 import logging
 from lcd12864 import SPI_LCD12864
+from devices.display import Display, Field, RIGHT
 
 time.sleep(5)
 try:
@@ -134,5 +135,19 @@ def draw_text(lcd, payload):
     lcd.update()
 
 iot.add_topic(TopicAction("./text", lambda _topic, payload : draw_text(lcd, payload)))
+
+disp = Display(lcd)
+disp.set_field("heure", Field(disp, "", 2,3,width=8, align=RIGHT))
+
+async def show_time():
+    s0 = 0
+    while True:
+        _, _, _, _, h, m, s, _ = iot.rtc.datetime()
+        if s0!=s:
+            disp.set("heure", f"{h:02}:{m:02}:{s:02}")
+            s0=s
+        await asyncio.sleep_ms(100)
+
+iot.add_routine(show_time)
 
 iot.run()
