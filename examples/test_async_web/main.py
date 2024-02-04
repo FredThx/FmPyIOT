@@ -136,9 +136,14 @@ def draw_text(lcd, payload):
 
 iot.add_topic(TopicAction("./text", lambda _topic, payload : draw_text(lcd, payload)))
 
+#####
+# Utilisation Display
+#####
+
 disp = Display(lcd)
 disp.set_field("heure", Field(disp, "", 2,3,width=8, align=RIGHT))
 
+#Une routine qui affiche l'heure
 async def show_time():
     s0 = 0
     while True:
@@ -147,7 +152,11 @@ async def show_time():
             disp.set("heure", f"{h:02}:{m:02}:{s:02}")
             s0=s
         await asyncio.sleep_ms(100)
-
 iot.add_routine(show_time)
+
+#Liaison avec un topic MQTT entrant
+disp.set_field("croq_status", Field(disp, "Croq.:", 4, 1, 7))
+iot.add_topic(TopicAction('./CROQ_STATUS', lambda topic, payload : disp.set("croq_status", payload)))
+
 
 iot.run()
