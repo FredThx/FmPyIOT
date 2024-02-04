@@ -7,8 +7,6 @@ from fmpyiot.topics import Topic, TopicAction
 import logging
 time.sleep(5)
 
-#TODO : faire une version async de Croquettes
-# mais il va falloir gerer des locks!!
 
 croquettes = Croquettes(
         hx_clk= Pin(13), # GP13 = 17

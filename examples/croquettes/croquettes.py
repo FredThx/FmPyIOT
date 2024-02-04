@@ -125,7 +125,7 @@ class Croquettes:
                 boost+=booster
             self.motor.stop()
         #Résultat : renvoie ce qui a été versé
-        time.sleep(1)
+        await asyncio.sleep(1)
         logging.info(f"{self.get_weight() - tare} grammes distribués")
         return self.get_weight() - tare
 
