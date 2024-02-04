@@ -359,8 +359,19 @@ class FmPyIot:
         while not self.rtc_is_updated:
             await self.publish_async("/FmPyIOT/datetime_","_")
             await asyncio.sleep(10)
-
-
+            
+    def get_vsys(self)->float:
+        '''renvoie le voltage VSYS
+        '''
+        wlan_active = self.wlan.active()
+        self.wlan.active(False)
+        machine.Pin(25, mode = machine.Pin.OUT, pull = machine.Pin.PULL_DOWN).high()
+        machine.Pin(29, machine.Pin.IN)
+        vsys = machine.ADC(29).read_u16()
+        #machine.Pin(29, machine.Pin.ALT, pull=machine.Pin.PULL_DOWN, alt=7)
+        self.wlan.active(wlan_active)
+        return vsys * 3 * 3.3 / 65535
+    
     async def sysinfo(self)->dict:
         '''renvoie les informations system
         '''
@@ -379,6 +390,7 @@ class FmPyIot:
             'mem_alloc' : gc.mem_alloc(),
             'statvfs' : dict(zip(statvfs_keys,os.statvfs('/'))),
             'logging_level' : logging.root.level,
+            'vsys' : self.get_vsys()
         }
 
     params_json = "params.json"
