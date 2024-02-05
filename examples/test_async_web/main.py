@@ -6,7 +6,7 @@ from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
 import logging
 from lcd12864 import SPI_LCD12864
-from devices.display import Display, Field, RIGHT
+from devices.display import Display, Field, RIGHT, Icon
 
 time.sleep(5)
 try:
@@ -158,5 +158,26 @@ iot.add_routine(show_time)
 disp.set_field("croq_status", Field("Croq.:", 4, 1, 7, invert=True))
 iot.add_topic(TopicAction('./CROQ_STATUS', lambda topic, payload : disp.set("croq_status", payload)))
 
-
+#Une icone selon message MQTT entrant
+f_icon = Icon(10,43)
+f_icon.set_icon("OFFLINE",[
+                [0,0,0,1,1,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,1,1,0,0],
+                [0,1,1,0,0,1,0,0,1,1,0],
+                [0,1,1,1,1,1,1,1,1,1,0],
+                [1,1,1,1,1,1,1,1,1,1,1],
+                [0,1,1,1,0,0,0,1,1,1,0],
+                [0,0,1,0,1,1,1,0,1,0,0],
+                [0,0,0,1,1,1,1,1,0,0,0]])
+f_icon.set_icon("ONLINE",[
+                [0,0,0,1,1,1,1,1,0,0,0],
+                [0,0,1,1,1,1,1,1,1,0,0],
+                [0,1,1,0,0,1,0,0,1,1,0],
+                [0,1,1,1,1,1,1,1,1,1,0],
+                [1,1,1,0,1,1,1,0,1,1,1],
+                [0,1,1,1,0,0,0,1,1,1,0],
+                [0,0,1,1,1,1,1,1,1,0,0],
+                [0,0,0,1,1,1,1,1,0,0,0]])
+disp.set_field("icon", f_icon)
+iot.add_topic(TopicAction('./CROQ_STATUS', lambda topic, payload : disp.set("icon", payload)))
 iot.run()
