@@ -18,15 +18,16 @@ class Display:
         self.device.update()
 
     def set_field(self, topic:str, field:Field, payload:str = None):
+        field.root = self
         self.topics[topic] = field
         field.show(payload)
 
-    def text(self, text:str, row:int, column:int):
+    def text(self, text:str, row:int, column:int, color:int=1, backcolor:int=0):
         '''Write text on display
         '''
         x,y = column*self.FONT_SIZE[0], row*self.FONT_SIZE[1]
-        self.device.rect(x,y,len(text*self.FONT_SIZE[0]), self.FONT_SIZE[1],0,True)
-        self.device.text(text, x,y)
+        self.device.rect(x,y,len(text*self.FONT_SIZE[0]), self.FONT_SIZE[1],backcolor,True)
+        self.device.text(text, x,y, color)
 
     def set(self, topic:str, payload:str):
         try:
@@ -39,11 +40,12 @@ class Display:
 class Field:
     '''Un champ avec label
     '''
-    def __init__(self, root:Display, label:str,
+    def __init__(self, label:str,
                  row:int,column:int, width:int=1, height:int = 1,
-                 align:int=LEFT
+                 align:int=LEFT,
+                 invert = False
                  ):
-        self.root = root
+        self.root = None
         self.label = label
         self.row = row
         self.column = column
@@ -51,17 +53,19 @@ class Field:
         self.width = width
         self.text = None
         self.align = align
+        self.color = 0 if invert else 1
+        self.backcolor = 1 if invert else 0
 
     def show(self, payload:str=None):
         if payload:
             self.text = payload
-        self.root.text(self.label or "", self.row, self.column)
+        self.root.text(self.label or "", self.row, self.column, self.color, self.backcolor)
         text = (self.text or "")[:self.width]
         if self.align == LEFT:
             text = text + " " * (self.width - len(text))
         else:
             text = " " * (self.width - len(text)) + text
-        self.root.text(text, self.row, self.column + len(self.label))
+        self.root.text(text, self.row, self.column + len(self.label), self.color, self.backcolor)
     
     def set(self, payload:str):
         self.text = payload
