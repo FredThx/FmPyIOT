@@ -139,8 +139,8 @@ class FmPyIot:
             logging.info(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
             asyncio.create_task(self.pulse())
             if topic in self.callbacks:
-                callback = self.callbacks[topic]
-                if callback:
+                callbacks = self.callbacks[topic]
+                for callback in callbacks or []:
                     asyncio.create_task(callback(topic, payload))
             else:
                 logging.warning(f"Unknow topic : {topic}")
@@ -189,7 +189,8 @@ class FmPyIot:
         topic = self.get_topic(topic)
         logging.info(f"Subscribe {topic} : callback={callback}")
         #Ce serait bien de detecter ici si callback est une coroutine (sans l'executer) : ca éviterais de la faire à chaque fois
-        self.callbacks[topic]=callback
+        self.callbacks[topic]=self.callbacks.get(topic, [])
+        self.callbacks[topic].append(callback)
 
     def add_topic(self, topic:Topic):
         '''Add a new topic

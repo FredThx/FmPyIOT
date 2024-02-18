@@ -1,5 +1,7 @@
 # # BUGS
 
+# MQTT
+
 # Divers
 
 - wifi country
@@ -27,6 +29,8 @@ Utiliser le bdd Btree à la place d'un json pour params.
 ## params
 
 Vérifier utilisation et améliorer
+
+Et rendre compatible le param de croquettes avec celui de fmpyiot : c'est à dire utiliser uniquement celui de fmpyiot
 
 ## devices async
 
