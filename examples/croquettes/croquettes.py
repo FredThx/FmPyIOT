@@ -52,7 +52,7 @@ class Croquettes:
             with open(self.params_json,"r") as json_file:
                 self.params.update(json.load(json_file))
         except OSError as e:
-            logging.error(e)
+            logging.error(str(e))
         print(f"Params loaded. New params : {self.params}")
 
     def set_params(self, volatil: bool = False, **kwargs):
