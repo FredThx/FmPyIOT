@@ -391,7 +391,8 @@ class FmPyIot:
             'mem_alloc' : gc.mem_alloc(),
             'statvfs' : dict(zip(statvfs_keys,os.statvfs('/'))),
             'logging_level' : logging.root.level,
-            'vsys' : self.get_vsys()
+            'vsys' : self.get_vsys(),
+            'mqtt_client_id' : self.client._client_id
         }
 
     params_json = "params.json"
