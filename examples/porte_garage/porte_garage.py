@@ -1,5 +1,6 @@
 from machine import Pin
 import time
+import uasyncio as asyncio
 
 class PorteGarage:
     '''Une porte de garage composé de deux capteurs (porte ouverte, porte fermée) et d'un bouton poussoir
@@ -36,4 +37,9 @@ class PorteGarage:
     def push_button(self):
         self.gate_motor_push.on()
         time.sleep(1)
+        self.gate_motor_push.off()
+    
+    async def push_button_async(self):
+        self.gate_motor_push.on()
+        await asyncio.sleep(1)
         self.gate_motor_push.off()
