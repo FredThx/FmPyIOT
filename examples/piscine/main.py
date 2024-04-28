@@ -44,5 +44,6 @@ iot = FmPyIotWeb(
 
 iot.add_topic(Topic("T-HOME/EXTERIEUR/temperature", read=get_temp, send_period=30))
 iot.add_topic(TopicAction('./pompe', action = lambda payload : relay.on() if payload == 'ON' else relay.off()))
+iot.add_topic(Topic("./pompe_status", read = lambda topic, payload : "ON" if relay() else "OFF"))
 
 iot.run()
