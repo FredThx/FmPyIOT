@@ -6,7 +6,7 @@ RIGHT = const(2)
 
 
 class Display:
-    '''Un ecran sur lequel on peutafficher des données 
+    '''Un ecran sur lequel on peut afficher des données 
     '''
     FONT_SIZE = (8,8)
 
