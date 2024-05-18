@@ -37,9 +37,8 @@ class FmPyIotWeb(FmPyIot):
             ssid = ssid, password=password,
             autoconnect=False, watchdog=watchdog, sysinfo_period=sysinfo_period,
             logging_level = logging_level, led_wifi = led_wifi, led_incoming=led_incoming,
+            name=name,description = description,
             incoming_pulse_duration = incoming_pulse_duration, keepalive=keepalive)
-        self.name = name
-        self.description = description
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials

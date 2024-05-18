@@ -22,11 +22,15 @@ class FmPyIot:
             log_file = "fmpyiot.log",
             log_maxBytes = 10_000,
             log_backupCount = 3,
-            led_wifi:machine.Pin|int = None,
-            led_incoming:machine.Pin|int = None,
+            name = None,
+            description = None,
+            led_wifi:machine.Pin|int|None = None,
+            led_incoming:machine.Pin|int|None = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
                  ):
+        self.name = name or mqtt_base_topic
+        self.description = description or "FmPyIot"
         #RTC
         self.rtc = machine.RTC()
         self.rtc_is_updated = False
