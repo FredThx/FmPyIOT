@@ -33,6 +33,7 @@ class Topic:
         self.read = read
         self.action = action
         self.last_send = 0
+        self.sleep_mode = False
 
     def __str__(self)->str:
         return self.topic
@@ -148,9 +149,13 @@ class Topic:
             return routine
     
     def get_routine(self, publisher):
-        async def _send_topic_async():
-            while True:
+        if self.sleep_mode:
+            async def _send_topic_async():
                 await self.send_async(publisher)
+        else:
+            async def _send_topic_async():
+                while True:
+                    await self.send_async(publisher)
         return _send_topic_async
 
     def is_coroutine(self, fn):
@@ -264,10 +269,14 @@ class TopicRoutine(Topic):
         '''renvoie la routine 
         '''
         if self.send_period:
-            async def routine():
-                while True:
+            if self.sleep_mode:
+                async def routine():
                     await self.do_action_async()
-                    await asyncio.sleep(self.send_period)
+            else:
+                async def routine():
+                    while True:
+                        await self.do_action_async()
+                        await asyncio.sleep(self.send_period)
             return routine
         else:
             return self.do_action_async
