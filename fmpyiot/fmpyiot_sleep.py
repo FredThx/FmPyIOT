@@ -28,14 +28,8 @@ class FmPyIotSleep(FmPyIot):
                  ):
         self.sleep_period = sleep_period
         self.run_pin_function = self.led_function(run_pin) # to enable/disable
-        self.run_pin_function(False)
-        #On commence par une pause!
-        logging.info(f'machine.lightsleep for {self.sleep_period} seconds.')
-        time.sleep(1)#Pour avoir le temps d'envoyer le logging
-        machine.lightsleep(self.sleep_period*1000)
-        print(f'Fin de la sieste!.')
-        logging.info("Enable devices")
-        self.run_pin_function(True)
+        # On commence par une petite pause
+        self.light_sleep()
         #Avant de vraiment bosser
         super().__init__(mqtt_host, mqtt_base_topic, ssid, password, autoconnect, watchdog, None, logging_level, log_file, log_maxBytes, log_backupCount, name, description, led_wifi, led_incoming, incoming_pulse_duration, keepalive)
 
@@ -85,23 +79,29 @@ class FmPyIotSleep(FmPyIot):
     
     MAX_LIGHT_SLEEP = 3600 # seconds => 1 hour
 
-    def deep_sleep(self, sleep_period:int=None):
-        '''Mise en deep_sleep 
-        sleep_period    :   secondes
-        => reboot au reveil
+    def light_sleep(self,sleep_period:int=None):
+        '''Mise en light sleep
+        (dont coupure alimentation devices via self.pin)
         '''
         sleep_period = sleep_period or self.sleep_period
-        logging.info("Disable devices")
-        self.run_pin_function(False) # disable devices
-        #logging.info("Close WIFI")
-        self.wlan.disconnect()
-        self.wlan.active(False)
-        self.wlan.deinit()
-        machine.Pin('WL_GPIO1'.low())
-        logging.info(f'machine.lightsleep for {self.sleep_period} seconds.')
+        logging.info(f'light sleep for {self.sleep_period} seconds.')
+        self.run_pin_function(False)
         time.sleep(1)#Pour avoir le temps d'envoyer le logging
         while sleep_period>0:
             lightsleep_duration = min(sleep_period, self.MAX_LIGHT_SLEEP)
             sleep_period -= lightsleep_duration
             machine.lightsleep(lightsleep_duration*1000)
+        logging.info("End of sleep. Enable devices")
+        self.run_pin_function(True)
+
+    def deep_sleep(self, sleep_period:int=None):
+        '''Mise en deep_sleep 
+        sleep_period    :   secondes
+        => reboot au reveil
+        '''
+        self.wlan.disconnect()
+        self.wlan.active(False)
+        self.wlan.deinit()
+        machine.Pin('WL_GPIO1'.low())
+        self.light_sleep(sleep_period)
         machine.reset()
