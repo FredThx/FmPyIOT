@@ -29,11 +29,11 @@ class BigFont():
         '''Write text to FrameBuffer 
         '''
         for str_letter in text:
-            letter = self.letters[str_letter]
             if str_letter in self.letters:
+                letter = self.letters[str_letter]
                 fb.blit(letter['buf'], x, y)
                 x += letter['width']
-            elif letter==" ":
+            elif str_letter==" ":
                 x += self.width
 
 
