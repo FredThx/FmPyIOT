@@ -15,15 +15,13 @@ key0 = Pin(15, Pin.IN)
 mano = ManoAnalog(Pin(28), max_psi=150, min_voltage=0.317, no_negative = True)
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = "192.168.0.11",
     mqtt_base_topic = "OLFA/INCENDIE",
     ssid = 'WIFI_THOME2',
     password = "***REMOVED***",
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
-
-
     web_credentials=(***REMOVED***, ***REMOVED***),
     name = "La pression du réseau incendie",
     logging_level=logging.INFO,
