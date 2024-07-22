@@ -31,6 +31,7 @@ class FmPyIotWeb(FmPyIot):
             led_incoming:Pin|int = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
+            on_fail_connect:callable = None
                  ):
         super().__init__(
             mqtt_host=mqtt_host, mqtt_base_topic=mqtt_base_topic,
@@ -38,7 +39,8 @@ class FmPyIotWeb(FmPyIot):
             autoconnect=False, watchdog=watchdog, sysinfo_period=sysinfo_period,
             logging_level = logging_level, led_wifi = led_wifi, led_incoming=led_incoming,
             name=name,description = description,
-            incoming_pulse_duration = incoming_pulse_duration, keepalive=keepalive)
+            incoming_pulse_duration = incoming_pulse_duration, keepalive=keepalive,
+            on_fail_connect=on_fail_connect)
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials

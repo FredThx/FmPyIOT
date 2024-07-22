@@ -28,6 +28,7 @@ class FmPyIot:
             led_incoming:machine.Pin|int|None = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
+            on_fail_connect:callable = None
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
@@ -77,6 +78,7 @@ class FmPyIot:
         #Auto run
         if autoconnect:
             self.run()
+        self.on_fail_connect = on_fail_connect
         
 
     #########################
@@ -264,6 +266,12 @@ class FmPyIot:
                 logging.warning('Connection failed.')
                 logging.info("Connect restart in 5 secondes ...")
                 await asyncio.sleep(5)
+                if self.on_fail_connect:
+                    try:
+                        await self.on_fail_connect()
+                    except TypeError:
+                        pass
+
         logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
         for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async, self.hardware_watchdog_async):

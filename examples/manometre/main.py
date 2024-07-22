@@ -12,6 +12,18 @@ time.sleep(5)
 spi1 = SPI(1, baudrate=1_000_000, sck=Pin(10), mosi=Pin(11), miso=Pin(8))
 display = sh1107.SH1107_SPI(128, 64, spi1, Pin(8), Pin(12), Pin(9), rotate=0)
 
+trys = 1
+def display_connect():
+    global trys, iot
+    display.fill(0)
+    display.text("Demarrage ...",0,5,1)
+    display.text("Connection a ",5,20,1)
+    display.text(iot.client.server,15,35,1)
+    display.text(f"Tentative {trys}", 0, 55, 1)
+    trys += 1
+    display.show()
+
+
 key0 = Pin(15, Pin.IN)
 mano = ManoAnalog(Pin(28), max_psi=150, min_voltage=0.317, no_negative = True)
 
@@ -26,6 +38,7 @@ iot = FmPyIotWeb(
     web_credentials=(***REMOVED***, ***REMOVED***),
     name = "La pression du réseau incendie",
     logging_level=logging.INFO,
+    on_fail_connect=display_connect
     )
 
 
@@ -58,8 +71,5 @@ iot.add_topic(TopicRoutine(show_pressure, send_period=1))
 iot.add_topic(TopicIrq("./KEY0", pin=key0, trigger = Pin.IRQ_RISING, action=power_display))
 iot.add_routine(TopicRoutine(power_display))
 
-display.text("Demarrage ...",0,5,1)
-display.text("Connection a :",5,20,1)
-display.text(iot.client.server,15,35,1)
-display.show()
+display_connect()
 iot.run()
