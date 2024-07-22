@@ -11,6 +11,7 @@ time.sleep(5)
 
 spi1 = SPI(1, baudrate=1_000_000, sck=Pin(10), mosi=Pin(11), miso=Pin(8))
 display = sh1107.SH1107_SPI(128, 64, spi1, Pin(8), Pin(12), Pin(9), rotate=0)
+
 key0 = Pin(15, Pin.IN)
 mano = ManoAnalog(Pin(28), max_psi=150, min_voltage=0.317, no_negative = True)
 
@@ -56,4 +57,9 @@ iot.add_topic(TopicRoutine(show_pressure, send_period=1))
 # Routine pour on_off de l'ecran selon bouton key0
 iot.add_topic(TopicIrq("./KEY0", pin=key0, trigger = Pin.IRQ_RISING, action=power_display))
 iot.add_routine(TopicRoutine(power_display))
+
+display.text("Demarrage ...",0,5,1)
+display.text("Connection a :",5,20,1)
+display.text(iot.client.server,15,35,1)
+display.show()
 iot.run()
