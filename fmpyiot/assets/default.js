@@ -37,6 +37,9 @@ function init_vars() {
     $.get("/api/topics", function(html) {
         $('#list-topics').html(html);
     });
+    $.get("/api/params", function(html) {
+        $('#list-params').html(html);
+    });
 }
 
 // Mise à jour de REPL
@@ -151,6 +154,21 @@ $(document).ready(function() {
         });
         $('#status-upload-folder').html(success + " file(s) uploaded successfully.");
         e.preventDefault();
+    }).on('submit', '#form-list-params', function(e){
+            let key = document.activeElement['id'].substring(12);
+            let datas = {
+                'topic' : key,
+                'payload' : document.getElementById("_params_"+key).value
+                };
+            $.ajax({
+                async : true,
+                url : '/api/action/action_T__SET_PARAMS',
+                method:'POST',
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(datas),
+            })
+            e.preventDefault();
     });
 
     $("#REPL-logging-level-select").on("change", function(e){

@@ -350,13 +350,37 @@ class FmPyIotWeb(FmPyIot):
         async def api_get_logs(request):
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
             await request.write(f"{self.get_logs(0)}")
+        
+        @self.web.route('/api/params')
+        @self.authenticate()
+        async def get_html_params(request):
+            '''Renvoie sous forme html la liste des params et leurs valeurs
+            '''
+            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await request.write(self.get_html_params())
     
     def get_html_topics(self)->str:
         '''renvoie du code html
         '''
         html = "".join([topic.to_html() for topic in self.topics])
         return html
-    
+
+    def get_html_params(self)->str:
+        '''renvoie le code html représentant les paramètres
+        '''
+        return "".join([
+            f'''
+                <div>
+                    <span>{key} : </span>
+                    <span>
+                        <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
+                    </span>
+                    <span>
+                        <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">
+                    </span>
+                </div>
+            '''
+            for key, val in self.get_params().items()])
 
 if __name__=='__main__':
     iot=FmPyIot(

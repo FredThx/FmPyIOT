@@ -32,6 +32,7 @@ class FmPyIot:
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
+        self.params = {}
         #RTC
         self.rtc = machine.RTC()
         self.rtc_is_updated = False
@@ -410,36 +411,49 @@ class FmPyIot:
     params_json = "params.json"
 
     def get_params(self)->dict:
-        '''Renvoie le contenu de params_json
+        '''Renvoie le contenu de params_json ou du cache self.params
         '''
-        try:
-            with open(self.params_json,"r") as json_file:
-                return json.load(json_file)
-        except OSError as e:
-            logging.warning(f"Error reading {self.params_json} : {e}")
-            logging.info(f"create new empty file {self.params_json}")
-            self.write_params({})
-            return {}
-
+        if self.params:
+            return self.params
+        else:
+            try:
+                with open(self.params_json,"r") as json_file:
+                    self.params = json.load(json_file)
+                    return self.params
+            except OSError as e:
+                logging.warning(f"Error reading {self.params_json} : {e}")
+                logging.info(f"create new empty file {self.params_json}")
+                self.write_params({})
+                return {}
+        
+    def get_param(self, topic:bytes) -> any:
+        '''renvoie la valeur d'un paramètre
+        '''
+        return self.get_params().get(topic)
     
-    def set_params(self, topic:bytes, payload:bytes):
+    def set_params(self, topic:bytes, payload:bytes|None=None, default:bytes|None=None):
         '''Met à jour le fichier params_json en fonction de payload
         '''
         params = self.get_params()
-        try:
-            params[topic] = json.loads(payload)
-        except Exception as e:
-            logging.error(f"Error reading file {self.params_json} : {e}")
-        self.write_params(params)
-        for loader in self.params_loaders:
+        if default is not None and topic not in params and payload is None:
+            payload = default
+        if payload is not None:
             try:
-                loader()
+                params[topic] = json.loads(payload)
             except Exception as e:
-                print(f"Error on params_loader {loader} : {e}")
+                logging.error(f"Error on set_params : {e}")
+            else:
+                self.write_params(params)
+                for loader in self.params_loaders:
+                    try:
+                        loader()
+                    except Exception as e:
+                        print(f"Error on params_loader {loader} : {e}")
     
     def write_params(self, params):
-        '''Ecrit le fichier params
+        '''Ecrit le fichier params et le cache self.params
         '''
+        self.params = params
         try:
             with open(self.params_json,"w") as json_file:
                 json.dump(params, json_file)
@@ -488,8 +502,9 @@ class FmPyIot:
     
     def dm(self):
         '''place le dispositif en mode debug'''
-        self.wd.disable()
-        print('Watchdog desactivate')
+        if self.wd:
+            self.wd.disable()
+            print('Watchdog desactivate')
 
     def get_logs(self, index=0):
         '''Renvoie le contenu d'un fichier log
