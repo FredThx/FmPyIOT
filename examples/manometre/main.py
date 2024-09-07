@@ -30,8 +30,8 @@ mano = ManoAnalog(Pin(28), max_psi=150, min_voltage=0.317, no_negative = True)
 iot = FmPyIotWeb(
     mqtt_host = "192.168.0.11",
     mqtt_base_topic = "OLFA/INCENDIE",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
+    ssid = 'OLFA_PRODUCTION',
+    password = "79073028",
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
