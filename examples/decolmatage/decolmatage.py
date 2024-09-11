@@ -3,7 +3,7 @@ from machine import Pin, Timer
 import time
 
 class Decolmatage:
-    '''4 relmais pour piloter des electrovannes d'air comprimé
+    '''4 relais pour piloter des electrovannes d'air comprimé
     '''
     def __init__(
             self, 
@@ -15,7 +15,7 @@ class Decolmatage:
             else:
                 rel.init(Pin.OUT)
         self.tempo1 = int(tempo1*1000) #ms
-        self.tempo2 = int(tempo2 * 1000) #ms
+        self.tempo2 = int(tempo2*1000) #ms
         self.tim1 = Timer()
         self.tim2 = Timer()
         self.led = led
