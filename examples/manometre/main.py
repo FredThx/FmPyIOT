@@ -16,7 +16,7 @@ trys = 1
 def display_connect():
     global trys, iot
     display.fill(0)
-    display.text("Demarrage ...",0,5,1)
+    display.text(iot.mqtt_base_topic,0,5,1)
     display.text("Connection a ",5,20,1)
     display.text(iot.client.server,15,35,1)
     display.text(f"Tentative {trys}", 0, 55, 1)

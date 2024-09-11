@@ -1,7 +1,8 @@
 from machine import Pin
+import uasyncio as asyncio
 import time, logging
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicIrq
+from fmpyiot.topics import Topic, TopicIrq, TopicRoutine
 
 detecteur = Pin(15,Pin.IN)
 
@@ -23,9 +24,25 @@ iot = FmPyIotWeb(
     logging_level=logging.INFO,
     )
 
+iot.dm()
 
 detection_topic = TopicIrq("./detect", pin=detecteur, trigger = Pin.IRQ_RISING)
 
 
 iot.add_topic(detection_topic)
+
+iot.set_params('blink_duration', default=1)
+
+async def run_led():
+    while True:
+        try:
+            duration = float(iot.get_param('blink_duration'))
+        except Exception as e:
+            print(e)
+            await asyncio.sleep(0.1)        
+        else:
+            machine.Pin("LED").toggle()
+            await asyncio.sleep(duration)        
+iot.add_topic(TopicRoutine(run_led))
+
 iot.run()
