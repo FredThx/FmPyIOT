@@ -65,6 +65,7 @@ iot.run()
   - ...
   - créer les topics
   - ajouter les topics
+  - créer des paramètres
 - boot le µc
 
 ## Description
@@ -113,7 +114,9 @@ Si un topic est prévu en message entrant (ex : l'execution d'une action), alors
 
 ![sysinfo](image/readme/sysinfo.png)
 
-### Modifier des paramètres (todo)
+### Modifier des paramètres
+
+![files](image/readme/params.png)
 
 ### Upload/download les fichiers
 
@@ -147,6 +150,8 @@ Sécurité : BasicAutentification
 | Execution d'une commande python     | POST            | /api/repl/cmd                                                                                      | json:``json {"cmd" : "print(f'Hello {iot.name}')"}``                                | json:``json {"rep": ""}``                            |
 | Niveau du logging                   | POST            | /api/logging-level/{level}<br />level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL) |                                                                                     | 200, OK                                               |
 | Hello                               | GET             | /api/hello                                                                                         |                                                                                     | "FmPyIOT"""                                           |
+| Contenu du dernier fichier log      | GET             | /api/log                                                                                           |                                                                                     |                                                       |
+| Liste des paramètres               | GET             | /api/param                                                                                         |                                                                                     |                                                       |
 
 # Thanks
 

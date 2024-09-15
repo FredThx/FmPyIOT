@@ -348,6 +348,8 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/logs')
         async def api_get_logs(request):
+            '''Renvoie le contenu du dernier fichier log
+            '''
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
             await request.write(f"{self.get_logs(0)}")
         
