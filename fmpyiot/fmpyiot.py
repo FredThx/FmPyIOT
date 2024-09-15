@@ -328,7 +328,7 @@ class FmPyIot:
         while True:
             await asyncio.sleep(1)
             wd.feed()
-            logging.debug("hardware watchdog feeded.")
+            #logging.debug("hardware watchdog feeded.")
 
     @staticmethod
     async def garbage_collector_async(period=30):
