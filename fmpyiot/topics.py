@@ -54,11 +54,11 @@ class Topic:
             try:
                 return self.action(topic, payload)
             except TypeError as e:
-                #print(e)
+                #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e}. Retry without topic...")
                 try:
                     return self.action(payload)
                 except TypeError as e:
-                    #print(e)
+                    #logging.debug(f"error on {self.action}({payload=}) : {e}. Retry without payload...")
                     return self.action()
         else:
             print(f"Error : {self} has not attribute 'action'")
@@ -121,9 +121,11 @@ class Topic:
             try:
                 return await self.run_callback_async(self.action, topic, payload)
             except TypeError as e:
+                #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e}. Retry without topic...")
                 try:
                     return await self.run_callback_async(self.action, payload)
                 except TypeError as e:
+                    #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e} Retry without payload...")
                     return await self.run_callback_async(self.action)
         else:
             print(f"Error : {self} has not attribute 'action'")

@@ -157,9 +157,10 @@ $(document).ready(function() {
     }).on('submit', '#form-list-params', function(e){
             let key = document.activeElement['id'].substring(12);
             let datas = {
-                'topic' : key,
-                'payload' : document.getElementById("_params_"+key).value
-                };
+                'topic' : "",
+                'payload' : {}
+            };
+            datas['payload'][key] = document.getElementById("_params_"+key).value
             $.ajax({
                 async : true,
                 url : '/api/action/action_T__SET_PARAMS',

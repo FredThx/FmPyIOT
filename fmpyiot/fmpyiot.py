@@ -216,10 +216,11 @@ class FmPyIot:
         # Subscribe action function for topic
         if topic.action and topic.topic:
             async def callback(_topic, _payload):
-                logging.debug("Callback action")
+                logging.debug(f"Callback action : {_topic=} , {_payload=}")
                 payload = await topic.do_action_async(_topic,_payload)
                 logging.debug(f"payload = {payload}")
-                await self.publish_async(topic.reverse_topic_action(),payload)
+                if topic.reverse_topic_action():
+                    await self.publish_async(topic.reverse_topic_action(),payload)
             self.subscribe(
                 str(topic),
                 callback
@@ -354,7 +355,7 @@ class FmPyIot:
                     action = self.set_params
         ))
         self.add_topic(Topic(
-                    "./_PARAMS",
+                    "./PARAMS",
                     read = self.get_params
         ))
         self.add_topic(Topic(
@@ -434,15 +435,35 @@ class FmPyIot:
         '''
         return self.get_params().get(topic)
     
-    def set_params(self, topic:bytes, payload:bytes|None=None, default:bytes|None=None):
-        '''Met à jour le fichier params_json en fonction de payload
+    def set_params(self, topic:bytes, payload:bytes|dict|None=None):
+        '''Met à jour des paramètres (self.params + fichier params_json)
+        (utilisation : via MQTT ou interface web)
+        topic   :   non utilisé
+        payload :   json dict {key:value} or dict
         '''
+        logging.debug(f"set_params({topic=} ({type(topic)}), {payload=} ({type(payload)}))")
+        if type(payload)==dict:
+            data = payload
+        else:
+            try:
+                data = json.loads(payload)
+                assert type(data)==dict, "payload must be a dict"
+            except Exception as e:
+                logging.error(e)
+                return None
+        for key, value in data.items():
+            self.set_param(key, json.dumps(value))
+
+    def set_param(self, key:bytes, payload:bytes|None=None, default:bytes|None=None):
+        '''Met à jour un parametre (self.params + fichier params_json)
+        '''
+        logging.info(f"set_param({key=},{payload=})")
         params = self.get_params()
-        if default is not None and topic not in params and payload is None:
+        if default is not None and key not in params and payload is None:
             payload = default
         if payload is not None:
             try:
-                params[topic] = json.loads(payload)
+                params[key] = json.loads(str(payload))
             except Exception as e:
                 logging.error(f"Error on set_params : {e}")
             else:
@@ -476,7 +497,7 @@ class FmPyIot:
     def set_rtc(self, payload):
         rtc = tuple(json.loads(payload))
         self.rtc.datetime(rtc)
-        self.set_params("rtc",json.dumps(rtc))
+        self.set_param("rtc",json.dumps(rtc))
         logging.info(f"Set RTC {rtc}")
         self.rtc_is_updated = True
 
