@@ -8,7 +8,9 @@ class PorteGarage:
     def __init__(self,
             sensor_close : Pin,
             sensor_open : Pin,
-            gate_motor_push : Pin):
+            gate_motor_push : Pin,
+            push_duration:float = 1.0):
+        self.push_duration = push_duration
         self.sensor_close = sensor_close
         self.sensor_close.init(mode = Pin.IN)
         self.sensor_open = sensor_open
@@ -17,6 +19,9 @@ class PorteGarage:
         self.gate_motor_push.init(mode = Pin.OUT)
         self.gate_motor_push.off()
         self.gate_state = None
+
+    def set_push_duration(self, value:float):
+        self.push_duration = value
 
     def get_gate_state(self):
         if self.sensor_close.value()==0:
@@ -36,10 +41,10 @@ class PorteGarage:
 
     def push_button(self):
         self.gate_motor_push.on()
-        time.sleep(1)
+        time.sleep(self.push_duration)
         self.gate_motor_push.off()
     
     async def push_button_async(self):
         self.gate_motor_push.on()
-        await asyncio.sleep(1)
+        await asyncio.sleep(self.push_duration)
         self.gate_motor_push.off()

@@ -28,6 +28,8 @@ iot = FmPyIotWeb(
     logging_level=logging.INFO,
     )
 
+iot.set_param('push_duration', default=1.0, on_change = lambda value : porte_garage.set_push_duration(float(value)))
+
 iot.add_topic(Topic("./etat", read=lambda topic, payload : porte_garage.get_gate_state(), send_period=5))
 iot.add_topic(Topic('./push', action = lambda payload : porte_garage.push_button_async()))
 
