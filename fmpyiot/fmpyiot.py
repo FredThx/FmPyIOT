@@ -275,8 +275,11 @@ class FmPyIot:
 
         logging.info(f"SYSINFO :  {await self.sysinfo()}")
         tasks = []
-        for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async, self.hardware_watchdog_async):
+        for task in (self.up, self.down, self.messages, self.garbage_collector_async, self.get_rtc_async):
             tasks.append(asyncio.create_task(task()))
+        if self.wd:
+            tasks.append(asyncio.create_task(self.hardware_watchdog_async()))
+
         for task in self.routines:
             tasks.append(asyncio.create_task(task()))
 
