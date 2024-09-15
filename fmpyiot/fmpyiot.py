@@ -74,7 +74,7 @@ class FmPyIot:
         #Divers
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
-        self.params_loaders = [self.set_rtc_from_params]
+        self.params_loaders = {'rtc' : lambda _ : self.set_rtc_from_params()}
         self.web=None
         #Auto run
         if autoconnect:
@@ -454,7 +454,7 @@ class FmPyIot:
         for key, value in data.items():
             self.set_param(key, json.dumps(value))
 
-    def set_param(self, key:bytes, payload:bytes|None=None, default:bytes|None=None):
+    def set_param(self, key:bytes, payload:bytes|None=None, default:bytes|None=None, on_change:callable=None):
         '''Met à jour un parametre (self.params + fichier params_json)
         '''
         logging.info(f"set_param({key=},{payload=})")
@@ -468,12 +468,15 @@ class FmPyIot:
                 logging.error(f"Error on set_params : {e}")
             else:
                 self.write_params(params)
-                for loader in self.params_loaders:
+                if key in self.params_loaders:
                     try:
-                        loader()
+                        self.params_loaders[key](params[key])
                     except Exception as e:
                         print(f"Error on params_loader {loader} : {e}")
-    
+        if on_change:
+            self.params_loaders[key] = on_change
+
+
     def write_params(self, params):
         '''Ecrit le fichier params et le cache self.params
         '''
