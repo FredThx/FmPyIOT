@@ -1,11 +1,16 @@
+import gc
+gc.collect()
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
+gc.collect()
 import uasyncio as asyncio
 import logging, os, ubinascii, gc, json, network
 from logging.handlers import RotatingFileHandler
 import machine
+gc.collect()
 from fmpyiot.topics import Topic, TopicRoutine
+gc.collect()
 from fmpyiot.wd import WDT
-
+gc.collect()
 
 logging.basicConfig(level=logging.DEBUG)
 
