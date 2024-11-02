@@ -24,17 +24,30 @@ function update_status() {
             $('#' + data_topic.id).html(JSON.stringify(data_topic.payload));
             });
         //Update head data
+        // Wifi strenght
         var wifi_class;
-        if (sysinfo.wifi.rssi == null){
-            wifi_class = "bi bi-wifi-off"; // pas de chance que ça arrive en vrai!!!
+        if (sysinfo.wifi.rssi > -66){
+            wifi_class = "waveStrength-4";
         }else if (sysinfo.wifi.rssi > -70){
-            wifi_class = "bi bi-wifi";
-        }else if (sysinfo.wifi.rssi > -80){
-            wifi_class = "bi bi-wifi-2";
+            wifi_class = "waveStrength-3";
+        }else if (sysinfo.wifi.rssi > -82){
+            wifi_class = "waveStrength-2";
         }else{
-            wifi_class = "bi bi-wifi-1";
+            wifi_class = "waveStrength-1";
         }
-        $('#wifi-strenght').attr("class", wifi_class);
+        $('#wifi_strenght').attr("class", wifi_class);
+        // Mem free
+        console.log(sysinfo.mem_free + sysinfo.mem_alloc);
+        let e_mem_free = $("#mem_free");
+        let mem_free_percent = ~~(100*sysinfo.mem_free / (sysinfo.mem_free + sysinfo.mem_alloc));
+        if (mem_free_percent>25){
+            e_mem_free.attr("class", "progress-bar bg-success");
+        }else{
+            e_mem_free.attr("class", "progress-bar bg-danger");
+        }
+        e_mem_free.attr("style", "width: " + mem_free_percent + "%");
+        e_mem_free.attr("aria-valuenow", mem_free_percent.toString());
+        e_mem_free.text(mem_free_percent + "%");
     });
 }
 
