@@ -479,7 +479,7 @@ class FmPyIot:
                     try:
                         self.params_loaders[key](params[key])
                     except Exception as e:
-                        print(f"Error on params_loader {loader} : {e}")
+                        print(f"Error on params_loader {key} : {e}")
         if on_change:
             self.params_loaders[key] = on_change
 
@@ -494,8 +494,8 @@ class FmPyIot:
         except OSError as e:
             logging.error(f"Error writing file {self.params_json} : {e}")
     
-    def set_params_loader(self, loader:function):
-        self.params_loaders.append(loader)
+    def set_params_loader(self, key:str, loader:function):
+        self.params_loaders[key]=loader
     
     def set_rtc_from_params(self):
         params = self.get_params()

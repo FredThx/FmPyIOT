@@ -37,5 +37,5 @@ iot.add_topic(Topic("./DOSE", action = lambda topic, payload : croquettes.distri
 iot.add_topic(Topic("./MOTOR", action = lambda topic, payload : croquettes.run_motor(float(payload))))
 iot.add_topic(TopicAction('./VIBRE', lambda topic, payload: croquettes.vibre_async(float(payload))))
 
-iot.set_params_loader(croquettes.load_params)
+iot.set_params_loader("croquettes", croquettes.load_params)
 iot.run()
