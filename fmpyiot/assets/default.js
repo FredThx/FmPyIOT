@@ -15,12 +15,26 @@ function update_files() {
 // Est executée toutes les secondes
 function update_status() {
     $.getJSON("/api/status", function(data) {
+        //Update sysinfo data
         var sysinfo = data["./SYSINFO"].payload;
         $('#json_sysinfo').html(JSON.stringify(sysinfo, undefined, 2));
+        //Update topics data
         Object.entries(data).forEach(entry => {
             const [topic,data_topic] = entry;
             $('#' + data_topic.id).html(JSON.stringify(data_topic.payload));
             });
+        //Update head data
+        var wifi_class;
+        if (sysinfo.wifi.rssi == null){
+            wifi_class = "bi bi-wifi-off"; // pas de chance que ça arrive en vrai!!!
+        }else if (sysinfo.wifi.rssi > -70){
+            wifi_class = "bi bi-wifi";
+        }else if (sysinfo.wifi.rssi > -80){
+            wifi_class = "bi bi-wifi-2";
+        }else{
+            wifi_class = "bi bi-wifi-1";
+        }
+        $('#wifi-strenght').attr("class", wifi_class);
     });
 }
 

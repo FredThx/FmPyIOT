@@ -402,12 +402,14 @@ class FmPyIot:
         ifconfig_keys = ['ip', 'subnet', 'gateway', 'dns']
         uname_keys = ['sysname', 'nodename', 'release', 'version', 'machine']
         gc.collect()
+        wifi = {k:self.wlan.config(k) for k in ['ssid', 'channel', 'txpower']}
+        wifi['rssi'] = self.wlan.status('rssi')
         return{
             'name' : self.name,
             #'description' : self.description,
             'uname' : dict(zip(uname_keys, list(os.uname()))),
             'ifconfig' : dict(zip(ifconfig_keys, self.wlan.ifconfig())),
-            'wifi' : {k:self.wlan.config(k) for k in ['ssid', 'channel', 'txpower']},
+            'wifi' : wifi,
             'mac' : ubinascii.hexlify(self.wlan.config('mac'),':').decode(),
             'mem_free' : gc.mem_free(),
             'mem_alloc' : gc.mem_alloc(),
