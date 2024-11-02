@@ -186,11 +186,12 @@ $(document).ready(function() {
         do_repl_cmd();
         e.preventDefault();
     });
-    /*
     $("#REPL-input").on("keypress", function(e){
-        do_repl_cmd();
-        e.preventDefault();
-    });*/
+        if (e.key === "Enter"){
+            do_repl_cmd();
+            e.preventDefault();
+        }
+    });
 
 
     // main
