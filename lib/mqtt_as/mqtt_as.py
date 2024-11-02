@@ -35,8 +35,7 @@ _SOCKET_POLL_DELAY = const(5)  # 100ms added greatly to publish latency
 ESP32 = platform == "esp32"
 RP2 = platform == "rp2"
 if ESP32:
-    # https://forum.micropython.org/viewtopic.php?f=16&t=3608&p=20942#p20942
-    BUSY_ERRORS = [EINPROGRESS, ETIMEDOUT, 118, 119]  # Add in weird ESP32 errors
+    BUSY_ERRORS = [EINPROGRESS, ETIMEDOUT, 118, 119]
 elif RP2:
     BUSY_ERRORS = [EINPROGRESS, ETIMEDOUT, -110]
 else:
