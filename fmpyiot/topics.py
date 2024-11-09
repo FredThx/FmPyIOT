@@ -40,6 +40,12 @@ class Topic:
 
     def is_auto_send(self)->bool:
         return bool(self.send_period)
+    
+    def set_send_period(self, period:float|str):
+        try:
+            self.send_period = float(period)
+        except ValueError as e:
+            logging.error(f"set_send_period error : {e}")
 
     @never_crash
     def do_action(self, topic:str=None, payload:str=None)->str:

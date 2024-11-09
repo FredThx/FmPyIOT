@@ -474,14 +474,14 @@ class FmPyIot:
             except Exception as e:
                 logging.error(f"Error on set_params : {e}")
             else:
-                self.write_params(params)
-                if key in self.params_loaders:
-                    try:
-                        self.params_loaders[key](params[key])
-                    except Exception as e:
-                        print(f"Error on params_loader {key} : {e}")
+                self.write_params(params)        
         if on_change:
             self.params_loaders[key] = on_change
+        if key in self.params_loaders:
+            try:
+                self.params_loaders[key](params[key])
+            except Exception as e:
+                print(f"Error on params_loader {key} : {e}")
 
 
     def write_params(self, params):
