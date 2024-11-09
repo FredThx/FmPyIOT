@@ -321,7 +321,7 @@ class FmPyIot:
         self.wd.enable()
         self.add_topic(Topic(
                     "./WATCHDOG",
-                    send_period=int(watchdog_delai/3),
+                    send_period=watchdog_delai//5,
                     reverse_topic=False,
                     read=lambda topic, payload:"FEED",
                     action=lambda topic, payload: self.wd.feed()
