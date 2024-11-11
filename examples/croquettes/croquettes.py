@@ -45,14 +45,19 @@ class Croquettes:
             "booster" : 0.01
         }
 
-    def load_params(self):
+    def load_params(self, params:dict=None):
         '''Initialise les paramètres
+            - a partir d'un fichier json
+            - ou d'un dict en entrée 
         '''
-        try:
-            with open(self.params_json,"r") as json_file:
-                self.params.update(json.load(json_file))
-        except OSError as e:
-            logging.error(str(e))
+        if params:
+            self.params.update(params)
+        else:
+            try:
+                with open(self.params_json,"r") as json_file:
+                    self.params.update(json.load(json_file))
+            except OSError as e:
+                logging.error(str(e))
         print(f"Params loaded. New params : {self.params}")
 
     def set_params(self, volatil: bool = False, **kwargs):
