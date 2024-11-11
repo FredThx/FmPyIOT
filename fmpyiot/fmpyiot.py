@@ -233,11 +233,13 @@ class FmPyIot:
             
         # Add routine for auto send topics
         if topic.is_auto_send():
-            self.add_routine(topic.get_routine(self.publish_async))        
+            self.add_routine(topic.get_routine(self.publish_async))
+            if topic.send_period_as_param:
+                self.set_param(f"send_period {topic}", default=topic.send_period, on_change= lambda period : topic.set_send_period(period))
 
         # Essentiellement pour IRQ
         topic.attach(self)
-        # Essentiellment pour webserver
+        # Essentiellement pour webserver
         self.topics.append(topic)
 
     #########################
@@ -324,7 +326,8 @@ class FmPyIot:
                     send_period=watchdog_delai//5,
                     reverse_topic=False,
                     read=lambda topic, payload:"FEED",
-                    action=lambda topic, payload: self.wd.feed()
+                    action=lambda topic, payload: self.wd.feed(),
+                    send_period_as_param=False
                     ))
     
     async def hardware_watchdog_async(self):
@@ -352,7 +355,8 @@ class FmPyIot:
         self.add_topic(Topic(
                     "./SYSINFO",
                     send_period=period,
-                    read=self.sysinfo
+                    read=self.sysinfo,
+                    send_period_as_param=False
                     ))
         self.add_topic(Topic(
                     "./SET_PARAMS",
@@ -367,7 +371,8 @@ class FmPyIot:
                     "/FmPyIOT/datetime_",
                     send_period=3600, #toutes les heures
                     read = lambda topic, payload : "_",
-                    reverse_topic=False
+                    reverse_topic=False,
+                    send_period_as_param=False
                      ))
         self.add_topic(Topic(
                     "/FmPyIOT/datetime",
@@ -482,7 +487,6 @@ class FmPyIot:
                 self.params_loaders[key](params[key])
             except Exception as e:
                 print(f"Error on params_loader {key} : {e}")
-
 
     def write_params(self, params):
         '''Ecrit le fichier params et le cache self.params

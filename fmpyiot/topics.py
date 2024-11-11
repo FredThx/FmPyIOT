@@ -18,7 +18,8 @@ class Topic:
                  send_period:float = None,
                  reverse_topic:bool|str = True,
                  read:function = None,
-                 action:function = None):
+                 action:function = None,
+                 send_period_as_param:bool=True):
         '''Initialisation
         Arguments : 
             - topic (can start with ./ for relative topic name)
@@ -29,6 +30,7 @@ class Topic:
         '''
         self.topic = topic
         self.send_period = send_period
+        self.send_period_as_param = send_period_as_param
         self._reverse_topic = reverse_topic
         self.read = read
         self.action = action
@@ -210,8 +212,9 @@ class TopicRead(Topic):
                  read:function = None,
                  send_period:float = None,
                  reverse_topic:bool|str = True,
+                 send_period_as_param:bool=True,
                  ):
-        super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic)
+        super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic, send_period_as_param=send_period_as_param)
 
 class TopicAction(Topic):
     '''Un topic de type action

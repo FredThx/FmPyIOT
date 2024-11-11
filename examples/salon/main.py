@@ -36,8 +36,8 @@ iot = FmPyIotWeb(
 topic_pression = Topic("./PRESSION", read=lambda topic, payload: bmp.pressure/100, send_period=30)
 topic_temperature = Topic("./temperature", read=lambda topic, payload : ds.read_async(), send_period=30)
 
-iot.set_param("period_temperature", default=30, on_change= lambda period : topic_temperature.set_send_period(period))
-iot.set_param("period_pression", default=30, on_change= lambda period : topic_pression.set_send_period(period))
+#iot.set_param("period_temperature", default=30, on_change= lambda period : topic_temperature.set_send_period(period))
+#iot.set_param("period_pression", default=30, on_change= lambda period : topic_pression.set_send_period(period))
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
