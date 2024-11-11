@@ -219,7 +219,24 @@ $(document).ready(function() {
             e.preventDefault();
         }
     });
-
+    $("#REBOOT").on("click", function(e){
+        $.ajax({
+            async : true,
+            url : '/api/reboot',
+            method:'GET',
+        }).done();
+        history.back();
+        e.preventDefault();
+    });
+    $("#BOOTLOADER").on("click", function(e){
+        $.ajax({
+            async : true,
+            url : '/api/bootloader',
+            method:'GET',
+        }).done();
+        history.back();
+        e.preventDefault();
+    });
 
     // main
     setInterval(update_status, 1000);
