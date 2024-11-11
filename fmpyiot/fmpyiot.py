@@ -470,12 +470,17 @@ class FmPyIot:
 
     def set_param(self, key:bytes, payload:any=None, default:bytes|None=None, on_change:callable=None):
         '''Ajoute ou Met à jour un parametre (self.params + fichier params_json)
-        si key est du genre key.sub_key, alors self.params[key][sub_key] est modifié et self.param_loader(self.params[key]) est executé
+        si key est du genre "key{self.nested_separator}sub_key", alors self.params[key][sub_key] est modifié et self.param_loader(self.params[key]) est executé
         '''
         logging.info(f"set_param({key=},{payload=})")
         params = self.get_params()
+        #Defaults values
         if default is not None and key not in params and payload is None:
             payload = default
+        elif type(payload) == dict and type(default) == dict and payload is None and key in params:
+            payload = default
+            payload.update(params[key])
+        #Update params (memory + disk)
         keys = key.split(self.nested_separator)
         if payload is not None:
             if type(payload) not in (dict, int, float):
@@ -487,13 +492,14 @@ class FmPyIot:
             if payload is not None:
                 self.set_nested_item(params, keys, payload)
                 self.write_params(params)
+        #Callback
         if on_change:
-            self.params_loaders[key[0]] = on_change
-        if key in self.params_loaders:
+            self.params_loaders[keys[0]] = on_change
+        if keys[0] in self.params_loaders:
             try:
-                self.params_loaders[key[0]](params[key[0]])
+                self.params_loaders[keys[0]](params[keys[0]])
             except Exception as e:
-                print(f"Error on params_loader {key[0]} : {e}")
+                print(f"Error on params_loader {keys[0]} : {e}")
 
     @staticmethod
     def set_nested_item(data_dict, maplist:list[str], val):

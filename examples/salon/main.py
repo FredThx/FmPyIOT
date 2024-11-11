@@ -25,6 +25,7 @@ class Salon:
         return self.params[param]
     
     def load_params(self, param:dict):
+        logging.info("SALON : LOAD PARAMS")
         self.params.update(param)
 
 salon = Salon()
@@ -46,7 +47,7 @@ iot = FmPyIotWeb(
     logging_level=logging.INFO,
     )
 
-iot.set_param('salon', salon.params, on_change=salon.load_params)
+iot.set_param('salon', default=salon.params, on_change=salon.load_params)
 
 #detection_topic = TopicIrq("./detect", pin=detecteur, trigger = Pin.IRQ_RISING)
 #iot.add_topic(detection_topic)
