@@ -6,13 +6,28 @@ from fmpyiot.topics import Topic, TopicIrq, TopicRoutine
 from devices.bmp280 import BMP280
 from devices.ds18b20 import DS18b20
 
+class Salon:
+    params = {
+        'param1' : 1,
+        "param2" : 2
+    }
+    def __init__(self):
+        self.i2c = I2C(0, scl=Pin(5), sda=Pin(4), freq=400_000)
+        self.bmp = BMP280(self.i2c)
+        self.ds = DS18b20(27)
 
+    def get_pressure(self, **kwargs):
+        return self.bmp.pressure/100
+    def get_temperature(self, **kwargs):
+        return self.ds.read_async()
 
-i2c = I2C(0, scl=Pin(5), sda=Pin(4), freq=400_000)
+    def get_param(self, param:str):
+        return self.params[param]
+    
+    def load_params(self, param:dict):
+        self.params.update(param)
 
-bmp = BMP280(i2c)
-
-ds = DS18b20(27)
+salon = Salon()
 
 time.sleep(5)
 
@@ -31,16 +46,19 @@ iot = FmPyIotWeb(
     logging_level=logging.INFO,
     )
 
+iot.set_param('salon', salon.params, on_change=salon.load_params)
+
 #detection_topic = TopicIrq("./detect", pin=detecteur, trigger = Pin.IRQ_RISING)
 #iot.add_topic(detection_topic)
-topic_pression = Topic("./PRESSION", read=lambda topic, payload: bmp.pressure/100, send_period=30)
-topic_temperature = Topic("./temperature", read=lambda topic, payload : ds.read_async(), send_period=30)
-
-#iot.set_param("period_temperature", default=30, on_change= lambda period : topic_temperature.set_send_period(period))
-#iot.set_param("period_pression", default=30, on_change= lambda period : topic_pression.set_send_period(period))
+topic_pression = Topic("./PRESSION", read=salon.get_pressure, send_period=30)
+topic_temperature = Topic("./temperature", read=salon.get_temperature, send_period=30)
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
+
+iot.add_topic(Topic("./param1", read = lambda *args, **kwargs:salon.get_param("param1"), send_period=5))
+iot.add_topic(Topic("./param2", read = lambda *args, **kwargs:salon.get_param("param2"), send_period=5))
+
 
 iot.run()
 

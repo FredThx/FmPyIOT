@@ -373,7 +373,7 @@ class FmPyIotWeb(FmPyIot):
         return "".join([
             f'''
                 <div>
-                    <span>{key} : </span>
+                    <span>{key.replace(self.nested_separator, '.')} : </span>
                     <span>
                         <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
                     </span>
@@ -382,7 +382,19 @@ class FmPyIotWeb(FmPyIot):
                     </span>
                 </div>
             '''
-            for key, val in self.get_params().items()])
+            for key, val in self.get_params_deep()])
+
+    def get_params_deep(self, super_key:str=None, params:dict=None):#->Iterator[tuple[str, str]]
+        '''Renvoie un generator yield = (key, val) des paramètres de manière recursive (les sous dict sont parcourus)
+        dans le cas de sous dict, la key est du type "key.sub_jey"
+        '''
+        for key, val in (params or self.get_params()).items():
+            if super_key:
+                key = super_key + self.nested_separator + key
+            if type(val) == dict:
+                yield from self.get_params_deep(key, val)
+            else:
+                yield key, val
 
 if __name__=='__main__':
     iot=FmPyIot(

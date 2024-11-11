@@ -466,31 +466,48 @@ class FmPyIot:
         for key, value in data.items():
             self.set_param(key, json.dumps(value))
 
-    def set_param(self, key:bytes, payload:bytes|None=None, default:bytes|None=None, on_change:callable=None):
-        '''Met à jour un parametre (self.params + fichier params_json)
+    nested_separator = "__@@__"
+
+    def set_param(self, key:bytes, payload:any=None, default:bytes|None=None, on_change:callable=None):
+        '''Ajoute ou Met à jour un parametre (self.params + fichier params_json)
+        si key est du genre key.sub_key, alors self.params[key][sub_key] est modifié et self.param_loader(self.params[key]) est executé
         '''
         logging.info(f"set_param({key=},{payload=})")
         params = self.get_params()
         if default is not None and key not in params and payload is None:
             payload = default
+        keys = key.split(self.nested_separator)
         if payload is not None:
-            try:
-                params[key] = json.loads(str(payload))
-            except Exception as e:
-                logging.error(f"Error on set_params : {e}")
-            else:
-                self.write_params(params)        
+            if type(payload) not in (dict, int, float):
+                try:
+                    payload = json.loads(payload)
+                except ValueError:
+                    payload = None
+                    logging.error(f"Error on set_params : {e}")
+            if payload is not None:
+                self.set_nested_item(params, keys, payload)
+                self.write_params(params)
         if on_change:
-            self.params_loaders[key] = on_change
+            self.params_loaders[key[0]] = on_change
         if key in self.params_loaders:
             try:
-                self.params_loaders[key](params[key])
+                self.params_loaders[key[0]](params[key[0]])
             except Exception as e:
-                print(f"Error on params_loader {key} : {e}")
+                print(f"Error on params_loader {key[0]} : {e}")
+
+    @staticmethod
+    def set_nested_item(data_dict, maplist:list[str], val):
+        '''Set item in nested dictionary'''
+        assert len(maplist)>0, "maplist cannot be empty."
+        if len(maplist)==1:
+            data_dict[maplist[0]] = val
+        else:
+            FmPyIot.set_nested_item(data_dict[maplist[0]], maplist[1:], val)
 
     def write_params(self, params):
         '''Ecrit le fichier params et le cache self.params
         '''
+        logging.info(f"write params : {params}")
         self.params = params
         try:
             with open(self.params_json,"w") as json_file:
