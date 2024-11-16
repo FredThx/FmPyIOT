@@ -395,16 +395,3 @@ class FmPyIotWeb(FmPyIot):
                 yield from self.params_deep(key, val)
             else:
                 yield key, val
-
-if __name__=='__main__':
-    iot=FmPyIot(
-        mqtt_host="***REMOVED***",
-        mqtt_base_topic= "test",
-        ssid = 'WIFI_THOME2',
-        password = "***REMOVED***",
-        watchdog=100,
-        sysinfo_period = 600,
-        led_incoming="LED", #internal
-        led_wifi=16
-        )
-    iot.run()

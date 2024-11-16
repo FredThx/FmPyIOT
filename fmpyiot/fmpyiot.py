@@ -472,26 +472,28 @@ class FmPyIot:
         '''Ajoute ou Met à jour un parametre (self.params + fichier params_json)
         si key est du genre "key{self.nested_separator}sub_key", alors self.params[key][sub_key] est modifié et self.param_loader(self.params[key]) est executé
         '''
-        logging.info(f"set_param({key=},{payload=})")
+        logging.info(f"set_param(key={key},payload={payload} (type={type(payload)}))")
         params = self.get_params()
+        keys = key.split(self.nested_separator)
         #Defaults values
         if default is not None and key not in params and payload is None:
             payload = default
         elif type(payload) == dict and type(default) == dict and payload is None and key in params:
             payload = default
             payload.update(params[key])
+        #decode payload
+        if type(payload) in (str, bytes):
+            try:
+                payload = json.loads(payload)
+                #payload = json.loads(payload) # Pour focer a faire des int, float #TODO : typer les paramètres
+                logging.debug(f"payload decoded : {payload} => {payload} ({type(payload)})")
+            except ValueError:
+                logging.error(f"Error on set_params : {e}")
+        logging.info(f"set_param(key={key},payload={payload} (type={type(payload)}))")
         #Update params (memory + disk)
-        keys = key.split(self.nested_separator)
         if payload is not None:
-            if type(payload) not in (dict, int, float):
-                try:
-                    payload = json.loads(payload)
-                except ValueError:
-                    payload = None
-                    logging.error(f"Error on set_params : {e}")
-            if payload is not None:
-                self.set_nested_item(params, keys, payload)
-                self.write_params(params)
+            self.set_nested_item(params, keys, payload)
+            self.write_params(params)
         #Callback
         if on_change:
             self.params_loaders[keys[0]] = on_change
@@ -578,16 +580,3 @@ class FmPyIot:
                 return open(file_name,'r').read()
             except OSError as e:
                 logging.error(e)
-
-if __name__=='__main__':
-    iot=FmPyIot(
-        mqtt_host="***REMOVED***",
-        mqtt_base_topic= "test",
-        ssid = 'WIFI_THOME2',
-        password = "***REMOVED***",
-        watchdog=100,
-        sysinfo_period = 600,
-        led_incoming="LED", #internal
-        led_wifi=16
-        )
-    iot.run()
