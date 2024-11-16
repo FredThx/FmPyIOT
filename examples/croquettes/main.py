@@ -7,6 +7,7 @@ from fmpyiot.topics import Topic, TopicAction
 import logging
 time.sleep(5)
 
+from credentials import CREDENTIALS
 
 croquettes = Croquettes(
         hx_clk= Pin(13), # GP13 = 17
@@ -20,14 +21,14 @@ croquettes = Croquettes(
         )
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/CROQ3",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
-    web_credentials=(***REMOVED***, ***REMOVED***),
     name = "Les croquettes du futur des chats",
     logging_level=logging.INFO,
     )

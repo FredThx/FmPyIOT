@@ -17,7 +17,7 @@ Principe:
     Sinon, le contraire
 
 Auteur : Fredthx pour Olfa
-date : 28/10/203
+date : 28/10/2023
 '''
 from machine import Pin, Timer
 

@@ -9,6 +9,8 @@ import uasyncio as asyncio
 import logging
 time.sleep(5)
 
+from credentials import CREDENTIALS
+
 spi1 = SPI(1, baudrate=1_000_000, sck=Pin(10), mosi=Pin(11), miso=Pin(8))
 display = sh1107.SH1107_SPI(128, 64, spi1, Pin(8), Pin(12), Pin(9), rotate=0)
 
@@ -28,14 +30,13 @@ key0 = Pin(15, Pin.IN)
 mano = ManoAnalog(Pin(28), max_psi=150, min_voltage=0.317, no_negative = True)
 
 iot = FmPyIotWeb(
-    mqtt_host = "192.168.0.11",
-    mqtt_base_topic = "OLFA/INCENDIE",
-    ssid = 'OLFA_PRODUCTION',
-    password = "79073028",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     watchdog=300,
     sysinfo_period = 600,
     led_wifi='LED',
-    web_credentials=(***REMOVED***, ***REMOVED***),
     name = "La pression du réseau incendie",
     logging_level=logging.INFO,
     on_fail_connect=display_connect

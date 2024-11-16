@@ -8,6 +8,8 @@ import logging
 from lcd12864 import SPI_LCD12864
 from devices.display import Display, Field, RIGHT, Icon
 
+from credentials import CREDENTIALS
+
 time.sleep(5)
 try:
     del len #Bug micropython!!!
@@ -17,15 +19,15 @@ except:
 assert len([])==0, "Error with len!"
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/TEST",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=None,
     sysinfo_period = 600,
     #led_wifi='LED',
     web=True,
-    web_credentials=(***REMOVED***, ***REMOVED***),
     name = "FmPyIot TEST",
     logging_level=logging.DEBUG,
     )
@@ -180,4 +182,20 @@ f_icon.set_icon("ONLINE",[
                 [0,0,0,1,1,1,1,1,0,0,0]])
 disp.set_field("icon", f_icon)
 iot.add_topic(TopicAction('./CROQ_STATUS', lambda topic, payload : disp.set("icon", payload)))
+
+iot.set_param('blink_duration', default=1)
+
+async def run_led_params():
+    while True:
+        try:
+            duration = float(iot.get_param('blink_duration'))
+        except Exception as e:
+            print(e)
+            await asyncio.sleep(0.1)        
+        else:
+            machine.Pin("LED").toggle()
+            await asyncio.sleep(duration)        
+iot.add_topic(TopicRoutine(run_led_params))
+
+
 iot.run()

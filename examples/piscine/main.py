@@ -1,6 +1,3 @@
-# main.py -- put your code here!
-
-
 from machine import Pin
 import logging
 import uasyncio as asyncio
@@ -8,6 +5,8 @@ import time
 import onewire, ds18x20, time
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicAction
+
+from credentials import CREDENTIALS
 
 time.sleep(5)
 
@@ -30,14 +29,14 @@ relay.off()
 
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/PISCINE",
     watchdog=100,
     sysinfo_period = 600,
     led_wifi='LED',
-    web_credentials=("fred", ***REMOVED***),
     name = "Pompe Piscine",
     logging_level=logging.INFO,
     )

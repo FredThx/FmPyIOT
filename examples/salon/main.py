@@ -1,10 +1,11 @@
 from machine import Pin, I2C
-import uasyncio as asyncio
 import time, logging
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicIrq, TopicRoutine
+from fmpyiot.topics import Topic
 from devices.bmp280 import BMP280
 from devices.ds18b20 import DS18b20
+
+from credentials import CREDENTIALS
 
 class Salon:
     params = {
@@ -33,16 +34,16 @@ salon = Salon()
 time.sleep(5)
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/SALON",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=100,
     sysinfo_period = 600,
     led_incoming="LED", #internal
     led_wifi=16,
     web=True,
-    web_credentials=(***REMOVED***, ***REMOVED***),
     name = "Salon",
     logging_level=logging.INFO,
     )

@@ -1,11 +1,12 @@
-
 import time
 import uasyncio as asyncio
 from machine import I2C, Pin
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
+from fmpyiot.topics import TopicRoutine, TopicRead
 import logging
 from devices.lidar import TF_Luna
+
+from credentials import CREDENTIALS
 
 time.sleep(5)
 i2c = I2C(0, scl=Pin(13), sda=Pin(12), freq = 400_000)
@@ -16,19 +17,14 @@ niveau_haut = Pin(15, Pin.OUT)
 
 
 iot = FmPyIotWeb(
-    #mqtt_host = "***REMOVED***",
-    mqtt_host = "192.168.0.11",
-    #ssid = 'WIFI_THOME2',
-    #password = "***REMOVED***",
-    ssid = 'OLFA_PRESSES',
-    password = "79073028",
-    #ssid = 'OLFA_WIFI',
-    #password = "Olfa08SignyLePetit",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "OLFA/CUVE-SCIURE",
     watchdog=100,
     sysinfo_period = 600,
     led_wifi='LED',
-    web_credentials=("olfa", "tr0ne"),
     name = "Cuve de Sciure",
     logging_level=logging.INFO,
     )

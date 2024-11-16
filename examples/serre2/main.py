@@ -7,16 +7,19 @@ from fmpyiot.fmpyiot_sleep import FmPyIotSleep
 from fmpyiot.topics import Topic
 import time
 
+from credentials import CREDENTIALS
+
 print("BOOT")
 for i in range(5):
     time.sleep(1)
     print(".",end="")
 
 iot = FmPyIotSleep(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/SERRE",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=None,
     sleep_period = 1200, # secondes
     run_pin=22,

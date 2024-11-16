@@ -7,3 +7,4 @@ Thumbs.db
 /_bricolos
 *.mpy
 pymakr.conf
+_credentials.py

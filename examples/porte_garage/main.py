@@ -1,12 +1,11 @@
-# main.py -- put your code here!
-
-
 from machine import Pin
 import logging
 import time
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic
 from porte_garage import PorteGarage
+
+from credentials import CREDENTIALS
 
 time.sleep(5)
 
@@ -16,14 +15,13 @@ porte_garage = PorteGarage(
     gate_motor_push = Pin(19))
 
 iot = FmPyIotWeb(
-    mqtt_host = "***REMOVED***",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
-    mqtt_base_topic = "T-HOME/GARAGE/PORTE",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
+    web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     watchdog=100,
     sysinfo_period = 600,
     led_wifi='LED',
-    web_credentials=("fred", ***REMOVED***),
     name = "Porte de garage",
     logging_level=logging.INFO,
     )

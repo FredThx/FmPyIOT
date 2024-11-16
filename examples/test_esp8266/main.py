@@ -1,22 +1,24 @@
+import time
+from machine import Pin
+import logging
 
 if False:
-    import time
-    from machine import Pin
     from fmpyiot.fmpyiot import FmPyIot
     from fmpyiot.topics import Topic
-    import logging
+
+    from credentials import CREDENTIALS
+
     time.sleep(5)
 
     iot = FmPyIot(
-        mqtt_host = "***REMOVED***",
+        mqtt_host = CREDENTIALS.mqtt_host,
+        ssid = CREDENTIALS.wifi_SSID,
+        password = CREDENTIALS.wifi_password,
         mqtt_base_topic = "T-HOME/TEST_ESP8266",
-        ssid = 'WIFI_THOME2',
-        password = "***REMOVED***",
         watchdog=300,
         sysinfo_period = 600,
         led_wifi=None,
         web=True,
-        web_credentials=(***REMOVED***, ***REMOVED***),
         name = "Un test pour ESP8266",
         logging_level=logging.INFO,
         )
