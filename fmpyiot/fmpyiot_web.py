@@ -179,7 +179,7 @@ class FmPyIotWeb(FmPyIot):
             topics = {}
             for topic in self.topics:
                 payload = await topic.get_payload_async(topic.topic, None)
-                if payload:
+                if payload is not None:
                     topics[topic.topic] = {'payload' : payload, 'id': topic.get_id()}
             await request.write(json.dumps(topics))
 
