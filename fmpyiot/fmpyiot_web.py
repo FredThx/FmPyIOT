@@ -359,7 +359,8 @@ class FmPyIotWeb(FmPyIot):
             '''Renvoie sous forme html la liste des params et leurs valeurs
             '''
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
-            await request.write(self.get_html_params())
+            for html_param in self.html_params():
+                await request.write(html_param)
     
     def get_html_topics(self)->str:
         '''renvoie du code html
@@ -367,11 +368,11 @@ class FmPyIotWeb(FmPyIot):
         html = "".join([topic.to_html() for topic in self.topics])
         return html
 
-    def get_html_params(self)->str:
-        '''renvoie le code html représentant les paramètres
+    def html_params(self):#->Iterator[str]
+        '''Renvoi un generator du code html représentant les paramètres
         '''
-        return "".join([
-            f'''
+        for key, val in self.params_deep():
+            yield f'''
                 <div>
                     <span>{key.replace(self.nested_separator, '.')} : </span>
                     <span>
@@ -381,10 +382,9 @@ class FmPyIotWeb(FmPyIot):
                         <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">
                     </span>
                 </div>
-            '''
-            for key, val in self.get_params_deep()])
+            '''.strip()
 
-    def get_params_deep(self, super_key:str=None, params:dict=None):#->Iterator[tuple[str, str]]
+    def params_deep(self, super_key:str=None, params:dict=None):#->Iterator[tuple[str, str]]
         '''Renvoie un generator yield = (key, val) des paramètres de manière recursive (les sous dict sont parcourus)
         dans le cas de sous dict, la key est du type "key.sub_jey"
         '''
@@ -392,7 +392,7 @@ class FmPyIotWeb(FmPyIot):
             if super_key:
                 key = super_key + self.nested_separator + key
             if type(val) == dict:
-                yield from self.get_params_deep(key, val)
+                yield from self.params_deep(key, val)
             else:
                 yield key, val
 
