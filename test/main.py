@@ -1,19 +1,19 @@
-
 import time
 import uasyncio as asyncio
 from machine import Pin
 from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.topics import Topic, TopicRoutine, TopicIrq, TopicOnChange
 
+from credentials import CREDENTIALS
 
 time.sleep(5)
 
 
 iot = FmPyIot(
-    mqtt_host = "***REMOVED***",
+    mqtt_host = CREDENTIALS.mqtt_host,
+    ssid = CREDENTIALS.wifi_SSID,
+    password = CREDENTIALS.wifi_password,
     mqtt_base_topic = "T-HOME/TEST",
-    ssid = 'WIFI_THOME2',
-    password = "***REMOVED***",
     watchdog=None,
     sysinfo_period = 600,
     #led_wifi='LED',
