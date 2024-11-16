@@ -1,22 +1,24 @@
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/FredThx/FmPyIOT/blob/master/readme.md)[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/FredThx/FmPyIOT/blob/master/readme_FR.md)
+
 # projet Fmpyiot
 
-Pour Fred, micropython IOT
+For micropython IOT project on microcontrolers.
 
-C'est une évolution de https://github.com/FredThx/nodemcu_iot
+t's an evolution of https://github.com/FredThx/nodemcu_iot
 
-mais en micropython (et non plus en Lua)
+but in micropython (and no longer in Lua)
 
-L'idée est d'avoir une libriairie commune pour gérer des objects connectés à base de microcontroleur (raspberry pi pico, esp32, ...) compatibles avec micropython.
+The idea is to have a common library to manage connected objects based on microcontrollers (raspberry pi pico, esp32, ...) compatible with micropython.
 
-Ensuite, les communications se font en WIFI + MQTT.
+Communications are via WIFI + MQTT.
 
-En option : accès en http
+Optional: http access
 
-## Principes
+## General
 
-Un projet se décrit à partir d'un fichier main.py dans lequel on va décrire son fonctionement
+A project is described in a main.py file, which describes how it works.
 
-Exemple
+Example
 
 ```python
 from devices.mydevice import MyDevice
@@ -39,11 +41,11 @@ iot = FmPyIot(
     web_credentials=("login", "password"),
     name = "FmPyIot TEST",
 )
-# En mode synchrone (lecture du capteur rapide)
+# In synchronous mode (fast sensor reading)
 ma_mesure = Topic("./ma_mesure", read=lambda topic, payload : mydevice.read(), send_period=60)
 iot.add_topic(ma_mesure)
 
-# En mode asynchrone (si la lecture du capteur est longue, ou pour le style)
+# In asynchronous mode (if sensor reading is long, or for styling purposes)
 async def co_mesure():
     #Long traitement
     await asyncio.sleep(3)
@@ -55,18 +57,19 @@ iot.run()
 
 ## Installation
 
-- Installez micropython sur votre µcontroleur.
+- Install micropython on your µcontroller.
 - Uploader [/lib]()
 - Uploader [/FmPyIot]()
-- créer un fichier ``boot.py`` vide
-- créer un fichier ``main.py`` selon l'exemple ci-dessus
-  - avec IP du broker MQTT
-  - SSID et pass de votre réseau WIFI
+- create an empty ``boot.py`` file
+- create a ``main.py`` file as shown above
+
+  - with MQTT broker IP
+  - SSID and pass of your WIFI network
   - ...
-  - créer les topics
-  - ajouter les topics
-  - créer des paramètres
-- boot le µc
+  - create topics
+  - add topics
+  - create parameters
+  - boot the µc
 
 ## Description
 
@@ -76,7 +79,7 @@ iot.run()
 
 #### ./SYSINFO
 
-Renvoie les données system
+Returns system data
 
 ```json
 {"ifconfig":["192.168.10.77","255.255.255.0","192.168.10.254","192.168.10.169"],"uname":["rp2","rp2","1.21.0","v1.21.0 on 2023-10-06 (GNU 13.2.0 MinSizeRel)","Raspberry Pi Pico W with RP2040"],"mac":"28:cd:c1:0f:4d:81","wifi":{"ssid":"WIFI_THOME2","channel":3,"txpower":31},"mem_free":119504,"mem_alloc":57776,"statvfs":[4096,4096,212,118,118,0,0,0,0,255]}
@@ -84,74 +87,74 @@ Renvoie les données system
 
 ### ./PARAMS
 
-Renvoie les paramètres
+Return parameters
 
 ### ./SET_PARAM
 
-Permet de modifier les paramètres.
+Allows parameters to be modified.
 
 #### Reverse topic
 
-Pour chaque topic "TOPIC", un reverse topic est généré : "TOPIC_" qui force l'envoie du topic.
+For each “TOPIC” topic, a reverse topic is generated: “TOPIC_”, which forces the topic to be sent.
 
-Si un topic est prévu en message sortant (ex : lecture d'un capteur), alors un topic permet de forcer la lecture de cette valeur.
+If a topic is intended as an outgoing message (e.g. reading a sensor), then a topic can be used to force the reading of this value.
 
-Si un topic est prévu en message entrant (ex : l'execution d'une action), alors un topic est créé pour récupérer la valeur de retour de l'action (ex : "OK" ou une valeur)
+If a topic is scheduled as an incoming message (e.g. execution of an action), then a topic is created to retrieve the action's return value (e.g. “OK” or a value).
 
-|                      | MQTT entrant | MQTT sortant                          |
-| -------------------- | ------------ | ------------------------------------- |
-| Topic read "./TEMP"  | ./TEMP_      | ./TEMP                                |
-| Topic action "./LED" | ./LED        | ./LED_ (si action renvoie une valeur) |
-| Topic system SYSINFO | SYSINFO_     | SYSINFO                               |
+|                      | MQTT entrant | MQTT sortant                       |
+| -------------------- | ------------ | ---------------------------------- |
+| Topic read "./TEMP"  | ./TEMP_      | ./TEMP                             |
+| Topic action "./LED" | ./LED        | ./LED_ (if action returns a value) |
+| Topic system SYSINFO | SYSINFO_     | SYSINFO                            |
 
-## Serveur web
+## Web server
 
-### Visualiser les valeurs des Topics / Exécuter les actions
+### View Topic values / Execute actions
 
 ![topics](image/readme/topics.png)
 
-### visualiser les informations system
+### view system information
 
 ![sysinfo](image/readme/sysinfo.png)
 
-### Modifier des paramètres
+### modify parameters
 
 ![files](image/readme/params.png)
 
-### Upload/download les fichiers
+### Upload/download files
 
 ![files](image/readme/files.png)
 
-### avoir une console REPL
+### have a REPL console
 
 ![repl](image/readme/repl.png)
 
-### un petit menu system
+### a small system menu
 
 ![system](image/readme/system.png)
 
 ## API
 
-le microcontrôleur et le navigateur internet communiquent à travers cette API :
+the microcontroller and the web browser communicate via this API:
 
-Sécurité : BasicAutentification
+Security: BasicAutentification
 
-|                                     | Method          | url                                                                                                | params                                                                              | output                                                |
-| ----------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Les topics en HTML                  | GET             | /api/topics                                                                                        |                                                                                     | code HTML de la page topics                           |
-| Le status de l'IOT                  | GET             | /api/status                                                                                        |                                                                                     | json de sysinfo                                       |
-| Liste des fichiers                  | GET             | /api/ls                                                                                            |                                                                                     | json:``json {'files' : ['main.py', 'boot.py', ....}`` |
-| Download fichier                    | GET             | /api/download/{nom du fichier}                                                                     |                                                                                     |                                                       |
-| Delete fichier                      | DELETE          | /api/delete/{nom_fichier}                                                                          |                                                                                     | 200, OK                                               |
-| Upload fichier                      | PUT             | /api/upload/{nom_fichier}}                                                                         | fichier binary                                                                      | 201, Created                                          |
-| Reboot                              | GET&#124; POST | /api/reboot                                                                                        |                                                                                     | 200, Ok                                               |
-| Execute une action d'un topic       | POST            | /api/action/{topic_id}<br />``topic_id = "T"+re.sub(r'\W','_',self.topic)``                       | json:``json {'topic' : ..., 'payload':...}``<br />Souvent topic est ici facultatif | 200,OK                                                |
-| Les dernières lignes de la console | GET             | /api/repl                                                                                          |                                                                                     | json:``json {"repl" : ['...', '...', ...]}``          |
-| Execution d'une commande python     | POST            | /api/repl/cmd                                                                                      | json:``json {"cmd" : "print(f'Hello {iot.name}')"}``                                | json:``json {"rep": ""}``                            |
-| Niveau du logging                   | POST            | /api/logging-level/{level}<br />level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL) |                                                                                     | 200, OK                                               |
-| Hello                               | GET             | /api/hello                                                                                         |                                                                                     | "FmPyIOT"""                                           |
-| Contenu du dernier fichier log      | GET             | /api/log                                                                                           |                                                                                     |                                                       |
-| Liste des paramètres               | GET             | /api/param                                                                                         |                                                                                     |                                                       |
+|                               | Method          | url                                                                                                | params                                                                     | output                                                |
+| ----------------------------- | --------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------- |
+| HTML code for topics          | GET             | /api/topics                                                                                        |                                                                            | code HTML de la page topics                           |
+| IOT status                    | GET             | /api/status                                                                                        |                                                                            | json de sysinfo                                       |
+| List files                    | GET             | /api/ls                                                                                            |                                                                            | json:``json {'files' : ['main.py', 'boot.py', ....}`` |
+| Download file                 | GET             | /api/download/{nom du fichier}                                                                     |                                                                            |                                                       |
+| Delete file                   | DELETE          | /api/delete/{nom_fichier}                                                                          |                                                                            | 200, OK                                               |
+| Upload file                   | PUT             | /api/upload/{nom_fichier}}                                                                         | fichier binary                                                             | 201, Created                                          |
+| Reboot                        | GET&#124; POST | /api/reboot                                                                                        |                                                                            | 200, Ok                                               |
+| Execute an action for a topic | POST            | /api/action/{topic_id}<br />``topic_id = "T"+re.sub(r'\W','_',self.topic)``                       | json:``json {'topic' : ..., 'payload':...}``<br />topic is often optional | 200,OK                                                |
+| last REPL lines              | GET             | /api/repl                                                                                          |                                                                            | json:``json {"repl" : ['...', '...', ...]}``          |
+| Execute python statement      | POST            | /api/repl/cmd                                                                                      | json:``json {"cmd" : "print(f'Hello {iot.name}')"}``                       | json:``json {"rep": ""}``                            |
+| Set logging level             | POST            | /api/logging-level/{level}<br />level = 10 (DEBUG), 20(INFO), 30(WARNING), 40(ERROR), 50(CRITICAL) |                                                                            | 200, OK                                               |
+| Hello                         | GET             | /api/hello                                                                                         |                                                                            | "FmPyIOT"""                                           |
+| Return logfile content        | GET             | /api/log                                                                                           |                                                                            |                                                       |
+| list of parameters            | GET             | /api/param                                                                                         |                                                                            |                                                       |
 
 # Thanks
 
