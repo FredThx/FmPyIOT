@@ -127,7 +127,7 @@ $(document).ready(function() {
                 update_files();
             });
         });
-        $('#status').html(success + " file(s) uploaded successfully.");
+        $('#status-upload').html(success + " file(s) uploaded successfully.");
         e.preventDefault();
     }).on('submit', '#list', function(e) {
         var file = $(this).find('select').val()[0];
@@ -165,8 +165,8 @@ $(document).ready(function() {
     }).on('submit', '#upload-folder', function(e){
         var form = $(this);
         var success = 0;
+        $('#status-upload-folder').html("Upload files ...");
         $.each($('#files-folder').prop('files'), function(index, file) {
-            $('#status-upload-folder').html("Sending " + file.name);
             $.ajax({
                 async: false,
                 url: form.attr('action') + file.webkitRelativePath,
@@ -225,7 +225,6 @@ $(document).ready(function() {
             url : '/api/reboot',
             method:'GET',
         }).done();
-        history.back();
         e.preventDefault();
     });
     $("#BOOTLOADER").on("click", function(e){
@@ -234,7 +233,6 @@ $(document).ready(function() {
             url : '/api/bootloader',
             method:'GET',
         }).done();
-        history.back();
         e.preventDefault();
     });
 
