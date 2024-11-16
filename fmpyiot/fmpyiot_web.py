@@ -148,7 +148,8 @@ class FmPyIotWeb(FmPyIot):
             '''Renvoie sous forme html la liste des topics et leurs valeurs, boutons actions, ....
             '''
             await request.write("HTTP/1.1 200 OK\r\n\r\n")
-            await request.write(self.get_html_topics())
+            for html in self.html_topics():
+                await request.write(html)
 
         @self.web.route('/assets/*')
         @self.authenticate()
@@ -362,11 +363,11 @@ class FmPyIotWeb(FmPyIot):
             for html_param in self.html_params():
                 await request.write(html_param)
     
-    def get_html_topics(self)->str:
-        '''renvoie du code html
+    def html_topics(self): #Iterator[str]
+        '''Renvoie un generateur du code html pour chaque topics
         '''
-        html = "".join([topic.to_html() for topic in self.topics])
-        return html
+        for topic in self.topics:
+            yield topic.to_html() 
 
     def html_params(self):#->Iterator[str]
         '''Renvoi un generator du code html représentant les paramètres
