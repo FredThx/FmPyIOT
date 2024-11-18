@@ -1,10 +1,11 @@
 from machine import Pin, I2C
-import time, logging
+import time, logging, uasyncio as asyncio
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicIrq
 from devices.bmp280 import BMP280
 from devices.ds18b20 import DS18b20
-
+from devices import sh1106
+from devices.display import Display, Field, Icon, RIGHT, LEFT
 from credentials import CREDENTIALS
 
 class Salon:
@@ -14,16 +15,34 @@ class Salon:
         self.bmp = BMP280(self.i2c)
         self.ds = DS18b20(27)
         self.detecteur = Pin(26)
-        self.params = {}
+        self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
+        self.display.set_field("heure", Field("", 2,3,width=8, align=RIGHT))
+        self.display.set_field("T-HOME/SALON/PRESSION", Field("Pression : ", 0,0,6, align=LEFT))
+        self.display.set_field("T-HOME/SALON/temperature", Field("Temp. : ", 1,0,6, align=LEFT))
+        self.params = {
+            'pressure_offset' : 0
+        }
 
     def get_pressure(self, **kwargs):
-        return self.bmp.pressure/100
+        return self.bmp.pressure/100 - self.params['pressure_offset']
+    
     def get_temperature(self, **kwargs):
         return self.ds.read_async()
 
     def load_params(self, param:dict):
         logging.info("SALON : LOAD PARAMS")
         self.params.update(param)
+    
+    async def show_time(self):
+        #Une routine qui affiche l'heure
+        s0 = 0
+        while True:
+            _, _, _, _, h, m, s, _ = iot.rtc.datetime()
+            if s0!=s:
+                self.display.set("heure", f"{h:02}:{m:02}:{s:02}")
+                s0=s
+            await asyncio.sleep_ms(100)
+    
 
 salon = Salon()
 
@@ -46,13 +65,24 @@ iot = FmPyIotWeb(
 
 iot.set_param('salon', default=salon.params, on_change=salon.load_params)
 
-detection_topic = TopicIrq("./detect", pin=salon.detecteur, trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING)
-topic_pression = Topic("./PRESSION", read=salon.get_pressure, send_period=30)
-topic_temperature = Topic("./temperature", read=salon.get_temperature, send_period=30)
+detection_topic = TopicIrq("./detect",
+                           pin=salon.detecteur,
+                           trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING,
+                           action=lambda topic, payload : salon.display.power(payload=="1"))
+topic_pression = Topic("./PRESSION",
+                       read=salon.get_pressure,
+                       send_period=30,
+                       action=salon.display.set)
+topic_temperature = Topic("./temperature",
+                          read=salon.get_temperature,
+                          send_period=30,
+                          action=salon.display.set)
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
 iot.add_topic(detection_topic)
+
+iot.add_routine(salon.show_time)
 
 iot.run()
 
