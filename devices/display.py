@@ -15,7 +15,10 @@ class Display:
         self.topics={}
 
     def update(self):
-        self.device.update()
+        try:
+            self.device.update()
+        except:
+            self.device.show()
 
     def set_field(self, topic:str, field:Field, payload:str = None):
         field.root = self
@@ -26,7 +29,10 @@ class Display:
         '''Write text on display
         '''
         x,y = column*self.FONT_SIZE[0], row*self.FONT_SIZE[1]
-        self.device.rect(x,y,len(text*self.FONT_SIZE[0]), self.FONT_SIZE[1],backcolor,True)
+        try:
+            self.device.rect(x,y,len(text*self.FONT_SIZE[0]), self.FONT_SIZE[1],backcolor,True)
+        except TypeError:
+            self.device.fill_rect(x,y,len(text*self.FONT_SIZE[0]), self.FONT_SIZE[1],backcolor)
         self.device.text(text, x,y, color)
     
     def draw_icon(self, icon, x:int, y:int, color:int=1, backcolor:int=0):
@@ -44,6 +50,12 @@ class Display:
             print(f"No topic {topic}!")
         else:
             w.set(payload)
+    
+    def power(self, value:bool):
+        if value:
+            self.device.poweron()
+        else:
+            self.device.poweroff()
 
 class Widget:
     def __init__(self, invert):
