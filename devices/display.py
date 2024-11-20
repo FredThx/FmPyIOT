@@ -1,5 +1,5 @@
 from micropython import const
-import framebuf
+import framebuf, logging
 
 LEFT = const(1)
 RIGHT = const(2)
@@ -13,6 +13,10 @@ class Display:
     def __init__(self, device:framebuf.FrameBuffer):
         self.device = device
         self.topics={}
+
+    @property
+    def width_car(self):
+        return self.device.width//self.FONT_SIZE[1]
 
     def update(self):
         try:
@@ -43,11 +47,11 @@ class Display:
                 self.device.pixel(x+i,y+j,icon[j][i])
 
     def set(self, topic:str, payload:str):
-        print(f"{self}.set(topic='{topic}', payload = '{payload}')")
+        logging.debug(f"{self}.set(topic='{topic}', payload = '{payload}')")
         try:
             w = self.topics[topic]
         except:
-            print(f"No topic {topic}!")
+            logging.error(f"No topic {topic}!")
         else:
             w.set(payload)
     
@@ -71,10 +75,10 @@ class Widget:
 class Field(Widget):
     '''Un champ avec label
     '''
-    def __init__(self, label:str,
-                 row:int,column:int, width:int=1, height:int = 1,
+    def __init__(self, label:str="",
+                 row:int=0,column:int=0, width:int|None=None, height:int = 1,
                  align:int=LEFT,
-                 invert = False
+                 invert = False,
                  ):
         super().__init__(invert)
         self.label = label
@@ -89,7 +93,9 @@ class Field(Widget):
         if payload:
             self.payload = payload
         self.root.text(self.label or "", self.row, self.column, self.color, self.backcolor)
-        text = (self.payload or "")[:self.width]
+        text = self.payload or ""
+        self.width = self.width or self.root.width_car - len(self.label) #Initialize once
+        text = text[:self.width]
         if self.align == LEFT:
             text = text + " " * (self.width - len(text))
         else:
