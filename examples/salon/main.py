@@ -1,7 +1,7 @@
 from machine import Pin, I2C
 import time, logging, uasyncio as asyncio
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicIrq
+from fmpyiot.topics import Topic, TopicIrq, TopicAction
 from devices.bmp280 import BMP280
 from devices.ds18b20 import DS18b20
 from devices import sh1106
@@ -16,18 +16,22 @@ class Salon:
         self.ds = DS18b20(27)
         self.detecteur = Pin(26)
         self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
-        self.display.set_field("heure", Field("", 2,3,width=8, align=RIGHT))
-        self.display.set_field("T-HOME/SALON/PRESSION", Field("Pression : ", 0,0,6, align=LEFT))
-        self.display.set_field("T-HOME/SALON/temperature", Field("Temp. : ", 1,0,6, align=LEFT))
+        self.display.set_field("heure", Field("", 7,3,width=8, align=RIGHT))
+        self.display.set_field("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT))
+        self.display.text("hPa", 0, 13)
+        self.display.set_field("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT))
+        self.display.text("C", 1, 13)
+        self.display.set_field("T-HOME/CUVE-FUEL/quantite", Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
+        self.display.text("L", 4, 13)
         self.params = {
             'pressure_offset' : 0
         }
 
     def get_pressure(self, **kwargs):
-        return self.bmp.pressure/100 - self.params['pressure_offset']
+        return int(self.bmp.pressure/100 - self.params['pressure_offset'])
     
-    def get_temperature(self, **kwargs):
-        return self.ds.read_async()
+    async def get_temperature(self, **kwargs):
+        return await self.ds.read_async()
 
     def load_params(self, param:dict):
         logging.info("SALON : LOAD PARAMS")
@@ -78,9 +82,12 @@ topic_temperature = Topic("./temperature",
                           send_period=30,
                           action=salon.display.set)
 
+topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
+
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
 iot.add_topic(detection_topic)
+iot.add_topic(topic_fioul)
 
 iot.add_routine(salon.show_time)
 
