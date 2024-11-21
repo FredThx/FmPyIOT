@@ -41,7 +41,7 @@ class Topic:
         return self.topic
 
     def is_auto_send(self)->bool:
-        return bool(self.send_period)
+        return self.send_period is not None
     
     def set_send_period(self, period:float|str):
         try:
@@ -232,7 +232,7 @@ class TopicIrq(Topic):
                  pin:Pin | int,
                  trigger:int = None,
                  values:tuple[any]=None,
-                 rate_limit:int=1, 
+                 rate_limit:int=1, #TODO : le réutiliser
                  reverse_topic:bool = True,
                  read:function = None,
                  action:function = None):
@@ -245,6 +245,7 @@ class TopicIrq(Topic):
         super().__init__(topic, reverse_topic=reverse_topic, read=read, action = action)
         if self.read is None:
             self.read = self._read
+        self.irq_buffer = []
 
     def _read(self, topic:str, payload:str)->any:
         if self.values and len(self.values)==2:
@@ -252,14 +253,31 @@ class TopicIrq(Topic):
         else:
             return self.pin()
 
-    def attach(self, iot):
+    def _attach(self, iot):
         '''Lie l'intéruption => iot => lmqtt
+        OBSOLETTE
         '''
         def callback(pin):
             if time.time()>self.new_irq_time:
                 self.new_irq_time = time.time() + self.rate_limit
                 asyncio.create_task(self.send_async(iot.publish_async))
         self.pin.irq(callback, self.trigger)
+
+    def attach(self, iot:FmPyIot):
+        '''Lie l'intéruption au FmPtIot
+        '''
+        def callback(pin):
+            self.irq_buffer.append(pin.value())
+            logging.debug(f"irq_buffer = {self.irq_buffer}")
+        self.pin.irq(callback, self.trigger)
+        async def do_irq_action():
+            if self.irq_buffer:
+                pin_value = self.irq_buffer.pop(0)
+                logging.debug(f"new IRQ event : {self.topic} = {pin_value}")
+                await self.send_async(iot.publish_async)
+                if self.action:
+                    await self.do_action_async(self.topic, pin_value)
+        iot.add_topic(TopicRoutine(action = do_irq_action,send_period=0.1))
 
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache

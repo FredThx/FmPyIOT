@@ -20,7 +20,7 @@ class Salon:
         self.display.set_field("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT))
         self.display.text("hPa", 0, 13)
         self.display.set_field("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT))
-        self.display.text("C", 1, 13)
+        self.display.text("C", 2, 13)
         self.display.set_field("T-HOME/CUVE-FUEL/quantite", Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
         self.display.text("L", 4, 13)
         self.params = {
@@ -72,6 +72,7 @@ iot.set_param('salon', default=salon.params, on_change=salon.load_params)
 detection_topic = TopicIrq("./detect",
                            pin=salon.detecteur,
                            trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING,
+                           rate_limit=0.1,
                            action=lambda topic, payload : salon.display.power(payload=="1"))
 topic_pression = Topic("./PRESSION",
                        read=salon.get_pressure,

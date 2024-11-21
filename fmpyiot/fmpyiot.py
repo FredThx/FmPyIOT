@@ -219,7 +219,7 @@ class FmPyIot:
                 callback
                 )
         # Subscribe action function for topic
-        if topic.action and topic.topic:
+        if topic.action:# and topic.topic:
             async def callback(_topic, _payload):
                 logging.debug(f"Callback action : {_topic=} , {_payload=}")
                 payload = await topic.do_action_async(_topic,_payload)
