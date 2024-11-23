@@ -1,6 +1,7 @@
 import time, logging, re
 from machine import Pin
 import uasyncio as asyncio
+from fmpyiot.buffer import BufferBits
 
 def never_crash(fn):
     def never_crash_function(*args, **kwargs):
@@ -226,7 +227,8 @@ class TopicAction(Topic):
 
 
 class TopicIrq(Topic):
-    ''' Un topic basé sur l'intéruption matérielle d'un GPIO
+    ''' Un topic basé sur l'intéruption matérielle d'un GPIO.
+    En fait, on va lier une callback à lIRQ qui va juste remplir un buffer avec les valeurs de la pin 
     '''
     def __init__(self, topic:str,
                  pin:Pin | int,
@@ -235,7 +237,8 @@ class TopicIrq(Topic):
                  rate_limit:int=1, #TODO : le réutiliser
                  reverse_topic:bool = True,
                  read:function = None,
-                 action:function = None):
+                 action:function = None,
+                 buffer_size = 10):
         self.pin = pin if type(pin)==Pin else Pin(pin)
         self.trigger = trigger
         self.pin.init(Pin.IN)
@@ -245,7 +248,7 @@ class TopicIrq(Topic):
         super().__init__(topic, reverse_topic=reverse_topic, read=read, action = action)
         if self.read is None:
             self.read = self._read
-        self.irq_buffer = []
+        self.irq_buffer = BufferBits(buffer_size)
 
     def _read(self, topic:str, payload:str)->any:
         if self.values and len(self.values)==2:
@@ -253,17 +256,7 @@ class TopicIrq(Topic):
         else:
             return self.pin()
 
-    def _attach(self, iot):
-        '''Lie l'intéruption => iot => lmqtt
-        OBSOLETTE
-        '''
-        def callback(pin):
-            if time.time()>self.new_irq_time:
-                self.new_irq_time = time.time() + self.rate_limit
-                asyncio.create_task(self.send_async(iot.publish_async))
-        self.pin.irq(callback, self.trigger)
-
-    def attach(self, iot:FmPyIot):
+    def attach(self, iot):
         '''Lie l'intéruption au FmPtIot
         '''
         def callback(pin):
@@ -271,8 +264,7 @@ class TopicIrq(Topic):
             logging.debug(f"irq_buffer = {self.irq_buffer}")
         self.pin.irq(callback, self.trigger)
         async def do_irq_action():
-            if self.irq_buffer:
-                pin_value = self.irq_buffer.pop(0)
+            for pin_value in self.irq_buffer:
                 logging.debug(f"new IRQ event : {self.topic} = {pin_value}")
                 await self.send_async(iot.publish_async)
                 if self.action:
