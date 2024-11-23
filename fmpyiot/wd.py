@@ -1,6 +1,7 @@
 from machine import Timer
 import machine
 import time
+import logging
 
 
 class WDT:
@@ -25,7 +26,7 @@ class WDT:
         machine.reset()
     
     def feed(self):
-        print("Watchodg feeded.")
+        logging.info("Watchodg feeded.")
         self.timer.deinit()
         self.enable()
 
