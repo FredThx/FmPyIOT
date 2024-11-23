@@ -53,7 +53,6 @@ class FmPyIotWeb(FmPyIot):
         self.init_web()
         return asyncio.create_task(self.web.run())
 
-
     def authenticate(self):
         '''Décorateur pour BASIC authentification (self.web_credentials)
         '''
@@ -84,12 +83,14 @@ class FmPyIotWeb(FmPyIot):
             return wrapper
         return decorator
 
-
     @staticmethod
-    async def api_send_response(request, code=200, message="OK"):
-        await request.write("HTTP/1.1 %i %s\r\n" % (code, message))
-        await request.write("Content-Type: application/json\r\n\r\n")
-        await request.write('{"status": true}')
+    async def send_response(request, code:int=200, message:str="OK", content_type:str=None, status:str=None):
+        await request.write(f"HTTP/1.1 {code} {message}\r\n")
+        if content_type:
+            await request.write(f"Content-Type: {content_type}\r\n")
+        await request.write("\r\n")
+        if status:
+            await request.write(f'{{"status": {status}}}')
 
     @staticmethod
     async def send_file(request, filename, segment=64, binary=False):
@@ -104,11 +105,12 @@ class FmPyIotWeb(FmPyIot):
             if e.args[0] != uerrno.ENOENT:
                 raise
             raise naw.HttpError(request, 404, "File Not Found")
+        
     @staticmethod
     async def get_post_data(request):
         """ get Post data 
         """
-        await request.write("HTTP/1.1 200 Ok\r\n")
+        await FmPyIotWeb.send_response(request)
         if request.method != "POST":
             raise naw.HttpError(request, 501, "Not Implemented")
         try:
@@ -125,9 +127,9 @@ class FmPyIotWeb(FmPyIot):
                 key, value = chunk.split('=', 1)
                 result[key]=value
         return result
-
+    
     def init_web(self):
-        '''Initialise un serveur web par defaut
+        '''Initialise le serveur web
         '''
         self.web.STATIC_DIR = self.assets_dir
         self.web.assets_extensions += ('ico',)
@@ -137,7 +139,7 @@ class FmPyIotWeb(FmPyIot):
         async def index(request):
             '''Page principale
             '''
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await FmPyIotWeb.send_response(request)
             await self.send_file(
                     request,
                     f'./{self.assets_dir}/index.html')
@@ -147,7 +149,7 @@ class FmPyIotWeb(FmPyIot):
         async def get_html_topics(request):
             '''Renvoie sous forme html la liste des topics et leurs valeurs, boutons actions, ....
             '''
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await FmPyIotWeb.send_response(request)
             for html in self.html_topics():
                 await request.write(html)
 
@@ -156,7 +158,7 @@ class FmPyIotWeb(FmPyIot):
         async def assets(request):
             '''Permet un access aux fichiers static du site
             '''
-            await request.write("HTTP/1.1 200 OK\r\n")
+            await FmPyIotWeb.send_response(request)
             args = {}
             filename = request.url.split('/')[-1]
             if filename.endswith('.png'):
@@ -174,8 +176,7 @@ class FmPyIotWeb(FmPyIot):
             '''API qui va renvoyer (json) le status avec toutes les valeurs des topics
             '''
             logging.debug(f"request={request}")
-            await request.write("HTTP/1.1 200 OK\r\n")
-            await request.write("Content-Type: application/json\r\n\r\n")
+            await FmPyIotWeb.send_response(request, content_type='application/json')
             topics = {}
             for topic in self.topics:
                 payload = await topic.get_payload_async(topic.topic, None)
@@ -189,8 +190,7 @@ class FmPyIotWeb(FmPyIot):
             '''List device files (only on root)
             '''
             logging.debug(f"request={request}")
-            await request.write("HTTP/1.1 200 OK\r\n")
-            await request.write("Content-Type: application/json\r\n\r\n")
+            await FmPyIotWeb.send_response(request, content_type='application/json')
             await request.write('{"files": [%s]}' % ', '.join(
                 '"' + f + '"' for f in sorted(os.listdir('.')) if "." in f 
             ))
@@ -201,11 +201,9 @@ class FmPyIotWeb(FmPyIot):
             '''Download file from device
             '''
             logging.debug(f"request={request}")
-            await request.write("HTTP/1.1 200 OK\r\n")
             filename = request.url[len(request.route.rstrip("*")) - 1:].strip("/")
-            await request.write("Content-Type: application/octet-stream\r\n")
-            await request.write("Content-Disposition: attachment; filename=%s\r\n\r\n"
-                                % filename)
+            await FmPyIotWeb.send_response(request, content_type='application/octet-stream')
+            await request.write(f"Content-Disposition: attachment; filename={filename}\r\n\r\n")
             logging.info(f"Download file : {filename}")
             await naw.send_file(request, filename)
 
@@ -223,7 +221,7 @@ class FmPyIotWeb(FmPyIot):
                 logging.info(f"Delete file : {filename}")
             except OSError as e:
                 raise naw.HttpError(request, 500, "Internal error")
-            await self.api_send_response(request)
+            await self.send_response(request)
 
         @self.web.route('/api/upload/*')
         @self.authenticate()
@@ -235,7 +233,7 @@ class FmPyIotWeb(FmPyIot):
                 raise naw.HttpError(request, 501, "Not Implemented")
             bytesleft = int(request.headers.get('Content-Length', 0))
             if not bytesleft:
-                await request.write("HTTP/1.1 204 No Content\r\n\r\n")
+                await FmPyIotWeb.send_response(request, code=204, message="No Content")
                 return
             output_file = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
             tmp_file = output_file + '.tmp'
@@ -257,7 +255,7 @@ class FmPyIotWeb(FmPyIot):
             except OSError:
                 raise naw.HttpError(request, 500, "Internal error")
             logging.info(f"File uploaded : {output_file}")
-            await self.api_send_response(request, 201, "Created")
+            await self.send_response(request, 201, "Created")
             
         @self.web.route('/api/reboot')
         @self.authenticate()
@@ -266,7 +264,7 @@ class FmPyIotWeb(FmPyIot):
             '''
             logging.debug(f"request={request}")
             logging.info("reboot device")
-            await self.api_send_response(request, 200, "OK")
+            await self.send_response(request, 200, "OK")
             machine_reset()
             
 
@@ -277,7 +275,7 @@ class FmPyIotWeb(FmPyIot):
             '''
             logging.debug(f"request={request}")
             logging.info("Reset the device and enter its bootloader")
-            await self.api_send_response(request, 200, "OK")
+            await self.send_response(request, 200, "OK")
             machine_bootloader()
             
 
@@ -294,11 +292,11 @@ class FmPyIotWeb(FmPyIot):
             topics = [topic for topic in self.topics if topic.get_id()==topic_id]
             if not topics:
                 logging.error(f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
-                await self.api_send_response(request, 400, f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
+                await self.send_response(request, 400, f"Erreur en lien avec topic.get_id() : {topic_id}=>{topics}")
                 raise Exception("Erreur en lien avec topic.get_id()")
             topic = topics[0]
             await topic.do_action_async(data.get('topic'),data.get('payload'))
-            await self.api_send_response(request, 200, 'ok')
+            await self.send_response(request, 200, 'ok')
 
         @self.web.route('/api/repl')
         @self.authenticate()
@@ -308,8 +306,7 @@ class FmPyIotWeb(FmPyIot):
             if request.method != "GET":
                 raise naw.HttpError(request, 501, "Not Implemented")
             new_lines = self.REPL.read()
-            await request.write("HTTP/1.1 200 OK\r\n")
-            await request.write("Content-Type: application/json\r\n\r\n")
+            await FmPyIotWeb.send_response(request, content_type="application/json")
             await request.write(json.dumps({'repl' : new_lines}))
         
         @self.web.route('/api/repl/cmd')
@@ -325,8 +322,7 @@ class FmPyIotWeb(FmPyIot):
             except:
                 raise naw.HttpError(request, 400, "Bad request")
             rep = await self.REPL.exec(cmd)
-            await request.write("HTTP/1.1 200 OK\r\n")
-            await request.write("Content-Type: application/json\r\n\r\n")
+            await FmPyIotWeb.send_response(request, content_type="application/json")
             await request.write(json.dumps({'rep' : rep}))
             
 
@@ -340,18 +336,18 @@ class FmPyIotWeb(FmPyIot):
             except:
                 raise naw.HttpError(request, 400, "Bad request")
             self.set_logging_level(level)
-            await self.api_send_response(request)
+            await self.send_response(request)
 
         @self.web.route('/api/hello')
         async def hello(request):
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await FmPyIotWeb.send_response(request)
             await request.write(f"FmPyIOT/{self.name}")
 
         @self.web.route('/api/logs')
         async def api_get_logs(request):
             '''Renvoie le contenu du dernier fichier log
             '''
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await FmPyIotWeb.send_response(request)
             await request.write(f"{self.get_logs(0)}")
         
         @self.web.route('/api/params')
@@ -359,7 +355,7 @@ class FmPyIotWeb(FmPyIot):
         async def get_html_params(request):
             '''Renvoie sous forme html la liste des params et leurs valeurs
             '''
-            await request.write("HTTP/1.1 200 OK\r\n\r\n")
+            await FmPyIotWeb.send_response(request)
             for html_param in self.html_params():
                 await request.write(html_param)
     
