@@ -19,7 +19,8 @@ class Topic:
                  send_period:float = None,
                  reverse_topic:bool|str = True,
                  read:function = None,
-                 action:function = None,
+                 action:function = None, #for compatibility old iot,
+                 on_incoming:function = None,
                  send_period_as_param:bool=True):
         '''Initialisation
         Arguments : 
@@ -34,7 +35,7 @@ class Topic:
         self.send_period_as_param = send_period_as_param
         self._reverse_topic = reverse_topic
         self.read = read
-        self.action = action
+        self.on_incoming = on_incoming or action # or action = for compatibility old iot,
         self.last_send = 0
         self.sleep_mode = False
 
@@ -49,28 +50,6 @@ class Topic:
             self.send_period = float(period)
         except ValueError as e:
             logging.error(f"set_send_period error : {e}")
-
-    @never_crash
-    def do_action(self, topic:str=None, payload:str=None)->str:
-        '''Execute the action method and return (if exist) the value
-        action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
-        '''
-        # la fonction action pour prendre 2,1 ou 0 arguments
-        # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
-        # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
-        logging.debug(f"do_action[{self}]({topic},{payload})...")
-        if self.action:
-            try:
-                return self.action(topic, payload)
-            except TypeError as e:
-                #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e}. Retry without topic...")
-                try:
-                    return self.action(payload)
-                except TypeError as e:
-                    #logging.debug(f"error on {self.action}({payload=}) : {e}. Retry without payload...")
-                    return self.action()
-        else:
-            print(f"Error : {self} has not attribute 'action'")
 
     def reverse_topic(self)->str:
         '''return the reverse topic name
@@ -120,26 +99,26 @@ class Topic:
     async def do_action_async(self, topic:str=None, payload:str=None, action:function=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
-        action (optionnal) : default : self.action
+        action (optionnal) : default : self.on_incoming
         '''
         # la fonction action pour prendre 2,1 ou 0 arguments
         # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
         #logging.debug(f"do_action_async[{self}]({topic},{payload})...")
-        action = action or self.action
+        action = action or self.on_incoming
         if action:
             try:
                 return await self.run_callback_async(action, topic, payload)
             except TypeError as e:
-                #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e}. Retry without topic...")
+                #logging.debug(f"error on {action}({topic=}, {payload=}) : {e}. Retry without topic...")
                 try:
                     return await self.run_callback_async(action, payload)
                 except TypeError as e:
-                    #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e} Retry without payload...")
+                    #logging.debug(f"error on {action}({topic=}, {payload=}) : {e} Retry without payload...")
                     return await self.run_callback_async(action)
         else:
-            logging.error(f"Error : {self} has not attribute 'action'")
+            logging.error(f"Error : {self} has not attribute 'on_incoming'")
 
     async def get_a_callback(self, callback):
         '''Return a async callback
@@ -187,7 +166,7 @@ class Topic:
         html = ""
         if self.read:    
             html+= self.html_reader()
-        if self.action:
+        if self.on_incoming:
             html+= self.html_actionner()
         return html
 
@@ -223,9 +202,10 @@ class TopicAction(Topic):
     '''Un topic de type action
     '''
     def __init__(self, topic:str,
-                 action:function = None,
-                reverse_topic:bool|str = True,):
-        super().__init__(topic=topic, action=action)
+                 on_incoming:function = None,
+                 action:function = None, # for compatibility
+                 ):
+        super().__init__(topic=topic, on_incoming=on_incoming or action)
 
 
 class TopicIrq(Topic):
@@ -246,7 +226,8 @@ class TopicIrq(Topic):
                  rate_limit:float=0,
                  reverse_topic:bool = True,
                  read:function = None,
-                 action:function = None,
+                 on_incoming:function = None,
+                 action:function = None, # for compatibility
                  buffer_size = 10):
         self.pin = pin if type(pin)==Pin else Pin(pin)
         self.trigger = trigger
@@ -256,7 +237,7 @@ class TopicIrq(Topic):
         self.rate_limit = rate_limit
         self.new_irq_time = time.time()
         self.irq_buffer = BufferBits(buffer_size)
-        super().__init__(topic, reverse_topic=reverse_topic, read=read, action = action)
+        super().__init__(topic, reverse_topic=reverse_topic, read=read, on_incoming = on_incoming or action)
         if self.read is None:
             self.read = self._read
 
@@ -289,7 +270,8 @@ class TopicRoutine(Topic):
     '''
     def __init__(self,
                  action:function = None, send_period = None):
-        super().__init__(None, action=action, send_period= send_period)
+        self.action = action
+        super().__init__(None, send_period= send_period)
         self.none_topic_id = 0
 
     def get_id(self)->str:
@@ -305,11 +287,11 @@ class TopicRoutine(Topic):
         if self.send_period:
             if self.sleep_mode:
                 async def routine():
-                    await self.do_action_async()
+                    await self.do_action_async(action=self.action)
             else:
                 async def routine():
                     while True:
-                        await self.do_action_async()
+                        await self.do_action_async(action=self.action)
                         await asyncio.sleep(self.send_period)
             return routine
         else:
@@ -322,6 +304,7 @@ class TopicRoutine(Topic):
 
 class TopicOnChange(Topic):
     '''Un topic qui sera envpyé quand la valeur change
+    #TODO : ajouter une callback on_change
     '''
     def __init__(self,
                  topic:str, 

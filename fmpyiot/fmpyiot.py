@@ -219,7 +219,7 @@ class FmPyIot:
                 callback
                 )
         # Subscribe action function for topic
-        if topic.action:# and topic.topic:
+        if topic.on_incoming:
             async def callback(_topic, _payload):
                 logging.debug(f"Callback action : {_topic=} , {_payload=}")
                 payload = await topic.do_action_async(_topic,_payload)
@@ -326,7 +326,7 @@ class FmPyIot:
                     send_period=watchdog_delai//5,
                     reverse_topic=False,
                     read=lambda topic, payload:"FEED",
-                    action=lambda topic, payload: self.wd.feed(),
+                    on_incoming=lambda topic, payload: self.wd.feed(),
                     send_period_as_param=False
                     ))
     
@@ -361,7 +361,7 @@ class FmPyIot:
         self.add_topic(Topic(
                     "./SET_PARAMS",
                     reverse_topic=False,
-                    action = self.set_params
+                    on_incoming= self.set_params
         ))
         self.add_topic(Topic(
                     "./PARAMS",
@@ -377,7 +377,7 @@ class FmPyIot:
         self.add_topic(Topic(
                     "/FmPyIOT/datetime",
                     reverse_topic=False,
-                    action = self.set_rtc
+                    on_incoming= self.set_rtc
                      ))
         #self.add_topic(Topic('./LOGS',
         #            read = self.get_logs

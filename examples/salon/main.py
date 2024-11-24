@@ -77,11 +77,11 @@ detection_topic = TopicIrq("./detect",
 topic_pression = Topic("./PRESSION",
                        read=salon.get_pressure,
                        send_period=30,
-                       action=salon.display.set)
+                       on_incoming=salon.display.set)
 topic_temperature = Topic("./temperature",
                           read=salon.get_temperature,
                           send_period=30,
-                          action=salon.display.set)
+                          on_incoming=salon.display.set)
 
 topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
 
