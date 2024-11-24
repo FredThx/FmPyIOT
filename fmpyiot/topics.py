@@ -219,7 +219,7 @@ class TopicIrq(Topic):
     Ensuite une routine est créé pour lire ce buffer en asyncio.
         trigger : Pin.IRQ_FALLING | Pin.IRQ_RISING | Pin.IRQ_LOW_LEVEL | Pin.IRQ_HIGH_LEVEL
         values  : None or a tuple od 2 values ("on_off", "on_on") => theses values will be send instead
-        rate_limit : (s)
+        tempo_after_falling : (s) duration before sending falling message.
         buffer_size : size of the buffer used to store events (10 must be enought)
         on_irq : function called on irq event
     '''
@@ -228,7 +228,7 @@ class TopicIrq(Topic):
                  trigger:int,
                  on_irq:function = None,
                  values:tuple[any]=None, 
-                 tempo_rising:float=0, #s
+                 tempo_after_falling:float=0, #s
                  reverse_topic:bool = True,
                  read:function = None,
                  on_incoming:function = None,
@@ -239,7 +239,7 @@ class TopicIrq(Topic):
         self.pin.init(Pin.IN)
         self.values = values
         self.on_irq = on_irq
-        self.tempo_rising = int(tempo_rising * 1000) # ms
+        self.tempo_after_falling = int(tempo_after_falling * 1000) # ms
         self.idle = False
         self.new_irq_time = time.ticks_ms()
         self.irq_buffer = BufferBits(buffer_size)
@@ -259,30 +259,24 @@ class TopicIrq(Topic):
         # IRQ => buffer
         def callback(pin):
             self.irq_buffer.append(pin.value())
-            print(self.irq_buffer)
         self.pin.irq(callback, self.trigger)
         # buffer => publish + action
+        #TODO : faire mieux!!!!
         async def do_irq_action():
             unidle = False
-            if self.tempo_rising and self.idle and self.pin.value()==0 and time.ticks_diff(time.ticks_ms(), self.new_irq_time) > 0:
-                logging.info(f"RAZ idle and put new 0 on buffer")
+            if self.tempo_after_falling and self.idle and self.pin.value()==0 and time.ticks_diff(time.ticks_ms(), self.new_irq_time) > 0:
                 self.irq_buffer.append(0)
                 self.idle = False
                 unidle = True
             for pin_value in self.irq_buffer:
-                logging.info(f"new IRQ event : {self.topic} = {pin_value}")
-                if self.tempo_rising and not unidle:
-                    logging.info(f"Put TopicIRQ on IDLE mode for {self.tempo_rising/1000} secondes")
-                    self.new_irq_time = time.ticks_add(time.ticks_ms(), self.tempo_rising)
+                if self.tempo_after_falling and not unidle:
+                    self.new_irq_time = time.ticks_add(time.ticks_ms(), self.tempo_after_falling)
                     if pin_value == 0:
                         self.idle = True
                 if not self.idle:
                     await self.send_async(iot.publish_async, pin_value)
                     if self.on_irq:
                         await self.do_action_async(self.topic, pin_value, action=self.on_irq)
-                else:
-                    logging.info(f"{self} on Idle mode. Reste {time.ticks_diff(time.ticks_ms(), self.new_irq_time)/1000} secondes.")
-                asyncio.sleep(0.1)
         iot.add_topic(TopicRoutine(action = do_irq_action, send_period=0.01, send_period_as_param=False))
 
 class TopicRoutine(Topic):

@@ -77,7 +77,7 @@ def on_irq(topic, payload):
 detection_topic = TopicIrq("./detect",
                            pin=salon.detecteur,
                            trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING,
-                           tempo_rising=10.0,
+                           tempo_after_falling=10.0,
                            #on_irq=lambda topic, payload : salon.display.power(payload))
                            on_irq=on_irq)
 topic_pression = Topic("./PRESSION",
@@ -91,12 +91,12 @@ topic_temperature = Topic("./temperature",
 
 topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
 
-#iot.add_topic(topic_pression)
-#iot.add_topic(topic_temperature)
+iot.add_topic(topic_pression)
+iot.add_topic(topic_temperature)
 iot.add_topic(detection_topic)
-#iot.add_topic(topic_fioul)
+iot.add_topic(topic_fioul)
 
-#iot.add_routine(salon.show_time)
+iot.add_routine(salon.show_time)
 
 iot.run()
 
