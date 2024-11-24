@@ -1,7 +1,11 @@
+TYPE_CHECKING=False
 import time, logging, re
 from machine import Pin
 import uasyncio as asyncio
 from fmpyiot.buffer import BufferBits
+if TYPE_CHECKING:
+    from fmpyiot.fmpyiot import FmPyIot
+
 
 def never_crash(fn):
     def never_crash_function(*args, **kwargs):
@@ -67,15 +71,16 @@ class Topic:
         else:
             return f"{self}_"
 
-    async def send_async(self, publisher: function):
+    async def send_async(self, publisher: function, payload=None):
         '''Method call by Fmpyiot to send : topic, payload = read(...)
         '''
         if self.send_period:
             await asyncio.sleep(self.send_period)
-        payload = await self.get_payload_async()
+        if payload is None:
+            payload = await self.get_payload_async()
         await publisher(str(self), payload)
 
-    def attach(self, iot):
+    def attach(self, iot:FmPyIot):
         pass
 
     ################
@@ -223,7 +228,7 @@ class TopicIrq(Topic):
                  trigger:int,
                  on_irq:function = None,
                  values:tuple[any]=None, 
-                 rate_limit:float=0,
+                 tempo_rising:float=0, #s
                  reverse_topic:bool = True,
                  read:function = None,
                  on_incoming:function = None,
@@ -234,8 +239,9 @@ class TopicIrq(Topic):
         self.pin.init(Pin.IN)
         self.values = values
         self.on_irq = on_irq
-        self.rate_limit = rate_limit
-        self.new_irq_time = time.time()
+        self.tempo_rising = int(tempo_rising * 1000) # ms
+        self.idle = False
+        self.new_irq_time = time.ticks_ms()
         self.irq_buffer = BufferBits(buffer_size)
         super().__init__(topic, reverse_topic=reverse_topic, read=read, on_incoming = on_incoming or action)
         if self.read is None:
@@ -247,29 +253,44 @@ class TopicIrq(Topic):
         else:
             return self.pin()
 
-    def attach(self, iot):
+    def attach(self, iot:FmPyIot):
         '''Lie l'intéruption au FmPtIot
         '''
         # IRQ => buffer
         def callback(pin):
-            if time.time()>self.new_irq_time:
-                self.new_irq_time = time.time() + self.rate_limit
-                self.irq_buffer.append(pin.value())
+            self.irq_buffer.append(pin.value())
+            print(self.irq_buffer)
         self.pin.irq(callback, self.trigger)
         # buffer => publish + action
         async def do_irq_action():
+            unidle = False
+            if self.tempo_rising and self.idle and self.pin.value()==0 and time.ticks_diff(time.ticks_ms(), self.new_irq_time) > 0:
+                logging.info(f"RAZ idle and put new 0 on buffer")
+                self.irq_buffer.append(0)
+                self.idle = False
+                unidle = True
             for pin_value in self.irq_buffer:
-                logging.debug(f"new IRQ event : {self.topic} = {pin_value}")
-                await self.send_async(iot.publish_async)
-                if self.on_irq:
-                    await self.do_action_async(self.topic, pin_value, action=self.on_irq)
-        iot.add_topic(TopicRoutine(action = do_irq_action,send_period=None, send_period_as_param=False))
+                logging.info(f"new IRQ event : {self.topic} = {pin_value}")
+                if self.tempo_rising and not unidle:
+                    logging.info(f"Put TopicIRQ on IDLE mode for {self.tempo_rising/1000} secondes")
+                    self.new_irq_time = time.ticks_add(time.ticks_ms(), self.tempo_rising)
+                    if pin_value == 0:
+                        self.idle = True
+                if not self.idle:
+                    await self.send_async(iot.publish_async, pin_value)
+                    if self.on_irq:
+                        await self.do_action_async(self.topic, pin_value, action=self.on_irq)
+                else:
+                    logging.info(f"{self} on Idle mode. Reste {time.ticks_diff(time.ticks_ms(), self.new_irq_time)/1000} secondes.")
+                asyncio.sleep(0.1)
+        iot.add_topic(TopicRoutine(action = do_irq_action, send_period=0.01, send_period_as_param=False))
 
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
+        send_period     :   None : never | 0 : always, as fast as possible | x : every x secondes
     '''
     def __init__(self,
-                 action:function = None, send_period = None, send_period_as_param = True):
+                 action:function = None, send_period = 0, send_period_as_param = True):
         self.action = action
         super().__init__(None, send_period= send_period, send_period_as_param=send_period_as_param)
         self.none_topic_id = 0

@@ -23,6 +23,7 @@ class Salon:
         self.display.text("C", 2, 13)
         self.display.set_field("T-HOME/CUVE-FUEL/quantite", Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
         self.display.text("L", 4, 13)
+        self.display.update()
         self.params = {
             'pressure_offset' : 0
         }
@@ -69,11 +70,16 @@ iot = FmPyIotWeb(
 
 iot.set_param('salon', default=salon.params, on_change=salon.load_params)
 
+def on_irq(topic, payload):
+    logging.info(f"salon.display.power({payload})")
+    salon.display.power(payload)
+
 detection_topic = TopicIrq("./detect",
                            pin=salon.detecteur,
                            trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING,
-                           rate_limit=10,
-                           on_irq=lambda topic, payload : salon.display.power(payload))
+                           tempo_rising=10.0,
+                           #on_irq=lambda topic, payload : salon.display.power(payload))
+                           on_irq=on_irq)
 topic_pression = Topic("./PRESSION",
                        read=salon.get_pressure,
                        send_period=30,
@@ -85,12 +91,12 @@ topic_temperature = Topic("./temperature",
 
 topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
 
-iot.add_topic(topic_pression)
-iot.add_topic(topic_temperature)
+#iot.add_topic(topic_pression)
+#iot.add_topic(topic_temperature)
 iot.add_topic(detection_topic)
-iot.add_topic(topic_fioul)
+#iot.add_topic(topic_fioul)
 
-iot.add_routine(salon.show_time)
+#iot.add_routine(salon.show_time)
 
 iot.run()
 
