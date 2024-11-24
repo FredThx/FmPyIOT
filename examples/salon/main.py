@@ -17,13 +17,13 @@ class Salon:
         self.detecteur = Pin(26)
         self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
         self.display.set_widget("heure", Field("", 7,3,width=8, align=RIGHT))
-        self.display.set_widget("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT))
+        self.display.set_widget("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT), "???")
         self.display.text("hPa", 0, 13)
-        self.display.set_widget("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT))
+        self.display.set_widget("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT), "???")
         self.display.text("C", 2, 13)
-        self.display.set_widget("T-HOME/CUVE-FUEL/quantite_test", #Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
-                            Icon(60, 30, function = self.get_cuve_icon),"0")
-        self.display.set_widget("T-HOME/CUVE-FUEL/quantite_test", Field("", row=5,column=9, width=4, align=RIGHT))
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", #Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
+                            Icon(60, 28, function = self.get_cuve_icon),"0")
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", Field("", row=5,column=9, width=4, align=RIGHT),"???")
         self.display.text("Fioul :", 5, 0)
         self.params = {
             'pressure_offset' : 0
@@ -102,7 +102,7 @@ topic_temperature = Topic("./temperature",
                           send_period=30,
                           on_incoming=salon.display.set)
 
-topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite_test",action=salon.display.set)
+topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
