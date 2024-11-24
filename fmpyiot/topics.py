@@ -263,15 +263,15 @@ class TopicIrq(Topic):
                 await self.send_async(iot.publish_async)
                 if self.on_irq:
                     await self.do_action_async(self.topic, pin_value, action=self.on_irq)
-        iot.add_topic(TopicRoutine(action = do_irq_action,send_period=0.1))
+        iot.add_topic(TopicRoutine(action = do_irq_action,send_period=None, send_period_as_param=False))
 
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
     '''
     def __init__(self,
-                 action:function = None, send_period = None):
+                 action:function = None, send_period = None, send_period_as_param = True):
         self.action = action
-        super().__init__(None, send_period= send_period)
+        super().__init__(None, send_period= send_period, send_period_as_param=send_period_as_param)
         self.none_topic_id = 0
 
     def get_id(self)->str:
