@@ -16,17 +16,30 @@ class Salon:
         self.ds = DS18b20(27)
         self.detecteur = Pin(26)
         self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
-        self.display.set_field("heure", Field("", 7,3,width=8, align=RIGHT))
-        self.display.set_field("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT))
+        self.display.set_widget("heure", Field("", 7,3,width=8, align=RIGHT))
+        self.display.set_widget("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT))
         self.display.text("hPa", 0, 13)
-        self.display.set_field("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT))
+        self.display.set_widget("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT))
         self.display.text("C", 2, 13)
-        self.display.set_field("T-HOME/CUVE-FUEL/quantite", Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
-        self.display.text("L", 4, 13)
-        self.display.update()
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite_test", #Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
+                            Icon(60, 30, function = self.get_cuve_icon),"0")
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite_test", Field("", row=5,column=9, width=4, align=RIGHT))
+        self.display.text("Fioul :", 5, 0)
         self.params = {
             'pressure_offset' : 0
         }
+    @staticmethod
+    def get_cuve_icon(payload:str):
+        width, height = 60, 24
+        try:
+            niveau = int(payload) // int(1500/height)
+        except TypeError:
+            niveau = 0
+        haut_bas = [0,1] + [1]*(width-4) + [1,0]
+        icon = [haut_bas]
+        icon += [[1]*width if _niveau <= niveau else [1] + [0]*(width-2) + [1] for _niveau in range(height,0,-1)]
+        icon += [haut_bas]
+        return icon
 
     def get_pressure(self, **kwargs):
         return int(self.bmp.pressure/100 - self.params['pressure_offset'])
@@ -89,7 +102,7 @@ topic_temperature = Topic("./temperature",
                           send_period=30,
                           on_incoming=salon.display.set)
 
-topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
+topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite_test",action=salon.display.set)
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)

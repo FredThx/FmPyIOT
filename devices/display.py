@@ -24,10 +24,14 @@ class Display:
         except:
             self.device.show()
 
-    def set_field(self, topic:str, field:Field, payload:str = None):
-        field.root = self
-        self.topics[topic] = field
-        field.show(payload)
+    def set_widget(self, topic:str, widget:Field|Icon, payload:str = None):
+        widget.root = self
+        if topic not in self.topics:
+            self.topics[topic] = []
+        self.topics[topic].append(widget)
+        widget.show(payload)
+    
+    set_field = set_widget
 
     def text(self, text:str, row:int, column:int, color:int=1, backcolor:int=0):
         '''Write text on display
@@ -48,12 +52,11 @@ class Display:
 
     def set(self, topic:str, payload:str):
         logging.debug(f"{self}.set(topic='{topic}', payload = '{payload}')")
-        try:
-            w = self.topics[topic]
-        except:
-            logging.error(f"No topic {topic}!")
+        if topic in self.topics:
+            for w in self.topics[topic]:
+                w.set(payload)
         else:
-            w.set(payload)
+            logging.error(f"No topic {topic} in {self}")
     
     def power(self, value:bool):
         if value:
@@ -106,22 +109,29 @@ class Field(Widget):
 class Icon(Widget):
     '''Une icone
     '''
-    def __init__(self, x:int,y:int):
+    def __init__(self, x:int,y:int, invert=False, icons:dict=None, function:function=None):
+        super().__init__(invert)
         self.x = x
         self.y = y
         self.payload = None
-        self.icons = {}
+        self.icons = icons or {}
+        self.f_icon = function
 
     def set_icon(self, payload:str, icon:list[list]):
         '''Affecte une icon à une valeur
         '''
         self.icons[payload] = icon
+    
+    def set_function_icon(self, function:function):
+        self.f_icon = function
 
     def show(self, payload:str=None):
         if payload:
             self.payload = payload
         if self.payload in self.icons:
             self.root.draw_icon(self.icons[self.payload], self.x, self.y)
+        elif self.f_icon:
+            self.root.draw_icon(self.f_icon(self.payload), self.x, self.y)
         
 
 
