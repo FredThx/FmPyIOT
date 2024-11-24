@@ -117,27 +117,29 @@ class Topic:
                 except TypeError:
                     return await self.run_callback_async(self.read)
 
-    async def do_action_async(self, topic:str=None, payload:str=None)->str:
+    async def do_action_async(self, topic:str=None, payload:str=None, action:function=None)->str:
         '''Execute the action method and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
+        action (optionnal) : default : self.action
         '''
         # la fonction action pour prendre 2,1 ou 0 arguments
         # Et je n'ai pas trouvé comment connaitre en micropython le nombre d'arguments
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
         #logging.debug(f"do_action_async[{self}]({topic},{payload})...")
-        if self.action:
+        action = action or self.action
+        if action:
             try:
-                return await self.run_callback_async(self.action, topic, payload)
+                return await self.run_callback_async(action, topic, payload)
             except TypeError as e:
                 #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e}. Retry without topic...")
                 try:
-                    return await self.run_callback_async(self.action, payload)
+                    return await self.run_callback_async(action, payload)
                 except TypeError as e:
                     #logging.debug(f"error on {self.action}({topic=}, {payload=}) : {e} Retry without payload...")
-                    return await self.run_callback_async(self.action)
+                    return await self.run_callback_async(action)
         else:
-            print(f"Error : {self} has not attribute 'action'")
+            logging.error(f"Error : {self} has not attribute 'action'")
 
     async def get_a_callback(self, callback):
         '''Return a async callback
@@ -228,13 +230,20 @@ class TopicAction(Topic):
 
 class TopicIrq(Topic):
     ''' Un topic basé sur l'intéruption matérielle d'un GPIO.
-    En fait, on va lier une callback à lIRQ qui va juste remplir un buffer avec les valeurs de la pin 
+    En fait, on va lier une callback à l'IRQ qui va juste remplir un buffer avec les valeurs de la pin.
+    Ensuite une routine est créé pour lire ce buffer en asyncio.
+        trigger : Pin.IRQ_FALLING | Pin.IRQ_RISING | Pin.IRQ_LOW_LEVEL | Pin.IRQ_HIGH_LEVEL
+        values  : None or a tuple od 2 values ("on_off", "on_on") => theses values will be send instead
+        rate_limit : (s)
+        buffer_size : size of the buffer used to store events (10 must be enought)
+        on_irq : function called on irq event
     '''
     def __init__(self, topic:str,
                  pin:Pin | int,
-                 trigger:int = None,
-                 values:tuple[any]=None,
-                 rate_limit:int=1, #TODO : le réutiliser
+                 trigger:int,
+                 on_irq:function = None,
+                 values:tuple[any]=None, 
+                 rate_limit:float=0,
                  reverse_topic:bool = True,
                  read:function = None,
                  action:function = None,
@@ -243,12 +252,13 @@ class TopicIrq(Topic):
         self.trigger = trigger
         self.pin.init(Pin.IN)
         self.values = values
+        self.on_irq = on_irq
         self.rate_limit = rate_limit
         self.new_irq_time = time.time()
+        self.irq_buffer = BufferBits(buffer_size)
         super().__init__(topic, reverse_topic=reverse_topic, read=read, action = action)
         if self.read is None:
             self.read = self._read
-        self.irq_buffer = BufferBits(buffer_size)
 
     def _read(self, topic:str, payload:str)->any:
         if self.values and len(self.values)==2:
@@ -259,16 +269,19 @@ class TopicIrq(Topic):
     def attach(self, iot):
         '''Lie l'intéruption au FmPtIot
         '''
+        # IRQ => buffer
         def callback(pin):
-            self.irq_buffer.append(pin.value())
-            logging.debug(f"irq_buffer = {self.irq_buffer}")
+            if time.time()>self.new_irq_time:
+                self.new_irq_time = time.time() + self.rate_limit
+                self.irq_buffer.append(pin.value())
         self.pin.irq(callback, self.trigger)
+        # buffer => publish + action
         async def do_irq_action():
             for pin_value in self.irq_buffer:
                 logging.debug(f"new IRQ event : {self.topic} = {pin_value}")
                 await self.send_async(iot.publish_async)
-                if self.action:
-                    await self.do_action_async(self.topic, pin_value)
+                if self.on_irq:
+                    await self.do_action_async(self.topic, pin_value, action=self.on_irq)
         iot.add_topic(TopicRoutine(action = do_irq_action,send_period=0.1))
 
 class TopicRoutine(Topic):

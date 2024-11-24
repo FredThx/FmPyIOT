@@ -72,8 +72,8 @@ iot.set_param('salon', default=salon.params, on_change=salon.load_params)
 detection_topic = TopicIrq("./detect",
                            pin=salon.detecteur,
                            trigger = Pin.IRQ_RISING + Pin.IRQ_FALLING,
-                           rate_limit=0.1,
-                           action=lambda topic, payload : salon.display.power(payload=="1"))
+                           rate_limit=10,
+                           on_irq=lambda topic, payload : salon.display.power(payload))
 topic_pression = Topic("./PRESSION",
                        read=salon.get_pressure,
                        send_period=30,
