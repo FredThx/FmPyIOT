@@ -5,7 +5,7 @@ from fmpyiot.topics import Topic, TopicIrq, TopicAction
 from devices.bmp280 import BMP280
 from devices.ds18b20 import DS18b20
 from devices import sh1106
-from devices.display import Display, Field, Icon, RIGHT, LEFT
+from devices.display import Display, Field, Icon, RIGHT, LEFT, BarGraph
 from credentials import CREDENTIALS
 
 class Salon:
@@ -16,18 +16,44 @@ class Salon:
         self.ds = DS18b20(27)
         self.detecteur = Pin(26)
         self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
-        self.display.set_widget("heure", Field("", 7,3,width=8, align=RIGHT))
-        self.display.set_widget("T-HOME/SALON/PRESSION", Field("Pression:", row=0,column=0,width=4, align=RIGHT), "???")
-        self.display.text("hPa", 0, 13)
-        self.display.set_widget("T-HOME/SALON/temperature", Field("Temp.  :", row=2,column=0, width=4, align=RIGHT), "???")
-        self.display.text("C", 2, 13)
-        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", #Field("Fioul  :", row=4,column=0, width=4, align=RIGHT))
-                            Icon(60, 28, function = self.get_cuve_icon),"0")
-        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", Field("", row=5,column=9, width=4, align=RIGHT),"???")
-        self.display.text("Fioul :", 5, 0)
+        self.display.set_widget("heure", Field("", row=0,column=1,width=8, align=RIGHT))
+        self.display.set_widget("T-HOME/SALON/PRESSION", Field("P=", row=2,column=0,width=4, align=RIGHT, unit=" hPa"), "???")
+        self.display.set_widget("T-HOME/SALON/temperature", Field("T=", row=4,column=0, width=4, align=RIGHT, unit = " C"), "???")
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", BarGraph(12*8,0, lenght=50, width=8, max_value=1500, orient=90))
+        self.display.set_widget("T-HOME/CUVE-FUEL/quantite", Field("", row=7,column=10, width=4, align=RIGHT, unit=' l'),"???")
+        self.display.set_widget("T-HOME/SALON/PRESSION_VARIATION", Icon(9*8+2, 16,
+                icons={
+                    "UP" : self.icon_up,
+                    "EQ" : self.icon_eq,
+                    "DOWN" : self.icon_down
+                }
+                                                                        ))
         self.params = {
             'pressure_offset' : 0
         }
+
+    icon_up = [[0,0,0,1,1,0,0,0],
+               [0,0,1,1,1,1,0,0],
+               [0,1,1,1,1,1,1,0],
+               [1,1,0,1,1,0,1,1],
+               [1,0,0,1,1,0,0,1],
+               [0,0,0,1,1,0,0,0],
+               [0,0,0,1,1,0,0,0],
+               [0,0,0,1,1,0,0,0],]
+    
+    icon_eq = [[0,0,0,0,0,0,0,0],
+               [1,1,1,1,1,1,1,1],
+               [1,1,1,1,1,1,1,1],
+               [0,0,0,0,0,0,0,0],
+               [0,0,0,0,0,0,0,0],
+               [1,1,1,1,1,1,1,1],
+               [1,1,1,1,1,1,1,1],
+               [0,0,0,0,0,0,0,0],
+               ]
+    @property
+    def icon_down(self):
+        return reversed(self.icon_up)
+
     @staticmethod
     def get_cuve_icon(payload:str):
         width, height = 60, 24
@@ -103,12 +129,13 @@ topic_temperature = Topic("./temperature",
                           on_incoming=salon.display.set)
 
 topic_fioul = TopicAction("T-HOME/CUVE-FUEL/quantite",action=salon.display.set)
+topic_pression_variation = TopicAction("T-HOME/SALON/PRESSION_VARIATION", action=salon.display.set)
 
 iot.add_topic(topic_pression)
 iot.add_topic(topic_temperature)
 iot.add_topic(detection_topic)
 iot.add_topic(topic_fioul)
-
+iot.add_topic(topic_pression_variation)
 iot.add_routine(salon.show_time)
 
 iot.run()
