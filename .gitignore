@@ -8,3 +8,4 @@ Thumbs.db
 *.mpy
 pymakr.conf
 _credentials.py
+credentials.py
