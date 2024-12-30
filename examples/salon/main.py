@@ -17,11 +17,11 @@ class Salon:
         self.detecteur = Pin(26)
         self.display = Display(sh1106.SH1106_I2C(128, 64, self.i2c, addr=60, rotate=0, delay=0))
         self.display.set_widget("heure", Field("", row=0,column=1,width=8, align=RIGHT))
-        self.display.set_widget("T-HOME/SALON/PRESSION", Field("P=", row=2,column=0,width=4, align=RIGHT, unit=" hPa"), "???")
-        self.display.set_widget("T-HOME/SALON/temperature", Field("T=", row=4,column=0, width=4, align=RIGHT, unit = " C"), "???")
+        self.display.set_widget("T-HOME/SALON/ECRAN/PRESSION", Field("P=", row=2,column=0,width=4, align=RIGHT, unit=" hPa"), "???")
+        self.display.set_widget("T-HOME/SALON/ECRAN/temperature", Field("T=", row=4,column=0, width=4, align=RIGHT, unit = " C"), "???")
         self.display.set_widget("T-HOME/CUVE-FUEL/quantite", BarGraph(12*8,0, lenght=50, width=8, max_value=1500, orient=90))
         self.display.set_widget("T-HOME/CUVE-FUEL/quantite", Field("", row=7,column=10, width=4, align=RIGHT, unit=' l'),"???")
-        self.display.set_widget("T-HOME/SALON/PRESSION_VARIATION", Icon(9*8+2, 16,
+        self.display.set_widget("T-HOME/SALON/ECRAN/PRESSION_VARIATION", Icon(9*8+2, 16,
                 icons={
                     "UP" : self.icon_up,
                     "EQ" : self.icon_eq,
@@ -29,7 +29,8 @@ class Salon:
                 }
                                                                         ))
         self.params = {
-            'pressure_offset' : 0
+            'pressure_offset' : 0,
+            'temperature_offset' : 0
         }
 
     icon_up = [[0,0,0,1,1,0,0,0],
@@ -68,10 +69,11 @@ class Salon:
         return icon
 
     def get_pressure(self, **kwargs):
-        return int(self.bmp.pressure/100 - self.params['pressure_offset'])
+        return int(self.bmp.pressure/100 - float(self.params['pressure_offset']))
     
     async def get_temperature(self, **kwargs):
-        return await self.ds.read_async()
+        raw_temp = await self.ds.read_async()
+        return raw_temp + float(self.params['temperature_offset'])
 
     def load_params(self, param:dict):
         logging.info("SALON : LOAD PARAMS")
@@ -97,7 +99,7 @@ iot = FmPyIotWeb(
     ssid = CREDENTIALS.wifi_SSID,
     password = CREDENTIALS.wifi_password,
     web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
-    mqtt_base_topic = "T-HOME/SALON",
+    mqtt_base_topic = "T-HOME/SALON/ECRAN",
     watchdog=100,
     sysinfo_period = 600,
     led_incoming="LED", #internal
