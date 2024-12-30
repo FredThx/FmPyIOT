@@ -48,6 +48,8 @@ function update_status() {
         e_mem_free.attr("style", "width: " + mem_free_percent + "%");
         e_mem_free.attr("aria-valuenow", mem_free_percent.toString());
         e_mem_free.text(mem_free_percent + "%");
+        //Title
+        $('title').html("FmPyIot " + sysinfo.name);
     });
 }
 
@@ -67,6 +69,7 @@ function init_vars() {
     $.get("/api/params", function(html) {
         $('#list-params').html(html);
     });
+
 }
 
 // Mise à jour de REPL
