@@ -11,6 +11,9 @@ from fmpyiot.topics import Topic, TopicRoutine
 gc.collect()
 from fmpyiot.wd import WDT
 gc.collect()
+from fmpyiot.params import FmPyIotParam, FmPyIotParams
+gc.collect()
+
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -37,7 +40,7 @@ class FmPyIot:
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
-        self.params = {}
+        self.params = FmPyIotParams()
         #RTC
         self.rtc = machine.RTC()
         self.rtc_is_updated = False
@@ -79,7 +82,7 @@ class FmPyIot:
         #Divers
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
-        self.params_loaders = {'rtc' : lambda _ : self.set_rtc_from_params()}
+        self.params.set_loader('rtc',  lambda _ : self.set_rtc_from_params())
         self.web=None
         #Auto run
         if autoconnect:
@@ -235,7 +238,7 @@ class FmPyIot:
         if topic.is_auto_send():
             self.add_routine(topic.get_routine(self.publish_async))
             if topic.send_period_as_param:
-                self.set_param(f"send_period {topic}", default=topic.send_period, on_change= lambda period : topic.set_send_period(period))
+                self.params.set_param(f"send_period {topic}", default=topic.send_period, on_change= lambda period : topic.set_send_period(period))
 
         # Essentiellement pour IRQ
         topic.attach(self)
@@ -361,11 +364,11 @@ class FmPyIot:
         self.add_topic(Topic(
                     "./SET_PARAMS",
                     reverse_topic=False,
-                    on_incoming= self.set_params
+                    on_incoming= lambda topic, payload : self.params.set_params(payload)
         ))
         self.add_topic(Topic(
                     "./PARAMS",
-                    read = self.get_params
+                    read = self.params.get_params
         ))
         self.add_topic(Topic(
                     "/FmPyIOT/datetime_",
@@ -423,111 +426,24 @@ class FmPyIot:
             'vsys' : self.get_vsys(),
             'mqtt_client_id' : self.client._client_id
         }
-
-    params_json = "params.json"
-
-    def get_params(self)->dict:
-        '''Renvoie le contenu de params_json ou du cache self.params
+    
+    def add_param(self, param:FmPyIotParam):
+        '''Ajout un paramètre à l'iot
+        Non utilisé TODO
         '''
-        if self.params:
-            return self.params
-        else:
-            try:
-                with open(self.params_json,"r") as json_file:
-                    self.params = json.load(json_file)
-                    return self.params
-            except OSError as e:
-                logging.warning(f"Error reading {self.params_json} : {e}")
-                logging.info(f"create new empty file {self.params_json}")
-                self.write_params({})
-                return {}
-        
+        self.params.append(param)
+    
+    def set_param(self, key:bytes, payload:any=None, default:bytes|None=None, on_change:callable=None):
+        self.params.set_param(key, payload, default, on_change)
+
     def get_param(self, topic:bytes) -> any:
         '''renvoie la valeur d'un paramètre
+        Pour retro-compatibility
         '''
-        return self.get_params().get(topic)
-    
-    def set_params(self, topic:bytes, payload:bytes|dict|None=None):
-        '''Met à jour des paramètres (self.params + fichier params_json)
-        (utilisation : via MQTT ou interface web)
-        topic   :   non utilisé
-        payload :   json dict {key:value} or dict
-        '''
-        logging.debug(f"set_params({topic=} ({type(topic)}), {payload=} ({type(payload)}))")
-        if type(payload)==dict:
-            data = payload
-        else:
-            try:
-                data = json.loads(payload)
-                assert type(data)==dict, "payload must be a dict"
-            except Exception as e:
-                logging.error(e)
-                return None
-        for key, value in data.items():
-            self.set_param(key, json.dumps(value))
+        return self.params.get_params().get(topic)
 
-    nested_separator = "__@@__"
-
-    def set_param(self, key:bytes, payload:any=None, default:bytes|None=None, on_change:callable=None):
-        '''Ajoute ou Met à jour un parametre (self.params + fichier params_json)
-        si key est du genre "key{self.nested_separator}sub_key", alors self.params[key][sub_key] est modifié et self.param_loader(self.params[key]) est executé
-        '''
-        logging.info(f"set_param(key={key},payload={payload} (type={type(payload)}))")
-        params = self.get_params()
-        keys = key.split(self.nested_separator)
-        #Defaults values
-        if default is not None and key not in params and payload is None:
-            payload = default
-        elif type(payload) == dict and type(default) == dict and payload is None and key in params:
-            payload = default
-            payload.update(params[key])
-        #decode payload
-        if type(payload) in (str, bytes):
-            try:
-                payload = json.loads(payload)
-                #payload = json.loads(payload) # Pour focer a faire des int, float #TODO : typer les paramètres
-                logging.debug(f"payload decoded : {payload} => {payload} ({type(payload)})")
-            except ValueError:
-                logging.error(f"Error on set_params : {e}")
-        logging.info(f"set_param(key={key},payload={payload} (type={type(payload)}))")
-        #Update params (memory + disk)
-        if payload is not None:
-            self.set_nested_item(params, keys, payload)
-            self.write_params(params)
-        #Callback
-        if on_change:
-            self.params_loaders[keys[0]] = on_change
-        if keys[0] in self.params_loaders:
-            try:
-                self.params_loaders[keys[0]](params[keys[0]])
-            except Exception as e:
-                print(f"Error on params_loader {keys[0]} : {e}")
-
-    @staticmethod
-    def set_nested_item(data_dict, maplist:list[str], val):
-        '''Set item in nested dictionary'''
-        assert len(maplist)>0, "maplist cannot be empty."
-        if len(maplist)==1:
-            data_dict[maplist[0]] = val
-        else:
-            FmPyIot.set_nested_item(data_dict[maplist[0]], maplist[1:], val)
-
-    def write_params(self, params):
-        '''Ecrit le fichier params et le cache self.params
-        '''
-        logging.info(f"write params : {params}")
-        self.params = params
-        try:
-            with open(self.params_json,"w") as json_file:
-                json.dump(params, json_file)
-        except OSError as e:
-            logging.error(f"Error writing file {self.params_json} : {e}")
-    
-    def set_params_loader(self, key:str, loader:function):
-        self.params_loaders[key]=loader
-    
     def set_rtc_from_params(self):
-        params = self.get_params()
+        params = self.params.get_params()
         try:
             self.rtc.datetime(params['rtc'])
         except Exception as e:
@@ -536,7 +452,7 @@ class FmPyIot:
     def set_rtc(self, payload):
         rtc = tuple(json.loads(payload))
         self.rtc.datetime(rtc)
-        self.set_param("rtc",json.dumps(rtc))
+        self.params.set_param("rtc",json.dumps(rtc))
         logging.info(f"Set RTC {rtc}")
         self.rtc_is_updated = True
 

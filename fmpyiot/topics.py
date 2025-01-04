@@ -41,7 +41,7 @@ class Topic:
         self.read = read
         self.on_incoming = on_incoming or action # or action = for compatibility old iot,
         self.last_send = 0
-        self.sleep_mode = False
+        self.sleep_mode = False # Pour FmPyIotSleep
 
     def __str__(self)->str:
         return self.topic
@@ -50,6 +50,7 @@ class Topic:
         return self.send_period is not None
     
     def set_send_period(self, period:float|str):
+        logging.debug(f"set_send_period({self},{period}")
         try:
             self.send_period = float(period)
         except ValueError as e:
@@ -176,7 +177,7 @@ class Topic:
         return html
 
     def get_id(self)->str:
-        return "T"+re.sub(r'\W','_',self.topic)
+        return "T"+re.sub(r'\W','_',str(self))
     
     def html_reader(self)->str:
         '''renvoie le code html pour "topic : valeur"
@@ -282,35 +283,35 @@ class TopicIrq(Topic):
 class TopicRoutine(Topic):
     ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
         send_period     :   None : never | 0 : always, as fast as possible | x : every x secondes
+        topic           :   (facultatif) nom de la routine (pour debug et params)
     '''
-    def __init__(self,
-                 action:function = None, send_period = 0, send_period_as_param = True):
-        self.action = action
-        super().__init__(None, send_period= send_period, send_period_as_param=send_period_as_param)
-        self.none_topic_id = 0
+    index_instance = 0
 
-    def get_id(self)->str:
-        self.none_topic_id += 1
-        return "T"+re.sub(r'\W','_',f"Routine{self.none_topic_id-1}")
-    
+    def __init__(self,
+                 action:function = None, send_period = 0, send_period_as_param = True, topic:str=None):
+        self.action = action
+        self.index = self.index_instance
+        TopicRoutine.index_instance += 1
+        super().__init__(topic, send_period= send_period, send_period_as_param=send_period_as_param)
+
+    def __str__(self)->str:
+        return self.topic or f"Routine{self.index + 1}"
+
     def is_auto_send(self) -> bool:
         return True
     
     def get_routine(self, publisher):
         '''renvoie la routine 
         '''
-        if self.send_period:
-            if self.sleep_mode:
-                async def routine():
+        if self.send_period and not self.sleep_mode:
+            async def routine():
+                while True:
                     await self.do_action_async(action=self.action)
-            else:
-                async def routine():
-                    while True:
-                        await self.do_action_async(action=self.action)
-                        await asyncio.sleep(self.send_period)
-            return routine
+                    await asyncio.sleep(self.send_period)
         else:
-            return self.do_action_async
+            async def routine():
+                await self.do_action_async(action=self.action)
+        return routine
         
     def to_html(self)->str:
         '''renvoie un code html représantant le topic (sans valeur)
