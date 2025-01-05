@@ -11,17 +11,10 @@ class FmPyIotParams:
         self.params_loaders = {}
         self.params:dict[str, FmPyIotParam] = self.load_json()
         
-
-    def __getitem__(self, index):
-        return self.params[index]
-    def __setitem__(self, index, valeur):
-        self.params[index] = valeur
-    #def __delitem__(self, index):
-    #    del self.params[index]
-    #def __contains__(self,index):
-    #    return index in self.params
-    #def __len__(self):
-    #    return len(self.params)
+    def __iter__(self):
+        for param in self.params:
+            yield param
+    
     def append(self, param):
         self[param.key] = param
     
