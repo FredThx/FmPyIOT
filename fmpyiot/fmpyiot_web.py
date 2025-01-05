@@ -356,7 +356,7 @@ class FmPyIotWeb(FmPyIot):
             '''Renvoie sous forme html la liste des params et leurs valeurs
             '''
             await FmPyIotWeb.send_response(request)
-            for html_param in self.html_params():
+            for html_param in self.params.to_html():
                 await request.write(html_param)
     
     def html_topics(self): #Iterator[str]
@@ -365,30 +365,5 @@ class FmPyIotWeb(FmPyIot):
         for topic in self.topics:
             yield topic.to_html() 
 
-    def html_params(self):#->Iterator[str]
-        '''Renvoi un generator du code html représentant les paramètres
-        '''
-        for key, val in self.params_deep():
-            yield f'''
-                <div>
-                    <span>{key.replace(self.params.nested_separator, '.')} : </span>
-                    <span>
-                        <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
-                    </span>
-                    <span>
-                        <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">
-                    </span>
-                </div>
-            '''.strip()
 
-    def params_deep(self, super_key:str=None, params:dict=None):#->Iterator[tuple[str, str]]
-        '''Renvoie un generator yield = (key, val) des paramètres de manière recursive (les sous dict sont parcourus)
-        dans le cas de sous dict, la key est du type "key.sub_jey"
-        '''
-        for key, val in (params or self.params.get_params()).items():
-            if super_key:
-                key = super_key + self.params.nested_separator + key
-            if type(val) == dict:
-                yield from self.params_deep(key, val)
-            else:
-                yield key, val
+

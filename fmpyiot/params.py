@@ -121,6 +121,33 @@ class FmPyIotParams:
         '''
         self.params_loaders[key] = loader
 
+    def params_deep(self, super_key:str=None, params:dict=None):#->Iterator[tuple[str, str]]
+        '''Renvoie un generator yield = (key, val) des paramètres de manière recursive (les sous dict sont parcourus)
+        dans le cas de sous dict, la key est du type "key.sub_jey"
+        '''
+        for key, val in (params or self.params).items():
+            if super_key:
+                key = super_key + self.nested_separator + key
+            if type(val) == dict:
+                yield from self.params_deep(key, val)
+            else:
+                yield key, val
+
+    def to_html(self):#->Iterator[str]
+        '''Renvoi un generator du code html représentant les paramètres
+        '''
+        for key, val in self.params_deep():
+            yield f'''
+                <div>
+                    <span>{key.replace(self.nested_separator, '.')} : </span>
+                    <span>
+                        <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
+                    </span>
+                    <span>
+                        <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">
+                    </span>
+                </div>
+            '''.strip()
 
 #Pour l'instant non utilisé (on reste sur un dict) => TODO
 class FmPyIotParam:
