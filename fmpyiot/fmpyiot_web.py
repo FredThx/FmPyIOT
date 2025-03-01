@@ -16,7 +16,7 @@ class FmPyIotWeb(FmPyIot):
     assets_dir = "./fmpyiot/assets/"
 
     def __init__(self,
-            mqtt_host:str, mqtt_base_topic:str = None,
+            mqtt_host:str, mqtt_base_topic:str = "",
             ssid:str = None, password:str = None,
             autoconnect:bool = False,
             watchdog:int = 100,
