@@ -18,6 +18,7 @@ iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
     ssid = CREDENTIALS.wifi_SSID,
     password = CREDENTIALS.wifi_password,
+    mqtt_base_topic = "T-HOME/GARAGE/PORTE",
     web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     watchdog=100,
     sysinfo_period = 600,
