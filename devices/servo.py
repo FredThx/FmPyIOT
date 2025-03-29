@@ -1,6 +1,6 @@
 from machine import Pin, PWM
 import time
-
+import uasyncio as asyncio
 
 
 class Servo:
@@ -32,6 +32,16 @@ class Servo:
         for a in range(current_angle, angle, step):
             self.angle(a+1)
             time.sleep_us(int(1000/speed))
+
+    async def move_async(self, angle:int, speed:float=1.0):
+        '''Déplace le servomoteur à une position donnée de manière asynchrone
+        '''
+        current_angle = self.angle()
+        step = 1 if angle > current_angle else -1
+        for a in range(current_angle, angle, step):
+            self.angle(a+1)
+            await asyncio.sleep_ms(int(1/speed))
+            
 
     def angle(self, angle:int=None)->int:
         '''Set or get the angle of the servo
