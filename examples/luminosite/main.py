@@ -12,7 +12,11 @@ time.sleep(5)
 assert len([])==0, "Error with len!"
 
 i2c = I2C(1,sda=Pin(26), scl=Pin(27), freq=100000)
-sensor = TSL2561(i2c, address=0x39)
+try:
+    sensor = TSL2561(i2c, address=0x39)
+except OSError:
+    sensor = None
+    print("TSL2561 not found")
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -28,6 +32,20 @@ iot = FmPyIotWeb(
     logging_level=logging.DEBUG,
     )
 
-iot.add_topic(TopicRead("./LUMINOSITE", read= sensor.read, send_period=10))
+def read_sensor():
+    global sensor
+    if sensor is None:
+        try:
+            sensor = TSL2561(i2c, address=0x39)
+        except OSError:
+            print("TSL2561 not found")
+    if sensor:
+        try:
+            return sensor.read()
+        except OSError:
+            print("Error reading sensor:")
+            sensor = None
+
+iot.add_topic(TopicRead("./LUMINOSITE", read=read_sensor, send_period=10))
 
 iot.run()
