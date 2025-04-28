@@ -37,7 +37,6 @@ class Roue:
         Executé par l'irq sur la pin out_A
         '''
         self.compteur += 1
-        print(f"Compteur : {self.compteur}")
     
     def get_distance(self)->float:
         '''Retourne la distance parcourue en mm
@@ -48,7 +47,6 @@ class Roue:
         '''Retourne True si la longueur est atteinte
         '''
         distance = self.get_distance()
-        print(f"Distance : {distance} mm")
         if distance >= self.params['longueur']: 
             self.compteur = 0
             await self.do_action(distance)
