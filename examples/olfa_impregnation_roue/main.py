@@ -1,4 +1,4 @@
-import logging, json
+import logging
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic
 from devices.ds18b20 import DS18b20
@@ -7,8 +7,8 @@ from credentials import CREDENTIALS
 from roue import Roue
     
 roue = Roue(
-    out_A_pin=12,
-    output_pin=13,
+    out_A_pin=15,
+    output_pin=6,
     out_B_pin=None,
     resolution=1,
     sub_topic="./distance",
