@@ -304,7 +304,13 @@ class FmPyIot:
             await task #Mais on peut attendre ... indéfiniement.
 
 
-    def run(self):
+    def run(self, wait:int=0):
+        if wait:
+            print("Wait 5 seconds before starting the IoT")
+            time.sleep(wait)
+        '''Lance la boucle principale'''
+        if self.watchdog:
+            self.init_watchdog(self.watchdog)
         try:
             asyncio.run(self.main())
         except KeyboardInterrupt:
