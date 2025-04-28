@@ -77,8 +77,7 @@ class FmPyIot:
         self.set_logging_level(logging_level)
         #Watchdog
         self.wd = None
-        if watchdog:
-            self.init_watchdog(watchdog)
+        self.watchdog = watchdog
         #Divers
         if sysinfo_period:
             self.init_system_topics(sysinfo_period)
