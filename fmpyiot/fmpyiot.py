@@ -3,7 +3,7 @@ gc.collect()
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 gc.collect()
 import uasyncio as asyncio
-import logging, os, ubinascii, gc, json, network
+import logging, os, ubinascii, gc, json, network, time
 from logging.handlers import RotatingFileHandler
 import machine
 gc.collect()
