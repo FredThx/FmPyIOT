@@ -372,6 +372,11 @@ class FmPyIot:
                     on_incoming= lambda topic, payload : self.params.set_params(payload)
         ))
         self.add_topic(Topic(
+                    "./SET_PARAM",
+                    reverse_topic=False,
+                    on_incoming= lambda topic, payload : self.params.set_param(topic, payload)
+        ))
+        self.add_topic(Topic(
                     "./PARAMS",
                     read = self.params.get_params
         ))

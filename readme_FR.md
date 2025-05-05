@@ -90,6 +90,10 @@ Renvoie les paramètres
 
 ### ./SET_PARAM
 
+Permet de modifier un paramètre.
+
+### ./SET_PARAMS
+
 Permet de modifier les paramètres.
 
 #### Reverse topic
