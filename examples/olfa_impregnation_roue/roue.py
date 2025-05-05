@@ -2,7 +2,7 @@ import uasyncio as asyncio
 import logging, json
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicRoutine
-from machine import Pin
+from machine import Pin, Timer
 
 
 class Roue:
@@ -31,37 +31,28 @@ class Roue:
         self.sub_topic = sub_topic
         self.compteur:int=0
         self.load_params()
+        #self.tim_check = Timer()
+        #self.tim_check.init(period = 20, mode= Timer.PERIODIC, callback=self.check_longueur_atteinte)
+        self.tim_coupe= Timer()
     
     def _increment(self, pin:Pin):
         '''Incrémente le compteur de 1 pour chaque impulsion
         Executé par l'irq sur la pin out_A
         '''
         self.compteur += 1
-    
-    def get_distance(self)->float:
-        '''Retourne la distance parcourue en mm
-        '''
-        return self.compteur * self.resolution + self.params['offset']
-
-    async def check_longueur_atteinte(self)->bool:
-        '''Retourne True si la longueur est atteinte
-        '''
-        distance = self.get_distance()
-        if distance >= self.params['longueur']: 
+        if self.compteur >= self.compteur_max:
+            distance = self.compteur * self.resolution + self.params['offset']
             self.compteur = 0
-            await self.do_action(distance)
-            return True
-        return False
-
-    async def do_action(self, distance:float):
+            self.do_action(distance)
+    
+    def do_action(self, distance:float):
         '''Action à réaliser lorsque la longueur est atteinte
         '''
-        print(f"Longueur atteinte : {distance} mm")
+        #logging.debug(f"Longueur atteinte : {distance} mm")
         if self.output:
             self.output.on()
+            self.tim_coupe.init(period = int(self.params['output_temporisation']*1000), mode= Timer.ONE_SHOT, callback=lambda t:self.output.off())
             asyncio.create_task(self._publish_mqtt(distance))
-            await asyncio.sleep(self.params['output_temporisation'])
-            self.output.off()
 
     async def _publish_mqtt(self, distance:float):
         '''Envoi de la valeur sur le topic MQTT
@@ -72,7 +63,7 @@ class Roue:
     def set_iot(self, iot:FmPyIotWeb):
         self.iot = iot
         self.iot.set_param('roue', default=self.params, on_change=self.load_params)
-        self.iot.add_topic(TopicRoutine(action=self.check_longueur_atteinte, send_period=0.5, topic="./roue/check_longueur_atteinte"))
+        #self.iot.add_topic(TopicRoutine(action=self.check_longueur_atteinte, send_period=0.5, topic="./roue/check_longueur_atteinte"))
 
     def _load_params(self, params:dict):
         '''Load les paramètres à partir d'un dict
@@ -101,3 +92,5 @@ class Roue:
             except OSError as e:
                 logging.error(str(e))
         print(f"Params loaded. New params : {self.params}")
+        self.compteur_max = int((self.params['longueur']+ self.params['offset']) / self.resolution) # max compteur pour la longueur
+        
