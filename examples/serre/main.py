@@ -1,16 +1,24 @@
-from devices.ds18b20 import DS18b20
-from devices.fdht import DHT22
-from devices.fluxldr import LuxLDR
-from machine import Pin
+#from devices.ds18b20 import DS18b20
+#from devices.fdht import DHT22
+from dht import DHT22 
+from devices.tsl2561 import TSL2561
+from machine import Pin, I2C
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic
+from fmpyiot.topics import Topic, TopicRoutine, TopicRead
 
 from credentials import CREDENTIALS
 
-ds = DS18b20(14)
-dht = DHT22(16)
-ldr = LuxLDR(channel = 0, R= 10_000, k=0.9) #Channel0 = ADC0 = GPIO26
-led = Pin(17,Pin.OUT)
+assert len([])==0, "Error with len!"
+
+
+dht = DHT22(Pin(18))
+
+i2c = I2C(1,sda=Pin(26), scl=Pin(27), freq=100000)
+try:
+    sensor = TSL2561(i2c, address=0x39)
+except OSError:
+    sensor = None
+    print("TSL2561 not found")
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -24,14 +32,25 @@ iot = FmPyIotWeb(
     description="Une petite serre pour des salades.",
     )
 
-temperature = Topic("./temperatures", read=lambda topic, payload : ds.read_all_async(), send_period=60)
-humidity = Topic("./humidity", read = lambda topic, payload : dht.read_humidity(), send_period=60)
-luminosite = Topic("./luminosite", read = lambda topic, payload : ldr.read(), send_period=60)
-led_topic = Topic('./LED', action = lambda payload : led.value(int(payload)))
+iot.add_topic(Topic("./temperature", read=lambda topic, payload : dht.temperature(), send_period=30))
+iot.add_topic(Topic("./humidity", read = lambda topic, payload : dht.humidity(), send_period=30))
+iot.add_topic(TopicRoutine(dht.measure, send_period=5))
+
+def read_sensor():
+    global sensor
+    if sensor is None:
+        try:
+            sensor = TSL2561(i2c, address=0x39)
+        except OSError:
+            print("TSL2561 not found")
+    if sensor:
+        try:
+            return sensor.read()
+        except OSError:
+            print("Error reading sensor:")
+            sensor = None
+
+iot.add_topic(TopicRead("./LUMINOSITE", read=read_sensor, send_period=10))
 
 
-iot.add_topic(temperature)
-iot.add_topic(humidity)
-iot.add_topic(luminosite)
-iot.add_topic(led_topic)
 iot.run()
