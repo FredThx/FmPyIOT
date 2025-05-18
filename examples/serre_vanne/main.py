@@ -2,15 +2,14 @@
 #from devices.fdht import DHT22
 from machine import Pin
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicRoutine, TopicAction
-from devices.motor_stepper import StepperMotor
+from devices.motor_I298 import MotorI298
 from vanne import Vanne
 from credentials import CREDENTIALS
 
 assert len([])==0, "Error with len!"
 
-
-vanne = Vanne(StepperMotor([Pin(2), Pin(3), Pin(4), Pin(5)], delay=5, half_step=True))
+motor = MotorI298(Pin(17),Pin(18),Pin(16))
+vanne = Vanne(motor=motor, pin_open=Pin(15), pin_close = None, timeout=2000, delay=5)
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -21,14 +20,8 @@ iot = FmPyIotWeb(
     watchdog=100,
     sysinfo_period = 600,
     name="Vanne de la Serre de Fred",
-    description="uenvanne pour arrosage",
+    description="Une vanne pour arrosage",
     )
 
-iot.add_topic(TopicAction("./open", on_incoming=vanne.open))
-iot.add_topic(TopicAction("./close", on_incoming=vanne.close))
-async def move(topic, payload):
-    await vanne.move(payload)
-iot.add_topic(TopicAction("./move", on_incoming=move))
-
-
+vanne.set_iot(iot)
 iot.run()
