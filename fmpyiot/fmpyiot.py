@@ -291,7 +291,10 @@ class FmPyIot:
             tasks.append(asyncio.create_task(self.hardware_watchdog_async()))
 
         for task in self.routines:
-            tasks.append(asyncio.create_task(task()))
+            try:
+                tasks.append(asyncio.create_task(task()))
+            except Exception as e:
+                logging.error(f"Error on task {task} : {e}")
 
         #Web interface
         if self.web:
