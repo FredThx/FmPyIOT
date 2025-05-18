@@ -91,7 +91,11 @@ Return parameters
 
 ### ./SET_PARAM
 
-Allows parameters to be modified.
+Allows parameter to be modified.
+
+### ./SET_PARAMS
+
+Allows all parameters to be modified.
 
 #### Reverse topic
 
