@@ -1,8 +1,21 @@
 import json, logging
 
 
+#TODO
+'''
+- typer les paramètres (int, float, ...)
+    - éventuellement avec dict : {topic : type, ...}
+
+'''
+
 class FmPyIotParams:
     '''Une collection de FmPyIotparam
+    Utilisation :
+        attribut de FmPyIot
+            set_loader : définit une fonction callback lié à un paramètre : exécuté quand la valeur change
+            set_param : Ajoute ou met à jour la valeur d'un paramètre
+            set_params : Met à jour la valeur de plusieurs paralmètres (voir tous)
+            to_html : pour web
     '''
     nested_separator = "__@@__"
 
@@ -25,7 +38,6 @@ class FmPyIotParams:
     
     def set_params(self, params:bytes|dict|None=None):
         '''Met à jour des paramètres (self.params + fichier params_json)
-        (utilisation : via MQTT ou interface web)
         params :   json dict {key:value} or dict
         '''
         logging.debug(f"set_params({params=} ({type(params)}))")
