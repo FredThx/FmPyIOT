@@ -46,13 +46,13 @@ class BMP085():
     Module for the BMP085 pressure sensor.
     '''
     # init
-    def __init__(self, i2c=None):
+    def __init__(self, i2c=None, address=0x77):
         # internal module defines
         if i2c is None:
             raise ValueError("The I2C bus must be specified")
         else:
             self._bmp_i2c = i2c
-        self._bmp_addr = 119  # fix
+        self._bmp_addr = address
         self.chip_id = self._bmp_i2c.readfrom_mem(self._bmp_addr, 0xD0, 2)
         self._delays = (7, 8, 14, 28)
         self._diff_sign = time.ticks_diff(1, 0)
@@ -191,5 +191,5 @@ class BMP085():
 
 
 class BMP180(BMP085):
-    def __init__(self, i2c=None):
-        super().__init__(i2c)
+    def __init__(self, i2c=None, address=0x77):
+        super().__init__(i2c, address)
