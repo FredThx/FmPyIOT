@@ -7,7 +7,7 @@ class BufferBits:
         self.size = size
         self.buf = bytearray(size)
         self.pos = 0 # position du prochain
-        self.len = 0 # nb de données sans le buffer
+        self.len = 0 # nb de données dans le buffer
     
     def __repr__(self) -> str:
         _len = self.len
@@ -23,7 +23,10 @@ class BufferBits:
         '''
         while (value :=self.get()) is not None:
             yield value
-
+            
+    def __bool__(self) -> bool:
+        return self.len > 0
+    
     def append(self, value:int):
         self.buf[self.pos]= 1 if value else 0xff
         self.pos = (self.pos + 1)%self.size
