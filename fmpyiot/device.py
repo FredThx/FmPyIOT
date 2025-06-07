@@ -10,16 +10,16 @@ class Device(object):
     Une classe abstraite Device qui donne un ménanisme de connexion à FmPyIot
     et de gestion des paramètres.
     """
-    params = {
-        }
-    params_json = "params.json"
 
-    def __init__(self, name:str="device"):
+    def __init__(self, name:str="device", base_topic:str="./device", param_json:str="params.json"):
         '''
         Initialise le device avec un nom
         '''
+        self.params = {}
+        self.params_json = param_json
         self.name = name
         self.iot = None
+        self.base_topic = base_topic
         #self.load_params()
 
     def set_iot(self, iot:FmPyIotWeb):
