@@ -112,7 +112,7 @@ class Topic:
         # Il existe la lib inspect, mais elle ne fonctionne pas avec les lambda function!
         # TODO : trouver une autre solution car quand il y a une TypeError dans la callback => on merde!
         #logging.debug(f"do_action_async[{self}]({topic},{payload})...")
-        action = action or self.on_incoming
+        action = action or self.on_incoming or self.action
         if action:
             try:
                 return await self.run_callback_async(action, topic, payload)
@@ -290,6 +290,7 @@ class TopicRoutine(Topic):
     def __init__(self,
                  action:function = None, send_period = 0, send_period_as_param = True, topic:str=None):
         self.action = action
+        self.on_incoming = False
         self.index = self.index_instance
         TopicRoutine.index_instance += 1
         super().__init__(topic, send_period= send_period, send_period_as_param=send_period_as_param)
