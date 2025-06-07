@@ -3,7 +3,7 @@ gc.collect()
 from mqtt_as.mqtt_as import MQTTClient, config as mqtt_as_config
 gc.collect()
 import uasyncio as asyncio
-import logging, os, ubinascii, gc, json, network, time
+import logging, os, ubinascii, gc, json, network, time, re
 from logging.handlers import RotatingFileHandler
 import machine
 gc.collect()
@@ -36,7 +36,8 @@ class FmPyIot:
             led_incoming:machine.Pin|int|None = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
-            on_fail_connect:callable = None
+            on_fail_connect:callable = None,
+            country='FR'
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
@@ -73,6 +74,13 @@ class FmPyIot:
         #MQTTClient.DEBUG = True
         self.client = MQTTClient(mqtt_as_config)
         self.wlan = self.client._sta_if
+        #TODO : à tester
+        network.country(country)
+        try:
+            network.hostname(re.sub(r'[^a-zA-Z0-9]', '', self.name)[32])  # Set the hostname for the device
+        except:
+            pass
+        #fin TODO à tester
         self.callbacks = {} #{'topic' : callback}
         self.set_logging_level(logging_level)
         #Watchdog
