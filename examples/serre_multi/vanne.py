@@ -4,22 +4,23 @@ import uasyncio as asyncio
 from devices.motor_I298 import MotorI298
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicAction
+from fmpyiot.device import Device
 
-class Vanne(object):
+class Vanne(Device):
     """
     Class representing a valve in a hydraulic system.
     """
-    params = {
+    _params = {
         'timeout' : 1000, #Timeout in ms to wait for the valve to open/close
         'delay' : 5, # Delay in ms between each asyncio check
         }
-    params_json = "params.json"
 
-    def __init__(self, motor:MotorI298, pin_open:Pin=None, pin_close:Pin=None, timeout:int=None, delay:int=None):
+    def __init__(self, motor:MotorI298, pin_open:Pin=None, pin_close:Pin=None, timeout:int=None, delay:int=None, base_topic:str="./vanne"): 
         '''motor: StepperMotor
             pin_open: Pin to check if the valve is open (ie a hall effet sensor)
             pin_close: Pin to check if the valve is closed (ie a hall effet sensor)
         '''
+        super().__init__(name="vanne", base_topic=base_topic)
         self.motor = motor
         self.pin_open = pin_open
         if self.pin_open:
@@ -27,8 +28,8 @@ class Vanne(object):
         self.pin_close = pin_close
         if self.pin_close:
             self.pin_close.init(mode=Pin.IN)
-        self.params["timeout"] = timeout if timeout else self.params["timeout"]
-        self.params["delay"] = delay if delay else self.params["delay"]
+        self.params["timeout"] = timeout if timeout else self._params["timeout"]
+        self.params["delay"] = delay if delay else self._params["delay"]
         self.load_params()
         
 
@@ -69,36 +70,7 @@ class Vanne(object):
         return "unknown"
     
     def set_iot(self, iot:FmPyIotWeb):
-        self.iot = iot
-        iot.add_topic(TopicAction("./open", on_incoming=self.open))
-        iot.add_topic(TopicAction("./close", on_incoming=self.close))
-        iot.add_topic(Topic("./status", read=self.get_status, send_period=5))
-        self.iot.set_param('vanne', default=self.params, on_change=self.load_params)
-
-    def _load_params(self, params:dict):
-        '''Load les paramètres à partir d'un dict
-        en vérifiant le typage
-        '''
-        for k,v in params.items():
-            if k in self.params:
-                try:
-                    self.params[k] = type(self.params[k])(v) # type cast idem self.params
-                except ValueError:
-                    logging.error(f"Error with {k} : {v} cannot be converted to {type(self.params[k])}")
-            else:
-                logging.warning(f"Param {k} not in params")
-
-    def load_params(self, params:dict=None):
-        '''Initialise les paramètres
-            - a partir d'un fichier json
-            - ou d'un dict en entrée 
-        '''
-        if params:
-            self._load_params(params)
-        else:
-            try:
-                with open(self.params_json,"r") as json_file:
-                    self._load_params(json.load(json_file))
-            except OSError as e:
-                logging.error(str(e))
-        print(f"Params loaded. New params : {self.params}")
+        super().set_iot(iot)
+        iot.add_topic(TopicAction(f"{self.base_topic}/open", on_incoming=self.open))
+        iot.add_topic(TopicAction(f"{self.base_topic}/close", on_incoming=self.close))
+        iot.add_topic(Topic(f"{self.base_topic}/status", read=self.get_status, send_period=5))
