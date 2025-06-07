@@ -28,15 +28,15 @@ i2c = I2C(0,sda=Pin(8), scl=Pin(9), freq=100000)
 #Capteurs d'humidité de sol capacitifs
 can =  MCP3008(spi, cs = Pin(5), ref_voltage=5.0)
 soil_moistures = SoilMoistures(
-    [Hygrometer(lambda i=i:can.read(i), a_min=550, a_max=220, name=f"Hydrometer_{i+1}") for i in range(6)]
+    [Hygrometer(lambda i=i:can.read(i), a_min=550, a_max=220, name=f"Hydrometer_{6-i}") for i in range(6)]
     )
 # Vanne d'arrosage
-motor=MotorI298(pinA=Pin(17), pinB=Pin(18), pin_ena=Pin(16)), # Moteur de la vanne
+motor=MotorI298(pinA=Pin(17), pinB=Pin(18), pin_ena=Pin(16)) # Moteur de la vanne
 vanne = Vanne(
     motor = motor,
     pin_open=Pin(15, Pin.IN), # capteur à effet Hall pour vérifier si la vanne est ouverte
     pin_close=Pin(14, Pin.IN), # capteur à effet Hall pour vérifier si la vanne est fermée
-    timeout=1000, # Timeout en ms = temps maxi pour que la vanne s'ouvre/ferme
+    timeout=3000, # Timeout en ms = temps maxi pour que la vanne s'ouvre/ferme
     delay=5, # Délai en ms entre chaque vérification de l'état de la vanne
 )
 # capteur humidité air DHT22
