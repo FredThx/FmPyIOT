@@ -103,7 +103,7 @@ class FmPyIotParams:
             with open(self.params_json,"r") as json_file:
                 self.params = json.load(json_file)
                 return self.params
-        except OSError as e:
+        except (OSError, ValueError) as e:
             logging.warning(f"Error reading {self.params_json} : {e}")
             logging.info(f"create new empty file {self.params_json}")
             self.write_params({})

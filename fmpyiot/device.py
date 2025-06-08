@@ -53,7 +53,7 @@ class Device(object):
             try:
                 with open(self.params_json,"r") as json_file:
                     self._load_params(json.load(json_file))
-            except OSError as e:
+            except (OSError, ValueError) as e:
                 logging.error(str(e))
         print(f"Params loaded. New params : {self.params}")
         self.on_load_params()
