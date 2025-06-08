@@ -128,6 +128,35 @@ class FmPyIotWeb(FmPyIot):
                 result[key]=value
         return result
     
+    @staticmethod
+    def unquote(string:str)->str:
+        """unquote('abc%20def') -> 'abc def'.
+
+        Note: if the input is a str instance it is encoded as UTF-8.
+        This is only an issue if it contains unescaped non-ASCII characters,
+        which URIs should not.
+        """
+        if not string:
+            return ""
+        if isinstance(string, str):
+            b_string = string.encode('utf-8')
+        else:
+            b_string = string
+        bits = b_string.split(b'%')
+        if len(bits) == 1:
+            return string
+        res = bytearray(bits[0])
+        append = res.append
+        extend = res.extend
+        for item in bits[1:]:
+            try:
+                append(int(item[:2], 16))
+                extend(item[2:])
+            except KeyError:
+                append(b'%')
+                extend(item)
+        return bytes(res).decode('utf-8')
+
     def init_web(self):
         '''Initialise le serveur web
         '''
@@ -161,6 +190,7 @@ class FmPyIotWeb(FmPyIot):
             await FmPyIotWeb.send_response(request)
             args = {}
             filename = request.url.split('/')[-1]
+            filename = FmPyIotWeb.unquote(filename)
             if filename.endswith('.png'):
                 args = {'binary': True}
             await request.write("\r\n")
@@ -202,6 +232,7 @@ class FmPyIotWeb(FmPyIot):
             '''
             logging.debug(f"request={request}")
             filename = request.url[len(request.route.rstrip("*")) - 1:].strip("/")
+            filename = FmPyIotWeb.unquote(filename)
             await FmPyIotWeb.send_response(request, content_type='application/octet-stream')
             await request.write(f"Content-Disposition: attachment; filename={filename}\r\n\r\n")
             logging.info(f"Download file : {filename}")
@@ -216,6 +247,7 @@ class FmPyIotWeb(FmPyIot):
             if request.method != "DELETE":
                 raise naw.HttpError(request, 501, "Not Implemented")
             filename = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            filename = FmPyIotWeb.unquote(filename)
             try:
                 os.remove(filename)
                 logging.info(f"Delete file : {filename}")
@@ -236,6 +268,7 @@ class FmPyIotWeb(FmPyIot):
                 await FmPyIotWeb.send_response(request, code=204, message="No Content")
                 return
             output_file = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            output_file = FmPyIotWeb.unquote(output_file)
             tmp_file = output_file + '.tmp'
             try:
                 with open(tmp_file, 'wb') as o:
@@ -288,6 +321,7 @@ class FmPyIotWeb(FmPyIot):
             data = await self.get_post_data(request)
             logging.debug(f"POST : data={data}")
             topic_id = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            #topic_id = FmPyIotWeb.unquote(topic_id)
             topic_id = topic_id[7:]
             topics = [topic for topic in self.topics if topic.get_id()==topic_id]
             if not topics:
@@ -367,6 +401,7 @@ class FmPyIotWeb(FmPyIot):
             if request.method != "DELETE":
                 raise naw.HttpError(request, 501, "Not Implemented")
             param = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            param = self.unquote(param)
             if self.params.delete_param(param):
                 await self.send_response(request, 200, "OK")
             else:
