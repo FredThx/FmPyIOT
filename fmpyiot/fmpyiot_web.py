@@ -359,6 +359,17 @@ class FmPyIotWeb(FmPyIot):
             for html_param in self.params.to_html():
                 await request.write(html_param)
 
-
+        @self.web.route('/api/params/delete/*')
+        @self.authenticate()
+        async def delete_params(request):
+            '''Supprime tous les paramètres
+            '''
+            if request.method != "DELETE":
+                raise naw.HttpError(request, 501, "Not Implemented")
+            param = request.url[len(request.route.rstrip("*")) - 1:].strip("\/")
+            if self.params.delete_param(param):
+                await self.send_response(request, 200, "OK")
+            else:
+                await self.send_response(request, 204, "No Content")
 
 

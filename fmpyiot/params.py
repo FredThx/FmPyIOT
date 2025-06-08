@@ -143,7 +143,7 @@ class FmPyIotParams:
         '''
         for key, val in self.params_deep():
             yield f'''
-                <div>
+                <div id="_line_params_{key}" class="form-group">
                     <span>{key.replace(self.nested_separator, '.')} : </span>
                     <span>
                         <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
@@ -151,8 +151,46 @@ class FmPyIotParams:
                     <span>
                         <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">
                     </span>
+                    <span>
+                        <input class="btn btn-danger btn-sm" id="_del_params_{key}" type="submit" value="Supprime">
+                    </span>
                 </div>
             '''.strip()
+      
+    def delete_param(self, key:bytes)->bool:
+        '''Supprime un paramètre (self.params + fichier params_json)
+        key : paramètre sous la forme key1.key2.key3....
+        renvoie True si la clé a été supprimée, False sinon
+        '''
+        logging.info(f"delete_param({key})")
+        keys = key.split(self.nested_separator)
+        params = self.get_params()
+        if self.get_param(keys) is None:
+            logging.warning(f"Key {key} not found in params")
+            return False
+        if len(keys) > 1:
+            del self.get_param(keys[:-1])[keys[-1]]
+        else:
+            del params[keys[0]]
+        # On supprime les clés vides
+        for i in range(len(keys)-1, 0, -1):
+            if not params.get(keys[i-1]):
+                del params[keys[i-1]]
+        # On écrit les paramètres
+        self.write_params(params)
+        return True
+
+    def get_param(self, keys: list)->any: 
+        '''Renvoie la valeur d'un paramètre (self.params)
+        keys : liste de clés imbriquées (ex: ["key1", "key2", "key3"])
+        '''
+        params = self.get_params()
+        for key in keys:
+            if isinstance(params, dict) and key in params:
+                params = params[key]
+            else:
+                return None
+        return params
 
 #Pour l'instant non utilisé (on reste sur un dict) => TODO
 class FmPyIotParam:
