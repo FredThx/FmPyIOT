@@ -63,7 +63,7 @@ class FmPyIot:
         self.led_wifi = self.led_function(led_wifi)
         self.led_incoming = self.led_function(led_incoming)
         self.incoming_pulse_duration = incoming_pulse_duration
-        self.mqtt_base_topic = mqtt_base_topic + "/" if mqtt_base_topic[-1]!="/" else ""
+        self.mqtt_base_topic = mqtt_base_topic + ("/" if mqtt_base_topic[-1]!="/" else "")
         # mqtt_as_config : default mqtt_as config
         mqtt_as_config['server'] = mqtt_host
         mqtt_as_config['ssid']     = ssid
@@ -435,6 +435,7 @@ class FmPyIot:
         wifi['rssi'] = self.wlan.status('rssi')
         return{
             'name' : self.name,
+            'mqtt_base_topic' : self.mqtt_base_topic,
             #'description' : self.description,
             'uname' : dict(zip(uname_keys, list(os.uname()))),
             'ifconfig' : dict(zip(ifconfig_keys, self.wlan.ifconfig())),
