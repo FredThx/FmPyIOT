@@ -185,20 +185,30 @@ $(document).ready(function() {
         $('#status-upload-folder').html(success + " file(s) uploaded successfully.");
         e.preventDefault();
     }).on('submit', '#form-list-params', function(e){
-            let key = document.activeElement['id'].substring(12);
-            let datas = {
-                'topic' : "",
-                'payload' : {}
-            };
-            datas['payload'][key] = document.getElementById("_params_"+key).value
-            $.ajax({
-                async : true,
-                url : '/api/action/action_T__SET_PARAMS',
-                method:'POST',
-                contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify(datas),
-            })
+            let key = document.activeElement['id'].substring(12); // Extract the key from the id '_set_params_key' or 'del_params_key'
+            let action = document.activeElement['id'].substring(1,11); // Extract the action from the id 'set_params_key' or 'del_params_key'
+            if (action == "set_params"){
+                let datas = {
+                    'topic' : "",
+                    'payload' : {}
+                };
+                datas['payload'][key] = document.getElementById("_params_"+key).value
+                $.ajax({
+                    async : true,
+                    url : '/api/action/action_T__SET_PARAMS',
+                    method:'POST',
+                    contentType: "application/json",
+                    dataType: "json",
+                    data: JSON.stringify(datas),
+                });
+            } else if (action == "del_params") {
+                $.ajax({
+                    async : true,
+                    url : '/api/params/delete/' + key,
+                    method:'DELETE',
+                });
+                document.getElementById("_line_params_"+key).remove();
+            }
             e.preventDefault();
     });
 

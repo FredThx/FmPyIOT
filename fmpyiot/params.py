@@ -162,11 +162,11 @@ class FmPyIotParams:
         key : paramètre sous la forme key1.key2.key3....
         renvoie True si la clé a été supprimée, False sinon
         '''
-        logging.info(f"delete_param({key})")
         keys = key.split(self.nested_separator)
         params = self.get_params()
         if self.get_param(keys) is None:
             logging.warning(f"Key {key} not found in params")
+            logging.debug(f"Params :  {params}")
             return False
         if len(keys) > 1:
             del self.get_param(keys[:-1])[keys[-1]]
@@ -178,6 +178,7 @@ class FmPyIotParams:
                 del params[keys[i-1]]
         # On écrit les paramètres
         self.write_params(params)
+        logging.info(f"Deleted param {key} from params")
         return True
 
     def get_param(self, keys: list)->any: 
