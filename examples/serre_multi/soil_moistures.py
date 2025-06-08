@@ -11,7 +11,7 @@ class SoilMoistures(Device):
     Class representing a group of soil moisture sensors
     """
     
-    def __init__(self, soil_moistures:list[Hygrometer], base_topic:str="./hydros"):
+    def __init__(self, soil_moistures:list[Hygrometer], base_topic:str="./HYDROS"):
         '''
         '''
         super().__init__(name="soil_moistures", base_topic=base_topic)
