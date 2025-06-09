@@ -21,11 +21,11 @@ from reservoir import Reservoir
 
 from credentials import CREDENTIALS
 
-# bus SPI et I2C
+# Bus SPI et I2C
 spi = SPI(0, baudrate=100000, polarity=0, phase=0, bits=8, sck=Pin(6), mosi=Pin(7), miso=Pin(4))
 i2c = I2C(0,sda=Pin(8), scl=Pin(9), freq=100000)
 
-#Capteurs d'humidité de sol capacitifs
+# Capteurs d'humidité de sol capacitifs
 can =  MCP3008(spi, cs = Pin(5), ref_voltage=5.0)
 soil_moistures = SoilMoistures(
     [Hygrometer(lambda i=i:can.read(i), a_min=550, a_max=220, name=f"Hydrometer_{6-i}") for i in range(6)]
@@ -39,10 +39,10 @@ vanne = Vanne(
     timeout=3000, # Timeout en ms = temps maxi pour que la vanne s'ouvre/ferme
     delay=5, # Délai en ms entre chaque vérification de l'état de la vanne
 )
-# capteur humidité air DHT22
+# Capteur humidité air + température DHT22
 dht = DHT22(Pin(1))
 
-#Luminosité
+#Capteur Luminosité TLS2561
 tls2561 = None
 # Fonction de lecture du capteur de luminosité TSL2561
 def read_luminosite():
@@ -61,10 +61,9 @@ def read_luminosite():
     return 0.0
 
 # Reservoir d'eau
-lps = LPS35HW(i2c, address=0x5D)  # Capteur de pression au fond du réservoir
+#lps = LPS35HW(i2c, address=0x5D)  # Capteur de pression au fond du réservoir
 #bmp = BMP180(i2c, address=0x77)  # Capteur de pression hors du réservoir
 #reservoir = Reservoir(lps, bmp, max_height=100, name="reservoir")
-
 
 #Création de l'IOT avec interface web et mécanismes MQTT
 iot = FmPyIotWeb(
@@ -84,11 +83,12 @@ iot = FmPyIotWeb(
 
 soil_moistures.set_iot(iot)
 vanne.set_iot(iot)
+
 #reservoir.set_iot(iot)
 
 iot.add_topic(Topic("./temperature", read=lambda topic, payload : dht.temperature(), send_period=30))
 iot.add_topic(Topic("./humidity", read = lambda topic, payload : dht.humidity(), send_period=30))
-iot.add_topic(TopicRoutine(dht.measure, send_period=5))
+iot.add_topic(TopicRoutine(dht.measure, send_period=10))
 
 iot.add_topic(TopicRead("./LUMINOSITE", read=read_luminosite, send_period=10))
 
