@@ -160,6 +160,7 @@ Security: BasicAutentification
 | Hello                         | GET             | /api/hello                                                                                         |                                                                            | "FmPyIOT"""                                           |
 | Return logfile content        | GET             | /api/logs                                                                                          |                                                                            |                                                       |
 | list of parameters            | GET             | /api/param                                                                                         |                                                                            |                                                       |
+| Delete parameter              | DELETE          | /api/params/delete/{param_to_detele}                                                               |                                                                            | 200, OK                                               |
 
 # Thanks
 
