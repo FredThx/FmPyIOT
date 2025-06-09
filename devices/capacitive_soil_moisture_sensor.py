@@ -1,7 +1,7 @@
 from machine import I2C, Pin
 import logging
 
-
+# TODO : read : renvoyer None si le capteur n'est pas branché ou si la lecture échoue
 
 class Hygrometer:
     ''' A capacitive soil moisture sensor Hygrometer with analogique attachement
