@@ -11,11 +11,12 @@ class Vanne(Device):
     Class representing a valve in a hydraulic system.
     """
     _params = {
-        'timeout' : 1000, #Timeout in ms to wait for the valve to open/close
+        'timeout' : 3000, #Timeout in ms to wait for the valve to open/close
         'delay' : 5, # Delay in ms between each asyncio check
+        'delay_plus' : 100, # Additional delay in ms after the valve is opened/closed
         }
 
-    def __init__(self, motor:MotorI298, pin_open:Pin=None, pin_close:Pin=None, timeout:int=None, delay:int=None, base_topic:str="./vanne"): 
+    def __init__(self, motor:MotorI298, pin_open:Pin=None, pin_close:Pin=None, timeout:int=None, delay:int=None, delay_plus:int=None, base_topic:str="./vanne"): 
         '''motor: StepperMotor
             pin_open: Pin to check if the valve is open (ie a hall effet sensor)
             pin_close: Pin to check if the valve is closed (ie a hall effet sensor)
@@ -30,6 +31,7 @@ class Vanne(Device):
             self.pin_close.init(mode=Pin.IN)
         self.params["timeout"] = timeout if timeout else self._params["timeout"]
         self.params["delay"] = delay if delay else self._params["delay"]
+        self.params["delay_plus"] = delay_plus if delay_plus else self._params["delay_plus"]
         self.load_params()
         
 
@@ -45,6 +47,7 @@ class Vanne(Device):
             while (self.get_status() not in [stop_status, "error"]) and time.ticks_diff(timeout, time.ticks_ms()) > 0:
                 await asyncio.sleep_ms(self.params['delay'])
                 logging.debug(f"status = {self.get_status()}")
+            await asyncio.sleep_ms(self.params.get('delay_plus',0))  # Give some time to the motor to stop
         else:
             logging.info(f"Valve is already {stop_status}.")
         self.motor.stop()
