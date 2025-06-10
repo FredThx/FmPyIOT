@@ -56,8 +56,10 @@ def read_luminosite():
         try:
             return tls2561.read()
         except OSError:
-            print("Error reading TLS2561:")
+            logging.error("Error reading TLS2561:")
             tls2561 = None
+        except ValueError as e:
+            logging.error(f"ValueError reading TLS2561: {e}")
     return 0.0
 
 # Reservoir d'eau
