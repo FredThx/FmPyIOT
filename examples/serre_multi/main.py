@@ -54,7 +54,7 @@ def read_luminosite():
             print("TSL2561 not found")
     if tls2561:
         try:
-            return tls2561.read()
+            return tls2561.read(autogain=True)
         except OSError:
             logging.error("Error reading TLS2561:")
             tls2561 = None
