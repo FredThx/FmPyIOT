@@ -217,7 +217,7 @@ class BMP280:
 
             p = ((p + var1 + var2) >> 8) + (self._P7 << 4)
             self._p = p / 256.0
-        return self._p
+        return self._p / 100.0  # Convert to hPa
 
     def _write_bits(self, address, value, length, shift=0):
         d = self._read(address)[0]

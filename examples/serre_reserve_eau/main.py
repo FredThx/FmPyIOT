@@ -4,7 +4,7 @@ from machine import Pin, I2C
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from reservoir import Reservoir
 from devices.lps35hw import LPS35HW
-from devices.bmp085 import BMP180
+from devices.bmp280 import BMP280
 from credentials import CREDENTIALS
 import logging
 
@@ -15,7 +15,10 @@ except:
 
 i2c = I2C(1, scl=Pin(27), sda=Pin(26))
 lps = LPS35HW(i2c, address=0x5D)  # Capteur de pression au fond du réservoir
-bmp = BMP180(i2c, address=0x77)  # Capteur de pression hors du réservoir
+try:
+    bmp = BMP280(i2c)  # Capteur de pression hors du réservoir
+except OSError:
+    bmp = None
 reservoir = Reservoir(lps, bmp, max_height=100, name="reservoir")
 
 iot = FmPyIotWeb(

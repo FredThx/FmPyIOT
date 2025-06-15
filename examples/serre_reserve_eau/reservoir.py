@@ -26,8 +26,14 @@ class Reservoir(Device):
         self.params['pressure_offset'] = 0.0
         self.load_params()
         #Reveil des capteurs de pression
-        self.pressure_sensor_bottom.pressure
-        self.pressure_sensor_top.pressure
+        try:
+            self.pressure_sensor_bottom.pressure
+        except Exception as e:
+            pass
+        if self.pressure_sensor_top is not None:
+            # Le capteur de pression BMP280 est optionnel
+            # Il est utilisé pour mesurer la pression hors du réservoir
+            self.pressure_sensor_top.pressure
           
     def set_iot(self, iot:FmPyIotWeb):
         super().set_iot(iot)
@@ -37,8 +43,12 @@ class Reservoir(Device):
     def get_contenance(self)->int:
         '''Renvoie la contenance du réservoir en pourcentage
         '''
-        top_pressure = self.pressure_sensor_top.pressure
-        bottom_pressure = self.pressure_sensor_bottom.pressure
+        try:
+            top_pressure = self.pressure_sensor_top.pressure
+        except Exception as e:
+            logging.error(f"Error reading top pressure sensor: {e}")
+            top_pressure = None
+        bottom_pressure = self.pressure_sensor_bottom.pressure if self.pressure_sensor_top is not None else None
         if top_pressure is None or bottom_pressure is None:
             logging.error("Pressure sensors not available")
             return None
