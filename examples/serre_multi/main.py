@@ -17,7 +17,7 @@ from devices.bmp085 import BMP180
 
 from soil_moistures import SoilMoistures
 from vanne import Vanne
-from reservoir import Reservoir
+#from reservoir import Reservoir
 
 from credentials import CREDENTIALS
 
