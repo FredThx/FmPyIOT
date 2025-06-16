@@ -60,6 +60,8 @@ def read_luminosite():
             tls2561 = None
         except ValueError as e:
             logging.error(f"ValueError reading TLS2561: {e}")
+            if "sensor saturated" in str(e):
+                return 2500.0
     return 0.0
 
 # Reservoir d'eau
