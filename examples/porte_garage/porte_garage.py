@@ -1,5 +1,5 @@
 from machine import Pin
-import time
+import time, logging
 import uasyncio as asyncio
 
 class PorteGarage:
@@ -46,5 +46,7 @@ class PorteGarage:
     
     async def push_button_async(self):
         self.gate_motor_push.on()
+        logging.info("Porte garage : bouton poussoir ON")
         await asyncio.sleep(self.push_duration)
         self.gate_motor_push.off()
+        logging.info("Porte garage : bouton poussoir OFF")

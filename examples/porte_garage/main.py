@@ -12,7 +12,7 @@ time.sleep(5)
 porte_garage = PorteGarage(
     sensor_close = Pin(21),
     sensor_open = Pin(20),
-    gate_motor_push = Pin(19))
+    gate_motor_push = Pin(16))
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
