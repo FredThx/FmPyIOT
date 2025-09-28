@@ -4,7 +4,7 @@ from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import TopicAction
 import logging
 from devices.servo import Servo
-from devices.baregraph import BareGraph
+from devices.bargraph import BarGraph, BarGraphPWM
 import json
 from credentials import CREDENTIALS
 
@@ -14,7 +14,7 @@ assert len([])==0, "Error with len!"
 
 
 class AfficheurWC:
-    def __init__(self, servo: Servo, bargraph: BareGraph):
+    def __init__(self, servo: Servo, bargraph: BarGraph):
         self.servo = servo
         self.bargraph = bargraph
         self.load_params()
@@ -66,7 +66,7 @@ class AfficheurWC:
 
 afficheur_wc = AfficheurWC(
     servo=Servo(28),
-    bargraph=BareGraph([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    bargraph=BarGraphPWM([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 )
 
 iot = FmPyIotWeb(
