@@ -10,7 +10,10 @@ time.sleep(5)
 assert len([])==0, "Error with len!"
 
 def render():
-    return "<H3>Hello World!</H3>"
+    heure = '%s-%s-%s %s:%s:%s'%(time.localtime()[:6])
+    return f"""<H3>Hello World!</H3>
+        <p>This is the main web page rendered by the render_web function.</p>
+        <p>Current Time: {heure}</p>"""
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -20,11 +23,13 @@ iot = FmPyIotWeb(
     mqtt_base_topic = "T-HOME/TEST",
     watchdog=None,
     sysinfo_period = 600,
+    
     led_wifi='LED',
     web=True,
     name = "TEST",
     logging_level=logging.DEBUG,
     render_web=render,
     )
+
 
 iot.run()

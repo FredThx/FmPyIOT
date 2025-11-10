@@ -69,12 +69,6 @@ function init_vars() {
     $.get("/api/params", function(html) {
         $('#list-params').html(html);
     });
-    $.get("/api/render_web", function(html) {
-        console.log("Render main web page");
-        console.log(html);
-        $('#render_web').html(html);
-    });
-
 }
 
 // Mise à jour de REPL
@@ -111,6 +105,16 @@ function do_repl_cmd(){
             $("#REPL-input").val("");
         });
     }
+}
+
+//Mise à jour du main : (render_web)
+// Est executée toutes les secondes
+function update_main() {    
+    $.get("/api/render_web", function(html) {
+        console.log("Render main web page");
+        console.log(html);
+        $('#render_web').html(html);
+    });
 }
 
 //Quand la page est chargée
@@ -256,6 +260,7 @@ $(document).ready(function() {
 
     // main
     setInterval(update_status, 1000);
+    setInterval(update_main, 1000);
     setInterval(update_repl, 500);
     init_vars();
     update_files();
