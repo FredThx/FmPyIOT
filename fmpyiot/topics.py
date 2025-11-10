@@ -259,11 +259,14 @@ class TopicIrq(Topic):
         '''
         # IRQ => buffer
         def callback(pin):
+            pin.init(pull=Pin.PULL_UP)
             self.irq_buffer.append(pin.value())
         self.pin.irq(callback, self.trigger)
         # buffer => publish + action
         #TODO : faire mieux!!!!
         async def do_irq_action():
+            if self.irq_buffer:
+                logging.debug(f"do_irq_action[{self}] : buffer : {self.irq_buffer}")
             unidle = False
             if self.tempo_after_falling and self.idle and self.pin.value()==0 and time.ticks_diff(time.ticks_ms(), self.new_irq_time) > 0:
                 self.irq_buffer.append(0)
