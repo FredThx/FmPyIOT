@@ -7,7 +7,7 @@ from fmpyiot.topics import Topic, TopicAction
 
 class Device(object):
     """
-    Une classe abstraite Device qui donne un ménanisme de connexion à FmPyIot
+    Une classe abstraite Device qui donne un mécanisme de connexion à FmPyIot
     et de gestion des paramètres.
     """
 
@@ -15,7 +15,10 @@ class Device(object):
         '''
         Initialise le device avec un nom
         '''
-        self.params = {}
+        try:
+            self.params = self.params
+        except AttributeError:
+            self.params = {}
         self.params_json = param_json
         self.name = name
         self.iot = None
