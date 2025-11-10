@@ -49,6 +49,7 @@ def read_sensor():
         except OSError:
             print("Error reading sensor:")
             sensor = None
+    return 0.0
 
 iot.add_topic(TopicRead("./LUMINOSITE", read=read_sensor, send_period=10))
 
