@@ -130,7 +130,8 @@ class FmPyIotParams:
         '''Renvoie un generator yield = (key, val) des paramètres de manière recursive (les sous dict sont parcourus)
         dans le cas de sous dict, la key est du type "key.sub_jey"
         '''
-        for key, val in sorted((params or self.params).items()):
+        params = params if params is not None else self.params
+        for key, val in sorted((params).items()):
             if super_key:
                 key = super_key + self.nested_separator + key
             if type(val) == dict:
