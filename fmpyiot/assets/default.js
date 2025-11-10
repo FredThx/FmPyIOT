@@ -69,6 +69,11 @@ function init_vars() {
     $.get("/api/params", function(html) {
         $('#list-params').html(html);
     });
+    $.get("/api/render_web", function(html) {
+        console.log("Render main web page");
+        console.log(html);
+        $('#render_web').html(html);
+    });
 
 }
 

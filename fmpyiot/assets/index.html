@@ -55,7 +55,10 @@
 <!-- Tabs navs -->
 <nav>
   <div class="nav nav-tabs flex-column flex-sm-row" id="nav-tab" role="tablist">
-    <button class="nav-link active flex-sm-fill text-sm-center" id="nav-topics-tab" data-bs-toggle="tab" data-bs-target="#nav-topics" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
+    <button class="nav-link active flex-sm-fill text-sm-center" id="nav-main-tab" data-bs-toggle="tab" data-bs-target="#nav-main" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
+      Main
+    </button>
+    <button class="nav-link flex-sm-fill text-sm-center" id="nav-topics-tab" data-bs-toggle="tab" data-bs-target="#nav-topics" type="button" role="tab" aria-controls="nav-topics" aria-selected="true">
       Topics
     </button>
     <button class="nav-link flex-sm-fill text-sm-center" id="nav-sysinfo-tab" data-bs-toggle="tab" data-bs-target="#nav-sysinfo" type="button" role="tab" aria-controls="nav-sysinfo" aria-selected="false">
@@ -77,8 +80,12 @@
 </nav>
 <!-- Tabs navs content -->
 <div class="tab-content flex-column flex-sm-row" id="nav-tabContent">
+  <!-- Main (render_web)-->
+  <div class="tab-pane fade show active flex-sm-fill text-sm" id="nav-main" role="tabpanel" aria-labelledby="nav-main-tab">
+      <div id = "render_web"></div>
+  </div>
   <!-- Topics-->
-  <div class="tab-pane fade show active flex-sm-fill text-sm" id="nav-topics" role="tabpanel" aria-labelledby="nav-topics-tab">
+  <div class="tab-pane fade show flex-sm-fill text-sm" id="nav-topics" role="tabpanel" aria-labelledby="nav-topics-tab">
     <h3>Topics</h3>
     <form id = "form-list-topics">
       <div id = "list-topics"></div>

@@ -27,6 +27,7 @@ class FmPyIotWeb(FmPyIot):
             web_credentials:tuple[str,str] = None,
             name:str = "MyFmPyIot",
             description:str= "Un objet connecté à base de micropython et de FmPyiot.",
+            render_web:callable = None,
             led_wifi:Pin|int = None,
             led_incoming:Pin|int = None,
             incoming_pulse_duration:float = 0.3,
@@ -44,6 +45,7 @@ class FmPyIotWeb(FmPyIot):
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials
+        self.render_web = render_web #Callable to render web page
         #Auto run
         if autoconnect:
             self.run()
@@ -406,5 +408,17 @@ class FmPyIotWeb(FmPyIot):
                 await self.send_response(request, 200, "OK")
             else:
                 await self.send_response(request, 204, "No Content")
+
+        @self.web.route('/api/render_web')
+        @self.authenticate()
+        async def render_web(request):
+            '''Renvoie le contenu de la page web générée par la fonction render_web
+            '''
+            await FmPyIotWeb.send_response(request)
+            if self.render_web:
+                content = self.render_web()
+                await request.write(content)
+            else:
+                await request.write(f"{self.description}")
 
 
