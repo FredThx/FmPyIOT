@@ -24,6 +24,7 @@ iot = FmPyIotWeb(
     web=True,
     name = "DETECTEUR WC",
     logging_level=logging.DEBUG,
+    render_web=wc.render_web
     )
 
 wc.set_iot(iot)

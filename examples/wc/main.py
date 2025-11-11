@@ -29,6 +29,7 @@ iot = FmPyIotWeb(
     led_wifi='LED',
     web=True,
     name = "AFFICHEUR WC",
+    render_web=afficheur_wc.render_web,
     logging_level=logging.DEBUG,
     )
 

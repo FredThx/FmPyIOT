@@ -26,21 +26,39 @@ class AfficheurWC(object):
         '''
         self.servo = servo
         self.bargraph = bargraph
+        self.state = {
+            "etat": None,
+            "niveau": None
+        }
         self.load_params()
     
     async def set_etat(self, payload):
         if payload.upper() == 'LIBRE':
             await self.servo.move_async(self.params.get("angle_libre",80),speed = self.params.get("servo_speed",0.5))
+            self.state["etat"] = "LIBRE"
             logging.info("WC libre")
         else:
             await self.servo.move_async(self.params.get("angle_occupe",170),speed = self.params.get("servo_speed",0.5))
+            self.state["etat"] = "OCCUPE"
             logging.info("WC occupé")
+
+    async def set_bargraphe(self, topic:str, payload):
+        niveau = int(payload)
+        self.bargraph.set_level(niveau, facteur=self.params.get("facteur_attenuation",2.0))
+        self.state["niveau"] = niveau
+        logging.info(f"Bargraph level set to {niveau}")
 
     def set_iot(self, iot:FmPyIotWeb):
         self.iot = iot
         iot.add_topic(TopicAction("./ETAT", lambda topic, payload: self.set_etat(payload)))
-        iot.add_topic(TopicAction("./BARGRAPH", lambda topic, payload: self.bargraph.set_level(int(payload), facteur=self.params.get("facteur_attenuation",2.0) )))
+        iot.add_topic(TopicAction("./BARGRAPH", self.set_bargraphe))
         iot.set_param("afficheur", default=self.params, on_change=self.load_params)
+    
+    def render_web(self)->str:
+        html_content = "<h3>Afficheur WC</h3>"
+        html_content += f"<p>État actuel: {self.state['etat']}</p>"
+        html_content += f"<p>Niveau du bargraph (qualité de l'air): {self.state['niveau']}</p>"
+        return html_content
 
     def _load_params(self, params:dict):
         '''Load les paramètres à partir d'un dict
