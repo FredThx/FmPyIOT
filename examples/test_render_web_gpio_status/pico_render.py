@@ -19,7 +19,7 @@ class PicoRender:
         [VBUS,VSYS,GND,_3V3_EN,_3V3_OUT,ADC_VREF,28,GND,27,26,RUN,22,GND,21,20,19,18,GND,17,16],
     ]
 
-    def __init__(self, title_html:str="Pico GPIO Status"):
+    def __init__(self, title_html:str="<H4>Pico GPIO Status</H4>"):
         self.title_html = title_html
 
     def render(self):
