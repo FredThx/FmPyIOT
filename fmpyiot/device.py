@@ -68,7 +68,7 @@ class Device(object):
         self.iot.set_param(self.name, payload=self.params)
 
     def on_load_params(self):
-        '''Called when the params are loaded
+        '''Called when the params are loaded or changed
         This method can be overridden by the subclass to do something when the params are loaded
         '''
         pass

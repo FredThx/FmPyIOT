@@ -249,10 +249,15 @@ class TopicIrq(Topic):
             self.read = self._read
 
     def _read(self, topic:str, payload:str)->any:
+        return self._get_value(self.pin())
+
+    def _get_value(self, pin_value:int)->any:
+        '''Si self.values est défini, renvoie la valeur associée au pin_value
+        '''
         if self.values and len(self.values)==2:
-            return self.values[self.pin()]
+            return self.values[pin_value]
         else:
-            return self.pin()
+            return pin_value
 
     def attach(self, iot:FmPyIot):
         '''Lie l'intéruption au FmPtIot
@@ -278,7 +283,7 @@ class TopicIrq(Topic):
                     if pin_value == 0:
                         self.idle = True
                 if not self.idle:
-                    await self.send_async(iot.publish_async, pin_value)
+                    await self.send_async(iot.publish_async, self._get_value(pin_value))
                     if self.on_irq:
                         await self.do_action_async(self.topic, pin_value, action=self.on_irq)
         iot.add_topic(TopicRoutine(action = do_irq_action, send_period=0.01, send_period_as_param=False))
