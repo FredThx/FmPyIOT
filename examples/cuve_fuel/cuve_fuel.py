@@ -13,7 +13,11 @@ class CuveFuel(Device):
     params = {
         'lidar_min' : 20,
         'lidar_max' : 800,
-        'lidar_freq' : 100
+        'lidar_freq' : 100,
+        'contenance_maxi' : 1500,  # in litres
+        'contenance_mini' : 100,  # in litres
+        'hauteur_cuve_maxi' : 140,  # in cm
+        'hauteur_cuve_mini' : 20,    # in cm
     }
     def __init__(self,
                  pin_scl:int=9, pin_sda:int=8, i2c_freq:int=400_000,
@@ -37,11 +41,14 @@ class CuveFuel(Device):
             'rouge' : Pin(pin_led_rouge, Pin.OUT),
             'vert' : Pin(pin_led_vert,Pin.OUT)
             }
+        self._distance=0
         self.load_params()
     
     def on_load_params(self):
         '''Called on load_params and when parameters are changed'''
         logging.info(f"cuve_fuel.load_params({self.params})")
+        for k,val in self.params.items():
+            self.params[k] = int(val) #TODO : faire ça en amont
         self.lidar = TF_Luna(self.i2c,
                             min=int(self.params['lidar_min']),
                             max=int(self.params['lidar_max']),
@@ -59,8 +66,9 @@ class CuveFuel(Device):
         iot.add_topic(TopicAction("./LED", action = lambda topic, payload : self.set_leds(payload)))
     
     def read_distance(self, *args, **kwargs):
-        '''Lit la distance mesurée par le Lidar'''
-        return self.lidar.distance()
+        '''Lit la distance mesurée par le Lidar en cm'''
+        self._distance = self.lidar.distance()
+        return self._distance
 
     def set_leds(self, payload:str):
         '''Allume ou éteint les LEDs en fonction de la payload reçue
@@ -73,15 +81,34 @@ class CuveFuel(Device):
             else:
                 led.off()
 
+    def calculate_fuel_level(self, distance_cm:int)->float:
+        '''Calcule le niveau de fuel en pourcentage en fonction de la distance mesurée
+        '''
+        h_min, hmax, c_min, c_max = self.params['hauteur_cuve_mini'], self.params['hauteur_cuve_maxi'], self.params['contenance_mini'], self.params['contenance_maxi']  
+        level = (((c_min-c_max)*distance_cm + c_max*hmax - c_min*h_min) / (hmax - h_min))/c_max * 100.0
+        if level < 0:
+            level = 0
+        elif level > 100:
+            level = 100
+        return level
+
     def render_web(self)->str:
         '''Renders the web page content
         '''
         heure = '%s-%s-%s %s:%s:%s'%(time.localtime()[:6])
+        level = self.calculate_fuel_level(self._distance)
+        quantite_fuel = int((level / 100.0) * self.params["contenance_maxi"])
+        level=int(level)
         html = f"""<br><H3>Cuve de Fuel Status</H3>
             <p>Current Time: {heure}</p>
-            <p>Distance mesurée : {self.read_distance()} mm</p>
-            <p>LED Rouge : {'ON' if self.leds['rouge']() else 'OFF'}</p>
-            <p>LED Vert : {'ON' if self.leds['vert']() else 'OFF'}</p>
+            <p>Distance mesurée : {self._distance} cm</p>
+            <p>Niveau de fuel : {level} % (~{quantite_fuel} litres)</p>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="200px" height="150px">
+                <rect id="fuel" x="10px" y="{130-level}px" width="180px" height="{level+9}px" fill="red" />
+                <rect id="tank" x="10px" y="30px" width="180px" height="110px" rx="10px" ry="10px" fill-opacity="0" stroke="black" stroke-width="5px"/>
+                <circle id="led_rouge" cx="150px" cy="15px" r="10px" fill="{'red' if self.leds['rouge']() else 'None'}" stroke="black" stroke-width="1px"/>
+                <circle id="led_vert" cx="175px" cy="15px" r="10px" fill="{'green' if self.leds['vert']() else 'None'}" stroke="black" stroke-width="1px"/>
+            </svg>
             """
         return html
 
