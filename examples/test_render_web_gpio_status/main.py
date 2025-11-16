@@ -20,14 +20,11 @@ iot = FmPyIotWeb(
     mqtt_base_topic = "T-HOME/TEST",
     watchdog=None,
     sysinfo_period = 600,
-    
     led_wifi='LED',
     web=True,
     name = "TEST",
     logging_level=logging.DEBUG,
-    render_web=test.render_web,
+    device=test
     )
-
-test.set_iot(iot)
 
 iot.run()

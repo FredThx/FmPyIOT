@@ -3,6 +3,7 @@ import logging, os, json
 from machine import Pin, reset as machine_reset, bootloader as machine_bootloader
 from fmpyiot.fmpyiot import FmPyIot
 from fmpyiot.repl import REPL
+from fmpyiot.device import Device
 from ubinascii import a2b_base64 as base64_decode
 import nanoweb as naw
 import uerrno
@@ -32,7 +33,8 @@ class FmPyIotWeb(FmPyIot):
             led_incoming:Pin|int = None,
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
-            on_fail_connect:callable = None
+            on_fail_connect:callable = None,
+            device:Device=None
                  ):
         super().__init__(
             mqtt_host=mqtt_host, mqtt_base_topic=mqtt_base_topic,
@@ -41,11 +43,13 @@ class FmPyIotWeb(FmPyIot):
             logging_level = logging_level, led_wifi = led_wifi, led_incoming=led_incoming,
             name=name,description = description,
             incoming_pulse_duration = incoming_pulse_duration, keepalive=keepalive,
-            on_fail_connect=on_fail_connect)
+            on_fail_connect=on_fail_connect,
+            device=device
+            )
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials
-        self.render_web = render_web #Callable to render web page
+        self.render_web = render_web or (device.render_web if device else None)#Callable to render web page
         #Auto run
         if autoconnect:
             self.run()

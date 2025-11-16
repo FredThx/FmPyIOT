@@ -37,7 +37,8 @@ class FmPyIot:
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
             on_fail_connect:callable = None,
-            country='FR'
+            country='FR',
+            device=None#:Device
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
@@ -95,7 +96,9 @@ class FmPyIot:
         if autoconnect:
             self.run()
         self.on_fail_connect = on_fail_connect
-        
+        #Connect device
+        if device:
+            device.set_iot(self)
 
     #########################
     # DIVERS utilitaires    #

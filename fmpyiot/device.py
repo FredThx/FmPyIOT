@@ -1,16 +1,13 @@
-import logging, time, json
-from machine import Pin
-import uasyncio as asyncio
-from devices.capacitive_soil_moisture_sensor import Hygrometer
-from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicAction
+import logging, json
+#from fmpyiot.fmpyiot_web import FmPyIotWeb
 
 class Device(object):
     """
     Une classe abstraite Device qui donne un mécanisme de connexion à FmPyIot
     et de gestion des paramètres.
     """
-
+    render_web = None  #Callable to render web page
+    
     def __init__(self, name:str="device", base_topic:str="./device", param_json:str="params.json"):
         '''
         Initialise le device avec un nom
@@ -25,7 +22,7 @@ class Device(object):
         self.base_topic = base_topic
         #self.load_params()
 
-    def set_iot(self, iot:FmPyIotWeb):
+    def set_iot(self, iot):#iot:FmPyIotWeb
         '''Must be implemented by the subclass to set the iot instance
         This method is called to set the iot instance and add the topics
         '''
