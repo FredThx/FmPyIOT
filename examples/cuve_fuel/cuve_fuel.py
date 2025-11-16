@@ -41,11 +41,11 @@ class CuveFuel(Device):
     
     def on_load_params(self):
         '''Called on load_params and when parameters are changed'''
-        logging.info(f"cuve_fuel.load_params({self.param})")
+        logging.info(f"cuve_fuel.load_params({self.params})")
         self.lidar = TF_Luna(self.i2c,
-                            min=int(self.param['lidar_min']),
-                            max=int(self.param['lidar_max']),
-                            freq = int(self.param['lidar_freq']))
+                            min=int(self.params['lidar_min']),
+                            max=int(self.params['lidar_max']),
+                            freq = int(self.params['lidar_freq']))
 
     def set_iot(self, iot:FmPyIotWeb):
         '''
