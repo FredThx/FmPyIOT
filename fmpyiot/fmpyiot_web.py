@@ -34,8 +34,10 @@ class FmPyIotWeb(FmPyIot):
             incoming_pulse_duration:float = 0.3,
             keepalive:int = 120,
             on_fail_connect:callable = None,
-            device:Device=None
+            device:Device=None,
+            devices:list[Device]=None
                  ):
+        devices = (devices or []) + ([device] if device else [])
         super().__init__(
             mqtt_host=mqtt_host, mqtt_base_topic=mqtt_base_topic,
             ssid = ssid, password=password,
@@ -44,16 +46,33 @@ class FmPyIotWeb(FmPyIot):
             name=name,description = description,
             incoming_pulse_duration = incoming_pulse_duration, keepalive=keepalive,
             on_fail_connect=on_fail_connect,
-            device=device
+            devices=devices
             )
         if web:
             self.web = naw.Nanoweb(web_port)
             self.web_credentials = web_credentials
-        self.render_web = render_web or (device.render_web if device else None)#Callable to render web page
+        #render_web : Callable to render web page
+        self.renders_web = []
+        if render_web:
+            self.renders_web.append(render_web)
+        for device in devices:
+            if device.render_web:
+                self.renders_web.append(device.render_web)
         #Auto run
         if autoconnect:
             self.run()
         
+    def render_web(self)->str:
+        '''Renders the web page content
+        '''
+        html = ""
+        for render in self.renders_web:
+            try:
+                html += render()
+            except Exception as e:
+                logging.error(f"Error in render_web: {e}")
+        return html or f"{self.description}"
+
     def get_web_task(self)-> asyncio.Task:
         self.REPL=REPL(size=20)
         self.init_web()
@@ -419,10 +438,8 @@ class FmPyIotWeb(FmPyIot):
             '''Renvoie le contenu de la page web générée par la fonction render_web
             '''
             await FmPyIotWeb.send_response(request)
-            if self.render_web:
-                content = self.render_web()
-                await request.write(content)
-            else:
-                await request.write(f"{self.description}")
+            content = self.render_web()
+            await request.write(content)
+                
 
 

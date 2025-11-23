@@ -5,12 +5,14 @@ import logging
 from machine import Pin
 from credentials import CREDENTIALS
 from test import Test
+from clock import Clock
 
 time.sleep(5)
 
 assert len([])==0, "Error with len!"
 
 test= Test(input_pin=15, output_pin=14, name="TEST_GPIO")
+clock = Clock(name="Horloge")
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -24,7 +26,7 @@ iot = FmPyIotWeb(
     web=True,
     name = "TEST",
     logging_level=logging.DEBUG,
-    device=test
+    devices=[clock, test],
     )
 
 iot.run()

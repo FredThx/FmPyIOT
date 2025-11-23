@@ -38,7 +38,7 @@ class FmPyIot:
             keepalive:int = 120,
             on_fail_connect:callable = None,
             country='FR',
-            device=None#:Device
+            devices:list=None#:[Device]
                  ):
         self.name = name or mqtt_base_topic
         self.description = description or "FmPyIot"
@@ -97,7 +97,7 @@ class FmPyIot:
             self.run()
         self.on_fail_connect = on_fail_connect
         #Connect device
-        if device:
+        for device in devices or []:
             device.set_iot(self)
 
     #########################

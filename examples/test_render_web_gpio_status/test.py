@@ -1,4 +1,3 @@
-import time
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 from fmpyiot.topics import Topic, TopicIrq
 from fmpyiot.device import Device
@@ -48,8 +47,6 @@ class Test(Device):
     def render_web(self)->str:
         '''Renders the web page content
         '''
-        heure = '%s-%s-%s %s:%s:%s'%(time.localtime()[:6])
         html = f"""<br><H3>Etat du FmPyIot</H3>
-            <p>Current Time: {heure}</p>
             {self.pico_render.render()}    """
         return html
