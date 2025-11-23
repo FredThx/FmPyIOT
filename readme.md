@@ -18,7 +18,9 @@ Optional: http access
 
 A project is described in a main.py file, which describes how it works.
 
-Example
+#### Examples
+
+Example n° 1 : topics into main.py (old solution)
 
 ```python
 from devices.mydevice import MyDevice
@@ -55,6 +57,22 @@ iot.add_topic(Topic('/CO_TEST', read = co_mesure))
 iot.run()
 ```
 
+Example n°2 : avec un objet Device
+
+The idea is to create a MyDevice class inherited from fmpyiot.device.Device which with:
+
+- __init__: (method) creation of the instance, initialisations
+- params: (dict) with parameters that can be modified via the web interface
+- on_load_params: (method) which will be called when the parameters are modified in the web interface. Typically: application of parameters.
+- set_iot: (method) which will create the topics and attach them to the iot object
+- render_web: (method) which will create the ‘Main’ tab of the web interface
+
+This object is then passed as a device parameter to the FmPyIotWeb or FmPyIot object.
+
+https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/examples/test_render_web_gpio_status/test.py#L1-L55
+
+https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/examples/test_render_web_gpio_status/main.py#L1-L30
+
 ## Installation
 
 - Install micropython on your µcontroller.
@@ -66,9 +84,8 @@ iot.run()
   - with MQTT broker IP
   - SSID and pass of your WIFI network
   - ...
-  - create topics
-  - add topics
-  - create parameters
+  - créer un fichier credentials
+    https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/credentials.py#L1-L6
   - boot the µc
 
 ## Description
@@ -112,6 +129,13 @@ If a topic is scheduled as an incoming message (e.g. execution of an action), th
 | Topic system SYSINFO | SYSINFO_     | SYSINFO                            |
 
 ## Web server
+
+
+### Main page (custom)
+
+Page customisable by a function that returns HTML code: Device.render_web or render_web passed as a parameter to FmPyIot.
+
+![main](image/readme/main.png)
 
 ### View Topic values / Execute actions
 
@@ -161,6 +185,7 @@ Security: BasicAutentification
 | Return logfile content        | GET             | /api/logs                                                                                          |                                                                            |                                                       |
 | list of parameters            | GET             | /api/param                                                                                         |                                                                            |                                                       |
 | Delete parameter              | DELETE          | /api/params/delete/{param_to_detele}                                                               |                                                                            | 200, OK                                               |
+| main                          | GET&#124; POS  | /api/render_wab                                                                                    |                                                                            | html                                                  |
 
 # Thanks
 

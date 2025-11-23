@@ -18,7 +18,7 @@ En option : accès en http
 
 Un projet se décrit à partir d'un fichier main.py dans lequel on va décrire son fonctionement
 
-Exemples
+#### Exemples
 
 Exemple n°1 : les topics dans le main.py
 
@@ -60,6 +60,7 @@ iot.run()
 Example n°2 : avec un objet Device
 
 L'idée est de créer une classe MyDevice héritée de fmpyiot.device.Device qui avec :
+
 - __init__ : (method) création de l'instance, initialisations
 - params : (dict) avec les paramètres modifiables via interface web
 - on_load_params : (method) qui sera appelée lors de la modification des parametres dans l'interface web. Typiquement : application des paramètres.
@@ -72,8 +73,6 @@ https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd
 
 https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/examples/test_render_web_gpio_status/main.py#L1-L30
 
-
-
 ## Installation
 
 - Installez micropython sur votre µcontroleur.
@@ -85,7 +84,7 @@ https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd
   - SSID et pass de votre réseau WIFI
   - ...
 - créer un fichier credentials
- https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/credentials.py#L1-L6
+  https://github.com/FredThx/FmPyIOT/blob/00804a790c4bbeba0ba27d1c22de880a5e3591cd/credentials.py#L1-L6
 - boot le µc
 
 ## Description
@@ -129,6 +128,12 @@ Si un topic est prévu en message entrant (ex : l'execution d'une action), alors
 | Topic system SYSINFO | SYSINFO_     | SYSINFO                               |
 
 ## Serveur web
+
+### Page personnalisable
+
+Page personnalisable par une fonction qui renvoie du code html : Device.render_web ou render_web passé en paramètre à FmPyIot.
+
+![main](image/readme/main.png)
 
 ### Visualiser les valeurs des Topics / Exécuter les actions
 
@@ -178,6 +183,7 @@ Sécurité : BasicAutentification
 | Contenu du dernier fichier log      | GET             | /api/logs                                                                                          |                                                                                     |                                                       |
 | Liste des paramètres               | GET             | /api/param                                                                                         |                                                                                     |                                                       |
 | Supprime un paramètre              | DELETE          | /api/params/delete/{param_to_delete}                                                               |                                                                                     | 200, OK                                               |
+| Main                                | GET&#124; POST | /api/render_web                                                                                    |                                                                                     | code html de l'onglet main                            |
 
 # Thanks
 
