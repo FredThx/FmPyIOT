@@ -59,7 +59,7 @@ iot.run()
 
 Example n°2 : avec un objet Device
 
-https://github.com/FredThx/FmPyIOT/blob/master/examples/test_render_web_gpio_status/test.py
+https://github.com/FredThx/FmPyIOT/blob/master/examples/test_render_web_gpio_status/test.py#L1-L20
 
 https://github.com/FredThx/FmPyIOT/blob/master/examples/test_render_web_gpio_status/main.py
 
