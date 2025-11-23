@@ -32,7 +32,7 @@ iot = FmPyIotWeb(
     logging_level= logging.INFO,
     name="Reservoir de la Serre de Fred",
     description="Des capteur de pression pour mesurer le niveau d'eau dans le réservoir de la serre",
+    device=reservoir
     )
 
-reservoir.set_iot(iot)
 iot.run()

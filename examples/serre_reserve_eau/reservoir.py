@@ -25,6 +25,10 @@ class Reservoir(Device):
         self.params['max_height'] = max_height
         self.params['pressure_offset'] = 0.0
         self.load_params()
+        #Cache des valeurs
+        self._top_pressure = None
+        self._bottom_pressure = None
+        self._contenance = None
         #Reveil des capteurs de pression
         try:
             self.pressure_sensor_bottom.pressure
@@ -44,20 +48,21 @@ class Reservoir(Device):
         '''Renvoie la contenance du réservoir en pourcentage
         '''
         try:
-            top_pressure = self.pressure_sensor_top.pressure
+            self._top_pressure = self.pressure_sensor_top.pressure
         except Exception as e:
             logging.error(f"Error reading top pressure sensor: {e}")
-            top_pressure = None
-        bottom_pressure = self.pressure_sensor_bottom.pressure if self.pressure_sensor_top is not None else None
-        if top_pressure is None or bottom_pressure is None:
+            self._top_pressure = None
+        self._bottom_pressure = self.pressure_sensor_bottom.pressure if self.pressure_sensor_top is not None else None
+        if self._top_pressure is None or self._bottom_pressure is None:
             logging.error("Pressure sensors not available")
-            return None
-        # Calcul de la contenance en fonction des pressions
-        hauteur_eau = (bottom_pressure - top_pressure + self.params['pressure_offset'])  # cm
-        contenance = hauteur_eau / self.params['max_height'] * 100.0  # Convertir en %
-        return int(max(0.0, min(100.0, contenance)))
+            self._contenance = None
+        else:
+            # Calcul de la contenance en fonction des pressions
+            hauteur_eau = (self._bottom_pressure - self._top_pressure + self.params['pressure_offset'])  # cm
+            self._contenance = hauteur_eau / self.params['max_height'] * 100.0  # Convertir en %
+            self._contenance = int(max(0.0, min(100.0, self._contenance)))
+        return self._contenance
         
-
     def calibre(self):
         '''Calibre les deux capteurs de pression'''
         top_pressure = self.pressure_sensor_top.pressure
@@ -73,3 +78,18 @@ class Reservoir(Device):
         '''Callback when the params are loaded'''
         pass
     
+    def render_web(self)->str:
+        '''Renders the web page content
+        '''
+        level = self.get_contenance() # en pourcentage (0-100)
+        no_error = level is not None
+        html = f"""<br><H3>Cuve de Fuel Status</H3>
+            <p>Contenance de la cuve d'eau : {level} % </p>
+            <p>Pression fond cuve : {int(self._bottom_pressure) if self._bottom_pressure is not None else 'N/A'} hPa</p>
+            <p>Pression hors cuve : {int(self._top_pressure) if self._top_pressure is not None else 'N/A'} hPa</p>
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100px" height="250px">
+                <rect id="fuel" x="10px" y="{230-(level if no_error else 80)}px" width="80px" height="{9 + (level if no_error else 80)}px" fill="{'blue' if no_error else 'red'}" />
+                <rect id="tank" x="10px" y="30px" width="80px" height="210px" rx="10px" ry="10px" fill-opacity="0" stroke="black" stroke-width="5px"/>
+            </svg>
+            """
+        return html
