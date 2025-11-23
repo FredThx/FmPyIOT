@@ -1,3 +1,4 @@
+import logging
 
 class LPS35HW:
     '''LPS35HW Pressure Sensor Class.'''
@@ -26,16 +27,24 @@ class LPS35HW:
     @property
     def pressure(self)->float:
         '''Read pressure in hPa from the sensor.'''
-        self.write_register(self.CTRL_REG2, 0x11)  # Enable the sensor
-        press_xl, press_l, press_h = self.read_register(self.PRESS_OUT_XL, 3)  # Read pressure data
-        pressure_lbs = press_h * 256 * 256 + press_l * 256 + press_xl
-        if pressure_lbs <  16777215:
-            return pressure_lbs / 4096
+        try:
+            self.write_register(self.CTRL_REG2, 0x11)  # Enable the sensor
+        except OSError as e:
+            logging.error(f"LPS35HW sensor not found : {e}")
+        else:
+            press_xl, press_l, press_h = self.read_register(self.PRESS_OUT_XL, 3)  # Read pressure data
+            pressure_lbs = press_h * 256 * 256 + press_l * 256 + press_xl
+            if pressure_lbs <  16777215:
+                return pressure_lbs / 4096
 
     @property
     def temperature(self)->float:
         '''Read temperature in Celsius from the sensor.'''
-        self.write_register(self.CTRL_REG2, 0x11)  # Enable the sensor
-        temp_l, temp_h = self.read_register(self.TEMP_OUT_L, 2)  # Read pressure data
-        if temp_h <  255:
-            return (temp_h * 256 + temp_l) / 100
+        try:
+            self.write_register(self.CTRL_REG2, 0x11)  # Enable the sensor
+        except OSError as e:
+            logging.error(f"LPS35HW sensor not found : {e}")
+        else:
+            temp_l, temp_h = self.read_register(self.TEMP_OUT_L, 2)  # Read pressure data
+            if temp_h <  255:
+                return (temp_h * 256 + temp_l) / 100
