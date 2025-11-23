@@ -38,7 +38,7 @@ class FmPyIotParams:
     
     def set_params(self, params:bytes|dict|None=None):
         '''Met à jour des paramètres (self.params + fichier params_json)
-        params :   json dict {key:value} or dict
+        params :   json dict '{key:value}' or dict
         '''
         logging.debug(f"set_params({params=} ({type(params)}))")
         if type(params)==dict:
