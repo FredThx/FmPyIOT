@@ -147,7 +147,7 @@ class FmPyIotParams:
                 <div id="_line_params_{key}" class="form-group">
                     <span>{key.replace(self.nested_separator, '.')} : </span>
                     <span>
-                        <input type = "text" class="form_control" id="_params_{key}" placeholder="value", value = "{val}">
+                        <input type="text" class="form_control" id="_params_{key}" placeholder="value" value="{val}">
                     </span>
                     <span>
                         <input class="btn btn-primary btn-sm" id="_set_params_{key}" type="submit" value="Mise à jour">

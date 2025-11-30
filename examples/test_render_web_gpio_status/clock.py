@@ -25,5 +25,5 @@ class Clock(Device):
         heure = '%s-%s-%s %s:%s:%s'%(time.localtime()[:6])
         html = f"""
             <h4>{self.params['title']}</h4>
-            <p>Current Time: {heure}</p>"""
+            <div>Current Time: {heure}</div>"""
         return html
