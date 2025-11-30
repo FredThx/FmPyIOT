@@ -1,6 +1,13 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+# Distribution / packaging
 /.vscode
 /FmPyIOT.code-workspace
-/__pycache__
 */firmware
 *.uf2
 Thumbs.db
