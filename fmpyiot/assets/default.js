@@ -37,7 +37,6 @@ function update_status() {
         }
         $('#wifi_strenght').attr("class", wifi_class);
         // Mem free
-        console.log(sysinfo.mem_free + sysinfo.mem_alloc);
         let e_mem_free = $("#mem_free");
         let mem_free_percent = ~~(100*sysinfo.mem_free / (sysinfo.mem_free + sysinfo.mem_alloc));
         if (mem_free_percent>25){
@@ -117,152 +116,156 @@ function update_main() {
     });
 }
 
-//Quand la page est chargée
-$(document).ready(function() {
-    // gestion des evenements
-    $(document).on('submit', '#upload', function(e) {
-        var form = $(this);
-        var success = 0;
-        $.each($('#files').prop('files'), function(index, file) {
-            $('#status-upload').html("Sending " + file.name);
+function initApp(){
+    console.log("App initialized");
+    //Quand la page est chargée
+    $(document).ready(function() {
+        // gestion des evenements
+        $(document).on('submit', '#upload', function(e) {
+            var form = $(this);
+            var success = 0;
+            $.each($('#files').prop('files'), function(index, file) {
+                $('#status-upload').html("Sending " + file.name);
 
-            $.ajax({
-                async: false,
-                url: form.attr('action') + file.name,
-                method: 'PUT',
-                data: file,
-                processData: false,  // tell jQuery not to process the data
-                contentType: false,  // tell jQuery not to set contentType
-            }).done(function() {
-                success++;
-
-                update_files();
-            });
-        });
-        $('#status-upload').html(success + " file(s) uploaded successfully.");
-        e.preventDefault();
-    }).on('submit', '#list', function(e) {
-        var file = $(this).find('select').val()[0];
-        if (file) {
-            var button = document.activeElement['value'];
-            if (button=="Download"){
-                window.location = '/api/download/' + file;
-            }
-            if (button=="Delete"){
                 $.ajax({
                     async: false,
-                    url: "/api/delete/" + file,
-                    method: 'DELETE',
+                    url: form.attr('action') + file.name,
+                    method: 'PUT',
+                    data: file,
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false,  // tell jQuery not to set contentType
                 }).done(function() {
+                    success++;
+
                     update_files();
                 });
+            });
+            $('#status-upload').html(success + " file(s) uploaded successfully.");
+            e.preventDefault();
+        }).on('submit', '#list', function(e) {
+            var file = $(this).find('select').val()[0];
+            if (file) {
+                var button = document.activeElement['value'];
+                if (button=="Download"){
+                    window.location = '/api/download/' + file;
+                }
+                if (button=="Delete"){
+                    $.ajax({
+                        async: false,
+                        url: "/api/delete/" + file,
+                        method: 'DELETE',
+                    }).done(function() {
+                        update_files();
+                    });
+                }
             }
-        }
-        e.preventDefault();
-    }).on('submit', '#form-list-topics', function(e){
-        let button = document.activeElement['value'];
-        let datas = {
-            'topic' : document.getElementById("_topic_"+button).value,
-            'payload' : document.getElementById("_payload_"+button).value
-            };
-        $.ajax({
-            async : true,
-            url : '/api/action/'+button,
-            method:'POST',
-            contentType: "application/json",
-            dataType: "json",
-            data: JSON.stringify(datas),
-        })
-        e.preventDefault();
-    }).on('submit', '#upload-folder', function(e){
-        var form = $(this);
-        var success = 0;
-        $('#status-upload-folder').html("Upload files ...");
-        $.each($('#files-folder').prop('files'), function(index, file) {
+            e.preventDefault();
+        }).on('submit', '#form-list-topics', function(e){
+            let button = document.activeElement['value'];
+            let datas = {
+                'topic' : document.getElementById("_topic_"+button).value,
+                'payload' : document.getElementById("_payload_"+button).value
+                };
+            $.ajax({
+                async : true,
+                url : '/api/action/'+button,
+                method:'POST',
+                contentType: "application/json",
+                dataType: "json",
+                data: JSON.stringify(datas),
+            })
+            e.preventDefault();
+        }).on('submit', '#upload-folder', function(e){
+            var form = $(this);
+            var success = 0;
+            $('#status-upload-folder').html("Upload files ...");
+            $.each($('#files-folder').prop('files'), function(index, file) {
+                $.ajax({
+                    async: false,
+                    url: form.attr('action') + file.webkitRelativePath,
+                    method: 'PUT',
+                    data: file,
+                    processData: false,  // tell jQuery not to process the data
+                    contentType: false,  // tell jQuery not to set contentType
+                }).done(function() {
+                    success++;
+                    update_files();
+                });
+            });
+            $('#status-upload-folder').html(success + " file(s) uploaded successfully.");
+            e.preventDefault();
+        }).on('submit', '#form-list-params', function(e){
+                let key = document.activeElement['id'].substring(12); // Extract the key from the id '_set_params_key' or 'del_params_key'
+                let action = document.activeElement['id'].substring(1,11); // Extract the action from the id 'set_params_key' or 'del_params_key'
+                if (action == "set_params"){
+                    let datas = {
+                        'topic' : "",
+                        'payload' : {}
+                    };
+                    datas['payload'][key] = document.getElementById("_params_"+key).value
+                    $.ajax({
+                        async : true,
+                        url : '/api/action/action_T__SET_PARAMS',
+                        method:'POST',
+                        contentType: "application/json",
+                        dataType: "json",
+                        data: JSON.stringify(datas),
+                    });
+                } else if (action == "del_params") {
+                    $.ajax({
+                        async : true,
+                        url : '/api/params/delete/' + key,
+                        method:'DELETE',
+                    });
+                    document.getElementById("_line_params_"+key).remove();
+                }
+                e.preventDefault();
+        });
+
+        $("#REPL-logging-level-select").on("change", function(e){
+            let level = $("#REPL-logging-level-select").val();
             $.ajax({
                 async: false,
-                url: form.attr('action') + file.webkitRelativePath,
-                method: 'PUT',
-                data: file,
-                processData: false,  // tell jQuery not to process the data
-                contentType: false,  // tell jQuery not to set contentType
-            }).done(function() {
-                success++;
-                update_files();
+                url: "/api/logging-level/" + level,
+                method: 'POST',
             });
-        });
-        $('#status-upload-folder').html(success + " file(s) uploaded successfully.");
-        e.preventDefault();
-    }).on('submit', '#form-list-params', function(e){
-            let key = document.activeElement['id'].substring(12); // Extract the key from the id '_set_params_key' or 'del_params_key'
-            let action = document.activeElement['id'].substring(1,11); // Extract the action from the id 'set_params_key' or 'del_params_key'
-            if (action == "set_params"){
-                let datas = {
-                    'topic' : "",
-                    'payload' : {}
-                };
-                datas['payload'][key] = document.getElementById("_params_"+key).value
-                $.ajax({
-                    async : true,
-                    url : '/api/action/action_T__SET_PARAMS',
-                    method:'POST',
-                    contentType: "application/json",
-                    dataType: "json",
-                    data: JSON.stringify(datas),
-                });
-            } else if (action == "del_params") {
-                $.ajax({
-                    async : true,
-                    url : '/api/params/delete/' + key,
-                    method:'DELETE',
-                });
-                document.getElementById("_line_params_"+key).remove();
-            }
             e.preventDefault();
-    });
-
-    $("#REPL-logging-level-select").on("change", function(e){
-        let level = $("#REPL-logging-level-select").val();
-        $.ajax({
-            async: false,
-            url: "/api/logging-level/" + level,
-            method: 'POST',
         });
-        e.preventDefault();
-    });
 
-    $("#REPL-input-btn").on("click", function(e){
-        do_repl_cmd();
-        e.preventDefault();
-    });
-    $("#REPL-input").on("keypress", function(e){
-        if (e.key === "Enter"){
+        $("#REPL-input-btn").on("click", function(e){
             do_repl_cmd();
             e.preventDefault();
-        }
-    });
-    $("#REBOOT").on("click", function(e){
-        $.ajax({
-            async : true,
-            url : '/api/reboot',
-            method:'GET',
-        }).done();
-        e.preventDefault();
-    });
-    $("#BOOTLOADER").on("click", function(e){
-        $.ajax({
-            async : true,
-            url : '/api/bootloader',
-            method:'GET',
-        }).done();
-        e.preventDefault();
-    });
+        });
+        $("#REPL-input").on("keypress", function(e){
+            if (e.key === "Enter"){
+                do_repl_cmd();
+                e.preventDefault();
+            }
+        });
+        $("#REBOOT").on("click", function(e){
+            $.ajax({
+                async : true,
+                url : '/api/reboot',
+                method:'GET',
+            }).done();
+            e.preventDefault();
+        });
+        $("#BOOTLOADER").on("click", function(e){
+            $.ajax({
+                async : true,
+                url : '/api/bootloader',
+                method:'GET',
+            }).done();
+            e.preventDefault();
+        });
 
-    // main
     setInterval(update_status, 1000);
     setInterval(update_main, 1000);
     setInterval(update_repl, 500);
     init_vars();
     update_files();
     update_status();
-});
+        
+    });
+
+}
