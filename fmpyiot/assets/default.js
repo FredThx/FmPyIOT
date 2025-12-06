@@ -24,6 +24,8 @@ function update_status() {
             $('#' + data_topic.id).html(JSON.stringify(data_topic.payload));
             });
         //Update head data
+        //RSSI
+        $('#ssid').html(sysinfo.wifi.ssid);
         // Wifi strenght
         var wifi_class;
         if (sysinfo.wifi.rssi > -66){
@@ -47,6 +49,18 @@ function update_status() {
         e_mem_free.attr("style", "width: " + mem_free_percent + "%");
         e_mem_free.attr("aria-valuenow", mem_free_percent.toString());
         e_mem_free.text(mem_free_percent + "%");
+        // Flash memory free
+        let e_flash_mem_free = $("#flash_mem_free");
+        let flash_mem_free_percent = ~~(100*sysinfo.statvfs.f_bfree  / (sysinfo.statvfs.f_blocks ));
+        let flash_mem_free = ~~((sysinfo.statvfs.f_bfree * sysinfo.statvfs.f_frsize)/1000);
+        if (flash_mem_free_percent>15){
+            e_flash_mem_free.attr("class", "progress-bar bg-success");
+        }else{
+            e_flash_mem_free.attr("class", "progress-bar bg-danger");
+        }
+        e_flash_mem_free.attr("style", "width: " + flash_mem_free_percent + "%");
+        e_flash_mem_free.attr("aria-valuenow", flash_mem_free_percent.toString());
+        e_flash_mem_free.text(flash_mem_free + "Ko");
         //Title
         $('title').html("FmPyIot " + sysinfo.name);
     });

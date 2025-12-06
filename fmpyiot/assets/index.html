@@ -52,15 +52,20 @@
           <div class="col-3">
             <!--Résumé info system-->
             <div class="row">
-              <div id = "wifi_strenght" class="waveStrength-0">
-                <div class="wv4 wave" style="">
-                  <div class="wv3 wave" style="">
-                    <div class="wv2 wave" style="">
-                      <div class="wv1 wave">
+              <div class="col">
+                <div id = "wifi_strenght" class="waveStrength-0">
+                  <div class="wv4 wave" style="">
+                    <div class="wv3 wave" style="">
+                      <div class="wv2 wave" style="">
+                        <div class="wv1 wave">
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
+              <div class="col align-self-center">
+                <span id = "ssid"></span>
               </div>
             </div>
             <div class="row">
@@ -68,6 +73,14 @@
               <div class="col">
                 <div class="progress">
                   <div id = "mem_free" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">flash free : </div>
+              <div class="col">
+                <div class="progress">
+                  <div id = "flash_mem_free" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
               </div>
             </div>
