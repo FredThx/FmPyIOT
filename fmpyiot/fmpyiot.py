@@ -430,7 +430,7 @@ class FmPyIot:
     async def sysinfo(self)->dict:
         '''renvoie les informations system
         '''
-        statvfs_keys = ['f_bsize ', 'f_frsize ', 'f_blocks', 'f_bfree', 'f_bavail', 'f_files', 'f_ffree', 'f_favail', 'f_flag', 'fnamemax']
+        statvfs_keys = ['f_bsize', 'f_frsize', 'f_blocks', 'f_bfree', 'f_bavail', 'f_files', 'f_ffree', 'f_favail', 'f_flag', 'fnamemax']
         ifconfig_keys = ['ip', 'subnet', 'gateway', 'dns']
         uname_keys = ['sysname', 'nodename', 'release', 'version', 'machine']
         gc.collect()
