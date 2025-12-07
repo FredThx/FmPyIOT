@@ -22,7 +22,7 @@ class ManoAnalog:
         self.offset = - max_bars*min_voltage/(max_voltage - min_voltage)
         self.no_negative = no_negative
 
-    def read(self, precision:int=2):
+    def read(self, precision:int=2)->float:
         '''Return pressure in Bars
         '''
         pressure =  round(self.adc.read_u16()*self.coef + self.offset, precision)
