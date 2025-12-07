@@ -48,10 +48,10 @@ function update_status() {
         }
         e_mem_free.attr("style", "width: " + mem_free_percent + "%");
         e_mem_free.attr("aria-valuenow", mem_free_percent.toString());
-        e_mem_free.text(mem_free_percent + "%");
+        $("#mem_free_text").text(mem_free_percent + "%");
         // Flash memory free
         let e_flash_mem_free = $("#flash_mem_free");
-        let flash_mem_free_percent = ~~(100*sysinfo.statvfs.f_bfree  / (sysinfo.statvfs.f_blocks ));
+        let flash_mem_free_percent = ~~(100*sysinfo.statvfs.f_bfree / sysinfo.statvfs.f_blocks);
         let flash_mem_free = ~~((sysinfo.statvfs.f_bfree * sysinfo.statvfs.f_frsize)/1000);
         if (flash_mem_free_percent>15){
             e_flash_mem_free.attr("class", "progress-bar bg-success");
@@ -60,7 +60,7 @@ function update_status() {
         }
         e_flash_mem_free.attr("style", "width: " + flash_mem_free_percent + "%");
         e_flash_mem_free.attr("aria-valuenow", flash_mem_free_percent.toString());
-        e_flash_mem_free.text(flash_mem_free + "Ko");
+        $("#flash_mem_free_text").text(flash_mem_free + "Ko");
         //Title
         $('title').html("FmPyIot " + sysinfo.name);
     });
@@ -124,8 +124,6 @@ function do_repl_cmd(){
 // Est executée toutes les secondes
 function update_main() {    
     $.get("/api/render_web", function(html) {
-        console.log("Render main web page");
-        console.log(html);
         $('#render_web').html(html);
     });
 }

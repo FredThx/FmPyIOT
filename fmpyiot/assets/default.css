@@ -92,3 +92,8 @@
 .waveStrength-1 .wv2.wave {
 	border-top-color: #eee;
 }  
+
+#mem_free_text, #flash_mem_free_text {
+    font-weight: bold;
+    color: black;
+}
