@@ -1,6 +1,6 @@
-import time, logging, uasyncio as asyncio
+import time, logging
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicIrq, TopicAction
+from fmpyiot.topics import Topic
 from devices.ds18b20 import DS18b20
 from credentials import CREDENTIALS
 
@@ -13,7 +13,10 @@ class Thermometre:
     
     async def get_temperature(self, **kwargs):
         raw_temp = await self.ds.read_async()
-        return raw_temp + float(self.params['temperature_offset'])
+        if raw_temp is None:
+            return None
+        else:
+            return raw_temp + float(self.params['temperature_offset'])
 
     def load_params(self, param:dict):
         self.params.update(param)
