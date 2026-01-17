@@ -81,13 +81,13 @@ class FmPyIotWeb(FmPyIot):
     def authenticate(self):
         '''Décorateur pour BASIC authentification (self.web_credentials)
         '''
-        async def fail(request):
+        async def fail(request:naw.Request):
             await request.write("HTTP/1.1 401 Unauthorized\r\n")
             await request.write('WWW-Authenticate: Basic realm="Restricted"\r\n\r\n')
             await request.write("<h1>Unauthorized</h1>")
 
         def decorator(func):
-            async def wrapper(request):
+            async def wrapper(request:naw.Request):
                 header = request.headers.get('Authorization', None)
                 if header is None:
                     return await fail(request)
@@ -109,7 +109,7 @@ class FmPyIotWeb(FmPyIot):
         return decorator
 
     @staticmethod
-    async def send_response(request, code:int=200, message:str="OK", content_type:str=None, status:str=None):
+    async def send_response(request:naw.Request, code:int=200, message:str="OK", content_type:str=None, status:str=None):
         await request.write(f"HTTP/1.1 {code} {message}\r\n")
         if content_type:
             await request.write(f"Content-Type: {content_type}\r\n")
@@ -118,7 +118,7 @@ class FmPyIotWeb(FmPyIot):
             await request.write(f'{{"status": {status}}}')
 
     @staticmethod
-    async def send_file(request, filename, segment=64, binary=False):
+    async def send_file(request:naw.Request, filename, segment=64, binary=False):
         try:
             with open(filename, 'rb' if binary else 'r') as f:
                 while True:
@@ -132,7 +132,7 @@ class FmPyIotWeb(FmPyIot):
             raise naw.HttpError(request, 404, "File Not Found")
         
     @staticmethod
-    async def get_post_data(request):
+    async def get_post_data(request:naw.Request)->dict:
         """ get Post data 
         """
         await FmPyIotWeb.send_response(request)
@@ -190,7 +190,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route("/")
         @self.authenticate()
-        async def index(request):
+        async def index(request:naw.Request):
             '''Page principale
             '''
             await FmPyIotWeb.send_response(request)
@@ -200,7 +200,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/topics')
         @self.authenticate()
-        async def get_html_topics(request):
+        async def get_html_topics(request:naw.Request):
             '''Renvoie sous forme html la liste des topics et leurs valeurs, boutons actions, ....
             '''
             await FmPyIotWeb.send_response(request)
@@ -209,7 +209,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/assets/*')
         @self.authenticate()
-        async def assets(request):
+        async def assets(request:naw.Request):
             '''Permet un access aux fichiers static du site
             '''
             await FmPyIotWeb.send_response(request)
@@ -227,7 +227,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/status')
         @self.authenticate()
-        async def api_status(request):
+        async def api_status(request:naw.Request):
             '''API qui va renvoyer (json) le status avec toutes les valeurs des topics
             '''
             logging.debug(f"request={request}")
@@ -241,7 +241,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/ls')
         @self.authenticate()
-        async def api_ls(request):
+        async def api_ls(request:naw.Request):
             '''List device files (only on root)
             '''
             logging.debug(f"request={request}")
@@ -252,7 +252,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/download/*')
         @self.authenticate()
-        async def api_download(request):
+        async def api_download(request:naw.Request):
             '''Download file from device
             '''
             logging.debug(f"request={request}")
@@ -265,7 +265,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/delete/*')
         @self.authenticate()
-        async def api_delete(request):
+        async def api_delete(request:naw.Request):
             '''Delete file on device
             '''
             logging.debug(f"request={request}")
@@ -282,7 +282,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/upload/*')
         @self.authenticate()
-        async def upload(request):
+        async def upload(request:naw.Request):
             '''Upload file to device
             '''
             logging.debug(f"request={request}")
@@ -317,7 +317,7 @@ class FmPyIotWeb(FmPyIot):
             
         @self.web.route('/api/reboot')
         @self.authenticate()
-        async def reboot(request):
+        async def reboot(request:naw.Request):
             '''Reboot the device
             '''
             logging.debug(f"request={request}")
@@ -328,7 +328,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/bootloader')
         @self.authenticate()
-        async def bootloader(request):
+        async def bootloader(request:naw.Request):
             '''Reset the device and enter its bootloader
             '''
             logging.debug(f"request={request}")
@@ -339,7 +339,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/action/*')
         @self.authenticate()
-        async def action(request):
+        async def action(request:naw.Request):
             '''Execute l'action liés à un topic
             '''
             logging.debug(f"request={request}")
@@ -359,7 +359,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/repl')
         @self.authenticate()
-        async def repl(request):
+        async def repl(request:naw.Request):
             '''renvoie les dernières ligne du REPL
             '''
             if request.method != "GET":
@@ -370,7 +370,7 @@ class FmPyIotWeb(FmPyIot):
         
         @self.web.route('/api/repl/cmd')
         @self.authenticate()
-        async def repl(request):
+        async def repl(request:naw.Request):
             '''Envoie une commande python au REPL
             '''
             if request.method != "POST":
@@ -387,7 +387,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/logging-level/*')
         @self.authenticate()
-        async def logging_level(request):
+        async def logging_level(request:naw.Request):
             if request.method != "POST":
                 raise naw.HttpError(request, 501, "Not Implemented")
             try:
@@ -398,12 +398,12 @@ class FmPyIotWeb(FmPyIot):
             await self.send_response(request)
 
         @self.web.route('/api/hello')
-        async def hello(request):
+        async def hello(request:naw.Request):
             await FmPyIotWeb.send_response(request)
             await request.write(f"FmPyIOT/{self.name}")
 
         @self.web.route('/api/logs')
-        async def api_get_logs(request):
+        async def api_get_logs(request:naw.Request):
             '''Renvoie le contenu du dernier fichier log
             '''
             await FmPyIotWeb.send_response(request)
@@ -411,7 +411,7 @@ class FmPyIotWeb(FmPyIot):
         
         @self.web.route('/api/params')
         @self.authenticate()
-        async def get_html_params(request):
+        async def get_html_params(request:naw.Request):
             '''Renvoie sous forme html la liste des params et leurs valeurs
             '''
             await FmPyIotWeb.send_response(request)
@@ -420,7 +420,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/params/delete/*')
         @self.authenticate()
-        async def delete_params(request):
+        async def delete_params(request:naw.Request):
             '''Supprime tous les paramètres
             '''
             if request.method != "DELETE":
@@ -434,7 +434,7 @@ class FmPyIotWeb(FmPyIot):
 
         @self.web.route('/api/render_web')
         @self.authenticate()
-        async def render_web(request):
+        async def render_web(request:naw.Request):
             '''Renvoie le contenu de la page web générée par la fonction render_web
             '''
             await FmPyIotWeb.send_response(request)
