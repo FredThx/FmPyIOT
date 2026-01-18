@@ -10,7 +10,7 @@ time.sleep(5)
 
 assert len([])==0, "Error with len!"
 
-wc = WC(gaz_sensor=Pin(26), ldr=Pin(27))
+wc = WC(gaz_sensor=Pin(28), ldr=Pin(26))
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
