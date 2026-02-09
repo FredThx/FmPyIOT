@@ -22,8 +22,8 @@ class Humidity:
         self.iot = iot
         #self.iot.set_param('impregnation', default=self.params, on_change=self.load_params)
         for i, dht in enumerate(self.dhts):
-            self.iot.add_topic(Topic(f"./humidity{i}", read=dht.humidity, send_period=2))
-            self.iot.add_topic(Topic(f"./temperature{i}", read=dht.temperature, send_period=2))
+            self.iot.add_topic(Topic(f"./humidity{i+1}", read=dht.humidity, send_period=2))
+            self.iot.add_topic(Topic(f"./temperature{i+1}", read=dht.temperature, send_period=2))
         self.iot.add_topic(TopicRoutine(action=self.measure, send_period=2, topic=f"./measure{i}"))
 
 
@@ -69,19 +69,19 @@ class Humidity:
         print(f"Params loaded. New params : {self.params}")
 
     
-humidity = Humidity(dht_pins=[26, 22])
+humidity = Humidity(dht_pins=[22])
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
     ssid = CREDENTIALS.wifi_SSID,
     password = CREDENTIALS.wifi_password,
     web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
-    mqtt_base_topic = "OLFA/IMPREGNATION/IR",
+    mqtt_base_topic = "OLFA/IMPREGNATION/VAPEUR",
     watchdog=100,
     sysinfo_period = 600,
     led_wifi="LED",
     web=True,
-    name = "machine imprégnation IR",
+    name = "Machine Imprégnation Vapeur",
     logging_level=logging.INFO,
     )
 

@@ -231,12 +231,12 @@ class FmPyIotWeb(FmPyIot):
             '''API qui va renvoyer (json) le status avec toutes les valeurs des topics
             '''
             logging.debug(f"request={request}")
-            await FmPyIotWeb.send_response(request, content_type='application/json')
             topics = {}
             for topic in self.topics:
                 payload = await topic.get_payload_async(topic.topic, None)
                 if payload is not None:
                     topics[topic.topic] = {'payload' : payload, 'id': topic.get_id()}
+            await FmPyIotWeb.send_response(request, content_type='application/json')
             await request.write(json.dumps(topics))
 
         @self.web.route('/api/ls')
