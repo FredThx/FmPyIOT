@@ -30,15 +30,15 @@ class Humidity(Device):
         Crée les topics MQTT 
         '''
         super().set_iot(iot)
-        #iot.add_routine(TopicRoutine(self.measure, send_period=50, topic = "./measure"))
-        iot.add_topic(TopicRead("./humidity", read= self.read_humidity, send_period=60))
+        iot.add_topic(TopicRoutine(self.read_sensor, send_period=10, topic = "./measure"))
+        iot.add_topic(TopicRead("./humidity", read= self.dht.humidity, send_period=60))
         iot.add_topic(TopicRead("./temperature", read= self.dht.temperature, send_period=60))
     
-    def read_humidity(self):
-        '''Mesure la température et l'humidité. Et renvoie de l'umidité'''
+    def read_sensor(self, *args, **kwargs):
+        '''Mesure la température et l'humidité.'''
         logging.info("Measuring humidity and temperature")
         self.dht.measure()
-        return self.dht.humidity()
+
 
     def render_web(self)->str:
         '''Renders the web page content
