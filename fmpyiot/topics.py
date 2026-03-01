@@ -103,7 +103,7 @@ class Topic:
                     return await self.run_callback_async(self.read)
 
     async def do_action_async(self, topic:str=None, payload:str=None, action:function=None)->str:
-        '''Execute the action method and return (if exist) the value
+        '''Execute the action method (en async ou pas) and return (if exist) the value
         action function can accept arguments : (inital topic, initial payload), just initial payload or nothing
         action (optionnal) : default : self.on_incoming
         '''
@@ -194,7 +194,7 @@ class Topic:
         return f'<div>{button}<span>(</span>{_topic}<span>,</span>{_payload}<span>)</span></div>'
     
 class TopicRead(Topic):
-    '''Un topic de type read
+    '''Un topic de type read : un topic qui lit une valeur à envoyer à interval régulier ou à la demande (reverse topic)
     '''
     def __init__(self, topic:str,
                  read:function = None,
@@ -202,15 +202,24 @@ class TopicRead(Topic):
                  reverse_topic:bool|str = True,
                  send_period_as_param:bool=True,
                  ):
+        '''
+        read : function for reading the value args : topic, payload
+        send_period : period (s) between 2 read (default : None => never, 0 => always, as fast as possible)
+        reverse_topic : if True : a reverse topic is créated (to force reading) (default)
+        send_period_as_param : if True, send_period is envoyé en paramètre de la callback read (default)
+        '''
         super().__init__(topic=topic, read=read, send_period=send_period, reverse_topic=reverse_topic, send_period_as_param=send_period_as_param)
 
 class TopicAction(Topic):
-    '''Un topic de type action
+    '''Un topic de type action : un topic qui execute une action à la réception d'un message
     '''
     def __init__(self, topic:str,
                  on_incoming:function = None,
                  action:function = None, # for compatibility
                  ):
+        '''
+        on_incoming : function for action on incoming message args : topic, payload
+        '''
         super().__init__(topic=topic, on_incoming=on_incoming or action)
 
 
@@ -289,14 +298,16 @@ class TopicIrq(Topic):
         iot.add_topic(TopicRoutine(action = do_irq_action, send_period=0.01, send_period_as_param=False))
 
 class TopicRoutine(Topic):
-    ''' Pas vraiment un Topic comme les autres : plutôt une routine qui sera executée comme tache
-        send_period     :   None : never | 0 : always, as fast as possible | x : every x secondes
-        topic           :   (facultatif) nom de la routine (pour debug et params)
+    ''' Une routine qui sera executée comme tache
     '''
     index_instance = 0
 
     def __init__(self,
                  action:function = None, send_period = 0, send_period_as_param = True, topic:str=None):
+        '''
+        send_period     :   None : never | 0 : always, as fast as possible | x : every x secondes
+        topic           :   (facultatif) nom de la routine (pour debug et params)
+        '''
         self.action = action
         self.on_incoming = False
         self.index = self.index_instance
