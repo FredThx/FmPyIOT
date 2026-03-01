@@ -23,6 +23,7 @@ class FmPyIot:
     def __init__(self,
             mqtt_host:str, mqtt_base_topic:str = "",
             ssid:str = None, password:str = None,
+            mqtt_queue_len:int = 1,
             autoconnect:bool = False,
             watchdog:int = 100,
             sysinfo_period:int = 600, #s
@@ -71,7 +72,7 @@ class FmPyIot:
         mqtt_as_config['wifi_pw']  = password
         mqtt_as_config['will'] = (self.get_topic("./BYE"), 'Goodbye cruel world!', False, 0)
         mqtt_as_config['keepalive'] = keepalive
-        mqtt_as_config["queue_len"] = 1  # Use event interface with default queue
+        mqtt_as_config["queue_len"] = mqtt_queue_len  # Use event interface with default queue
         #MQTTClient.DEBUG = True
         self.client = MQTTClient(mqtt_as_config)
         self.wlan = self.client._sta_if

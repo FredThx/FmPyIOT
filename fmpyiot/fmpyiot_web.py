@@ -19,6 +19,7 @@ class FmPyIotWeb(FmPyIot):
     def __init__(self,
             mqtt_host:str, mqtt_base_topic:str = "",
             ssid:str = None, password:str = None,
+            mqtt_queue_len:int = 1,
             autoconnect:bool = False,
             watchdog:int = 100,
             sysinfo_period:int = 600, #s
@@ -41,6 +42,7 @@ class FmPyIotWeb(FmPyIot):
         super().__init__(
             mqtt_host=mqtt_host, mqtt_base_topic=mqtt_base_topic,
             ssid = ssid, password=password,
+            mqtt_queue_len=mqtt_queue_len,
             autoconnect=False, watchdog=watchdog, sysinfo_period=sysinfo_period,
             logging_level = logging_level, led_wifi = led_wifi, led_incoming=led_incoming,
             name=name,description = description,
