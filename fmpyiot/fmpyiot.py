@@ -161,8 +161,8 @@ class FmPyIot:
         async for topic, msg, retained in self.client.queue:
             topic = topic.decode()
             payload = msg.decode()
-            logging.info(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
-            asyncio.create_task(self.pulse())
+            logging.debug(f'Incoming : "{topic}" : "{payload}" Retained: {retained}')
+            asyncio.create_task(self.pulse()) # Pulse incoming LED (TODO : supprimer ce truc sans intérêt)
             if topic in self.callbacks:
                 callbacks = self.callbacks[topic]
                 for callback in callbacks or []:

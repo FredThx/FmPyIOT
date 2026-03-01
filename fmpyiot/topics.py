@@ -323,7 +323,7 @@ class TopicRoutine(Topic):
     def get_routine(self, publisher):
         '''renvoie la routine 
         '''
-        if self.send_period and not self.sleep_mode:
+        if self.send_period is not None and not self.sleep_mode:
             async def routine():
                 while True:
                     await self.do_action_async(action=self.action)
