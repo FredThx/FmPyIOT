@@ -3,7 +3,7 @@ import time, json
 import uasyncio as asyncio
 from machine import Pin, ADC, SPI, RTC
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
+from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicRead
 import logging
 from lcd12864 import SPI_LCD12864
 from devices.display import Display, Field, RIGHT, Icon

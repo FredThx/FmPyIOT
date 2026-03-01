@@ -339,8 +339,7 @@ class TopicRoutine(Topic):
         return ""
 
 class TopicOnChange(Topic):
-    '''Un topic qui sera envpyé quand la valeur change
-    #TODO : ajouter une callback on_change
+    '''Un topic qui sera envoyé quand la valeur change
     '''
     def __init__(self,
                  topic:str, 
@@ -348,7 +347,8 @@ class TopicOnChange(Topic):
                  variation:float=0,
                  percent:bool=False,
                  period:float=None,
-                 reverse_topic:bool = True
+                 reverse_topic:bool = True,
+                 on_change:function = None
                  ):
         '''
         - read          :   function for reading the value args : topic, payload
@@ -365,6 +365,7 @@ class TopicOnChange(Topic):
         self.last_value = None
         self.percent = percent
         self.min_variation = variation
+        self.on_change = on_change
 
     async def send_async(self, publisher: function):
         '''Method call by Fmpyiot to send : topic, payload = read(...)
@@ -374,7 +375,8 @@ class TopicOnChange(Topic):
         payload = await self.get_payload_async()
         if self.is_changed(payload):
             await publisher(str(self), payload)
-    
+            if self.on_change:
+                await self.do_action_async(self.topic, payload, action=self.on_change)
     
     def is_auto_send(self)->bool:
         return True

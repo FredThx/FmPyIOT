@@ -3,7 +3,7 @@ import time
 import uasyncio as asyncio
 from machine import Pin, ADC
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicOnChange, TopicRead
+from fmpyiot.topics import Topic, TopicAction, TopicRoutine, TopicIrq, TopicRead
 import logging
 
 from credentials import CREDENTIALS
