@@ -77,3 +77,13 @@ class Vanne(Device):
         iot.add_topic(TopicAction(f"{self.base_topic}/open", on_incoming=self.open))
         iot.add_topic(TopicAction(f"{self.base_topic}/close", on_incoming=self.close))
         iot.add_topic(Topic(f"{self.base_topic}/status", read=self.get_status, send_period=5))
+
+    def render_web(self)->str:
+        '''Renders the web page content
+        '''
+        html = f"""<br><H3>Vanne</H3>
+            <p>Status : {self.get_status()}</p>
+            <p>Pour ouvrir : aller sur {self.base_topic}/open</p>
+            <p>Pour fermer : aller sur {self.base_topic}/close</p>
+            """
+        return html

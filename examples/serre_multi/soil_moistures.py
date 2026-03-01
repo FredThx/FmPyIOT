@@ -56,3 +56,11 @@ class SoilMoistures(Device):
                 sm.a_max = float(self.params[sm.name]['a_max'])
             else:
                 logging.warning(f"Sensor {sm.name} not found in params, using default values.")
+
+    def render_web(self)->str:
+        '''Renders the web page content
+        '''
+        html = f"<br><H3>Humidité du sol</H3>"
+        for sm in self.soil_moistures:
+            html += f"<p>{sm.name} : {sm.read():.1f}% (a_min={sm.a_min}, a_max={sm.a_max})</p>"
+        return html
