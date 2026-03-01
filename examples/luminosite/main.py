@@ -1,22 +1,20 @@
 
 import time
+from luminosite import Luminosite
 from fmpyiot.fmpyiot_web import FmPyIotWeb
-from fmpyiot.topics import TopicRead
 import logging
-from devices.tsl2561 import TSL2561
-from machine import I2C, Pin
+from machine import Pin, SoftI2C 
 from credentials import CREDENTIALS
 
+print("Booting...")
+print("CTRL-C to exit")
 time.sleep(5)
+print("Starting luminosity sensor...")
 
 assert len([])==0, "Error with len!"
 
-i2c = I2C(1,sda=Pin(26), scl=Pin(27), freq=100000)
-try:
-    sensor = TSL2561(i2c, address=0x39)
-except OSError:
-    sensor = None
-    print("TSL2561 not found")
+i2c = SoftI2C(sda=Pin(9), scl=Pin(8), freq=100000)
+luminiosite = Luminosite(i2c)
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -24,28 +22,13 @@ iot = FmPyIotWeb(
     password = CREDENTIALS.wifi_password,
     web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
     mqtt_base_topic = "T-HOME/SALON/SEMIS",
-    watchdog=None,
+    watchdog=100,
     sysinfo_period = 600,
     led_wifi='LED',
     web=True,
     name = "Luminosité semis",
-    logging_level=logging.DEBUG,
+    logging_level=logging.INFO,
+    device=luminiosite
     )
-
-def read_sensor():
-    global sensor
-    if sensor is None:
-        try:
-            sensor = TSL2561(i2c, address=0x39)
-        except OSError:
-            print("TSL2561 not found")
-    if sensor:
-        try:
-            return sensor.read()
-        except OSError:
-            print("Error reading sensor:")
-            sensor = None
-
-iot.add_topic(TopicRead("./LUMINOSITE", read=read_sensor, send_period=10))
 
 iot.run()
