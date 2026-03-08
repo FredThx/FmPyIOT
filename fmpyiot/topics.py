@@ -273,7 +273,7 @@ class TopicIrq(Topic):
         '''
         # IRQ => buffer
         def callback(pin):
-            pin.init(pull=Pin.PULL_UP)
+            #pin.init(pull=Pin.PULL_UP) # NON!!!
             self.irq_buffer.append(pin.value())
         self.pin.irq(callback, self.trigger)
         # buffer => publish + action
