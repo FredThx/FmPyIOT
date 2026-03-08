@@ -1,5 +1,6 @@
 
 import time
+from test import Test
 from fmpyiot.fmpyiot_web import FmPyIotWeb
 import logging
 from credentials import CREDENTIALS
@@ -7,6 +8,7 @@ from fmpyiot.topics import Topic, TopicRoutine, TopicIrq, TopicOnChange, TopicAc
 
 time.sleep(5)
 
+test = Test()
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
@@ -20,17 +22,7 @@ iot = FmPyIotWeb(
     led_wifi='LED',
     name = "Test TopicOnChange",
     logging_level=logging.INFO,
+    devices=[test]
     )
-
-compteur = 0
-def my_routine(topic, payload):
-    global compteur
-    compteur += 1
-    #time.sleep(0.2) # Simulate a long processing time
-
-iot.add_topic(Topic("./test",send_period=1, read=lambda :compteur+0))
-iot.add_topic(TopicAction("./test", action=lambda topic, payload: print("****************  Reception :", payload)))
-# Une routine pour saturer le µC
-iot.add_topic(TopicRoutine(topic="./test_routine", send_period=0, action=my_routine))
 
 iot.run()
