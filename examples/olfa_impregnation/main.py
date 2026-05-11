@@ -9,6 +9,7 @@ from credentials import CREDENTIALS
 
 class Humidity:
     params = {
+        'tempo_entre_mesure (ms)': 1000, # en secondes
         }
     params_json = "params.json"
     
@@ -20,11 +21,11 @@ class Humidity:
     
     def set_iot(self, iot:FmPyIotWeb):
         self.iot = iot
-        #self.iot.set_param('impregnation', default=self.params, on_change=self.load_params)
+        self.iot.set_param('impregnation', default=self.params, on_change=self.load_params)
         for i, dht in enumerate(self.dhts):
-            self.iot.add_topic(Topic(f"./humidity{i+1}", read=dht.humidity, send_period=2))
-            self.iot.add_topic(Topic(f"./temperature{i+1}", read=dht.temperature, send_period=2))
-        self.iot.add_topic(TopicRoutine(action=self.measure, send_period=2, topic=f"./measure{i}"))
+            self.iot.add_topic(Topic(f"./humidity{i}", read=dht.humidity, send_period=3))
+            self.iot.add_topic(Topic(f"./temperature{i}", read=dht.temperature, send_period=3))
+        self.iot.add_topic(TopicRoutine(action=self.measure, send_period=2, topic=f"./measure"))
 
 
     async def measure(self):
@@ -33,7 +34,7 @@ class Humidity:
         for dht in self.dhts:
             try:
                 dht.measure()
-                asyncio.sleep_ms(1) # pour éviter de faire trop de mesure en même temps
+                asyncio.sleep_ms(self.params['tempo_entre_mesure (ms)']) # pour éviter de faire trop de mesure en même temps
             except OSError as e:
                 logging.error(f"Error on dht.measure() : {e}")
 
@@ -69,19 +70,20 @@ class Humidity:
         print(f"Params loaded. New params : {self.params}")
 
     
-humidity = Humidity(dht_pins=[22])
+humidity = Humidity(dht_pins=[26, 22])
+
 
 iot = FmPyIotWeb(
     mqtt_host = CREDENTIALS.mqtt_host,
     ssid = CREDENTIALS.wifi_SSID,
     password = CREDENTIALS.wifi_password,
     web_credentials=(CREDENTIALS.web_user, CREDENTIALS.web_password),
-    mqtt_base_topic = "OLFA/IMPREGNATION/VAPEUR",
+    mqtt_base_topic = "OLFA/IMPREGNATION/IR",
     watchdog=100,
     sysinfo_period = 600,
     led_wifi="LED",
     web=True,
-    name = "Machine Imprégnation Vapeur",
+    name = "machine imprégnation IR",
     logging_level=logging.INFO,
     )
 
