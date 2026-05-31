@@ -111,10 +111,12 @@ class FmPyIotWeb(FmPyIot):
         return decorator
 
     @staticmethod
-    async def send_response(request:naw.Request, code:int=200, message:str="OK", content_type:str=None, status:str=None):
+    async def send_response(request:naw.Request, code:int=200, message:str="OK", content_type:str=None, status:str=None, content_disposition:str=None, filename:str=None):
         await request.write(f"HTTP/1.1 {code} {message}\r\n")
         if content_type:
             await request.write(f"Content-Type: {content_type}\r\n")
+        if filename:
+            await request.write(f"Content-Disposition: {content_disposition or 'attachment'}; filename={filename}\r\n")
         await request.write("\r\n")
         if status:
             await request.write(f'{{"status": {status}}}')
@@ -260,8 +262,9 @@ class FmPyIotWeb(FmPyIot):
             logging.debug(f"request={request}")
             filename = request.url[len(request.route.rstrip("*")) - 1:].strip("/")
             filename = FmPyIotWeb.unquote(filename)
-            await FmPyIotWeb.send_response(request, content_type='application/octet-stream')
-            await request.write(f"Content-Disposition: attachment; filename={filename}\r\n\r\n")
+            await FmPyIotWeb.send_response(request,
+                                           content_type='application/octet-stream',
+                                           content_disposition='attachment', filename=filename)
             logging.info(f"Download file : {filename}")
             await naw.send_file(request, filename)
 
