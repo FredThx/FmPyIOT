@@ -99,7 +99,10 @@ class FmPyIot:
         self.on_fail_connect = on_fail_connect
         #Connect device
         for device in devices or []:
-            device.set_iot(self)
+            try:
+                device.set_iot(self)
+            except Exception as e:
+                logging.error(f"Error occurred while setting IoT for device: {e}")
 
     #########################
     # DIVERS utilitaires    #
